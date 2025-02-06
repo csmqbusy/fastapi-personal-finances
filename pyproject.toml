@@ -1,0 +1,25 @@
+[project]
+name = "personal-finance"
+version = "0.1.0"
+description = "FastAPI application for personal finances"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.14.1",
+    "bcrypt>=4.2.1",
+    "fastapi[standard]>=0.115.6",
+    "orjson>=3.10.15",
+    "psycopg[binary]>=3.2.4",
+    "pydantic-settings>=2.7.1",
+    "pyjwt[crypto]>=2.10.1",
+    "python-multipart>=0.0.20",
+    "sqlalchemy[asyncio]>=2.0.37",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.14.1",
+    "pytest-asyncio>=0.25.3",
+    "pytest-env>=1.1.5",
+    "ruff>=0.9.2",
+]

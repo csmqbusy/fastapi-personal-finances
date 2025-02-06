@@ -1,0 +1,24 @@
+name: "personal_finances"
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: app_postgres
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: superuser
+      POSTGRES_PASSWORD: superpassword
+      POSTGRES_DB: finances_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superuser -d finances_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - "finances_db_data:/var/lib/postgresql/data"
+
+volumes:
+  finances_db_data:
