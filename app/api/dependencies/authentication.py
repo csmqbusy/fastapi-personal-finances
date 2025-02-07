@@ -48,7 +48,7 @@ async def validate_access_token(
     return payload
 
 
-async def get_auth_user_info(
+async def get_verified_user(
     payload: dict = Depends(validate_access_token),
     db_session: AsyncSession = Depends(get_db_session),
 ):
@@ -61,7 +61,7 @@ async def get_auth_user_info(
 
 
 async def get_active_auth_user_info(
-    user: UserModel = Depends(get_auth_user_info),
+    user: UserModel = Depends(get_verified_user),
 ):
     if user.active:
         return user
