@@ -32,9 +32,15 @@ async def validate_credentials(
     return user
 
 
-async def get_access_token_payload(request: Request) -> dict:
-    if not (access_token := request.cookies.get("access_token")):
-        raise TokenNotFoundError()
+async def get_access_token_payload(request: Request) -> str:
+    if access_token := request.cookies.get("access_token"):
+        return access_token
+    raise TokenNotFoundError()
+
+
+async def validate_access_token(
+    access_token: str = Depends(get_access_token_payload),
+):
     try:
         payload = decode_access_token(access_token)
     except InvalidTokenError:
@@ -43,7 +49,7 @@ async def get_access_token_payload(request: Request) -> dict:
 
 
 async def get_auth_user_info(
-    payload: dict = Depends(get_access_token_payload),
+    payload: dict = Depends(validate_access_token),
     db_session: AsyncSession = Depends(get_db_session),
 ):
     username = payload.get("sub")
