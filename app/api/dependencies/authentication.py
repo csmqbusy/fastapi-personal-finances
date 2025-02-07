@@ -60,7 +60,7 @@ async def get_verified_user(
     raise UserNotFoundError()
 
 
-async def get_active_auth_user_info(
+async def get_active_verified_user(
     user: UserModel = Depends(get_verified_user),
 ):
     if user.active:

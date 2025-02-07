@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.authentication import (
     validate_credentials,
-    get_active_auth_user_info,
+    get_active_verified_user,
 )
 from app.api.exceptions.authentication import (
     UsernameAlreadyExistsError,
@@ -86,6 +86,6 @@ async def logout(
     summary="Get current user info",
 )
 async def auth_user_get_info(
-    user: UserModel = Depends(get_active_auth_user_info),
+    user: UserModel = Depends(get_active_verified_user),
 ) -> SUserShortInfo:
     return SUserShortInfo.model_validate(user)
