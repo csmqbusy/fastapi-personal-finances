@@ -1,5 +1,5 @@
-from .base import Base
-from .user import UserModel
+from .base_model import Base
+from .user_model import UserModel
 
 
 __all__ = [

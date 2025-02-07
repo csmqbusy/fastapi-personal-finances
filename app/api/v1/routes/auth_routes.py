@@ -6,23 +6,26 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies.authentication import (
+from app.api.dependencies.auth_dependencies import (
     validate_credentials,
     get_active_verified_user,
 )
-from app.api.exceptions.authentication import (
+from app.api.exceptions.auth_exceptions import (
     UsernameAlreadyExistsError,
     EmailAlreadyExistsError,
 )
-from app.services.auth import (
+from app.services.auth_service import (
     hash_password,
     create_access_token,
 )
 from app.db import get_db_session
-from app.exceptions.user import UsernameAlreadyExists, EmailAlreadyExists
+from app.exceptions.user_exceptions import (
+    UsernameAlreadyExists,
+    EmailAlreadyExists,
+)
 from app.models import UserModel
-from app.schemes.user import SUserSignUp, SUserShortInfo
-from app.services.user import create_user
+from app.schemas.user_schemas import SUserSignUp, SUserShortInfo
+from app.services.user_service import create_user
 
 router = APIRouter()
 

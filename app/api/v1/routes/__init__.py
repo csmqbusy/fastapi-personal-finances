@@ -1,4 +1,4 @@
-from .authentication import router as authentication_router
+from .auth_routes import router as authentication_router
 
 
 __all__ = [
