@@ -35,14 +35,10 @@ class DatabaseConfig(BaseModel):
 
 class JWTAuth(BaseModel):
     certs_path: Path = get_correct_cwd() / "certs"
-    access_private_key_path: Path = certs_path / "access_private.pem"
-    access_public_key_path: Path = certs_path / "access_public.pem"
-    refresh_private_key_path: Path = certs_path / "refresh_private.pem"
-    refresh_public_key_path: Path = certs_path / "refresh_public.pem"
+    private_key_path: Path = certs_path / "private_key.pem"
+    public_key_path: Path = certs_path / "public_key.pem"
     algorithm: str = "RS256"
-    access_token_expires_sec: int = 900
-    refresh_token_expires_days: int = 60
-    max_active_auth_sessions: int = 5
+    access_token_expires_sec: int = 180 * 60
 
 
 class Settings(BaseSettings):
