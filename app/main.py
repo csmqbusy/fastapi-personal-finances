@@ -22,7 +22,6 @@ main_app = FastAPI(
 main_app.include_router(
     router_v1,
     prefix=settings.api.prefix_v1,
-    tags=["v1"]
 )
 
 if __name__ == '__main__':
