@@ -42,7 +42,7 @@ class JWTAuth(BaseModel):
 
 
 class AppConfig(BaseSettings):
-    pass
+    default_spending_category_name: str = "All spendings"
 
 
 class Settings(BaseSettings):
