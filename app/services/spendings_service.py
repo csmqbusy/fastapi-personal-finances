@@ -1,0 +1,53 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.repositories import spendings_repo
+from app.schemas.spendings_schemas import (
+    SSpendingIn,
+    SSpendingCreate,
+    SSpendingOut,
+)
+from app.services import spend_cat_service
+
+
+async def add_spending_to_db(
+    spending: SSpendingIn,
+    user_id: int,
+    session: AsyncSession,
+):
+    category_name = spending.category_name
+    if not category_name:
+        category_name = settings.app.default_spending_category_name
+    category_id = await _get_category_id(category_name, session)
+    spending_to_create = SSpendingCreate(
+        amount=spending.amount,
+        description=spending.description,
+        category_id=category_id,
+        user_id=user_id,
+    )
+    spending = await spendings_repo.add(
+        session,
+        spending_to_create.model_dump(),
+    )
+    return SSpendingOut.model_validate(spending)
+
+
+async def _get_category_id(
+    category_name: str,
+    session: AsyncSession,
+) -> int:
+    category_exists = await spend_cat_service.is_category_exists(
+        category_name,
+        session,
+    )
+    if category_exists:
+        category = await spend_cat_service.get_category_by_name(
+            category_name,
+            session,
+        )
+    else:
+        category = await spend_cat_service.add_category_to_db(
+            category_name,
+            session,
+        )
+    return category.id
