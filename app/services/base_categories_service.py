@@ -31,7 +31,9 @@ class BaseCategoriesService(Generic[T]):
     ):
         category = await self.category_repo.add(
             session,
-            dict(name=category_name),
+            dict(
+                name=category_name
+            ),
         )
         return category
 
