@@ -42,7 +42,7 @@ class BaseCategoriesService(Generic[T]):
                 name=category_name
             ),
         )
-        return category
+        return self.out_schema.model_validate(category)
 
     async def get_default_category(
         self,
@@ -55,7 +55,7 @@ class BaseCategoriesService(Generic[T]):
             ),
         )
         if category:
-            return category
+            return self.out_schema.model_validate(category)
         else:
             return await self.add_category_to_db(
                 self.default_category_name,
@@ -73,4 +73,4 @@ class BaseCategoriesService(Generic[T]):
                 name=name,
             ),
         )
-        return category
+        return self.out_schema.model_validate(category)
