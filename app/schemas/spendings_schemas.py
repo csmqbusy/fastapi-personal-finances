@@ -17,3 +17,8 @@ class SSpendingIn(SSpendingBase):
 class SSpendingOut(SSpendingBase):
     category_name: str | None = Field(None, max_length=50)
     date: datetime
+
+
+class SSpendingCreate(SSpendingBase):
+    category_id: int
+    user_id: int
