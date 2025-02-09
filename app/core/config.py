@@ -41,6 +41,10 @@ class JWTAuth(BaseModel):
     access_token_expires_sec: int = 180 * 60
 
 
+class AppConfig(BaseSettings):
+    pass
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
             env_file=get_correct_cwd() / ".env.dev",
@@ -54,6 +58,7 @@ class Settings(BaseSettings):
     api: ApiPrefix = ApiPrefix()
     db: DatabaseConfig
     auth: JWTAuth = JWTAuth()
+    app: AppConfig = AppConfig()
 
 
 settings = Settings()  # type: ignore
