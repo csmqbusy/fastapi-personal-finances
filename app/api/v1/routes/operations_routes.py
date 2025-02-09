@@ -10,7 +10,7 @@ from app.services.spendings_service import add_spending_to_db
 router = APIRouter()
 
 
-@router.post("/add_spending")
+@router.post("/add_spending/")
 async def add_spending(
     spending: SSpendingIn,
     user: UserModel = Depends(get_active_verified_user),
