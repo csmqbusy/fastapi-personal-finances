@@ -1,5 +1,6 @@
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Type
 
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -11,9 +12,11 @@ class BaseCategoriesService(Generic[T]):
         self,
         category_repo,
         default_category_name: str,
+        out_schema: Type[BaseModel],
     ):
         self.category_repo = category_repo
         self.default_category_name = default_category_name
+        self.out_schema = out_schema
 
     async def is_category_exists(
         self,
