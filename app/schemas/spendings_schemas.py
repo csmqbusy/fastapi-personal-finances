@@ -11,8 +11,9 @@ class SSpendingBase(BaseModel):
 
 
 class SSpendingIn(SSpendingBase):
-    pass
+    category_name: str | None = Field(None, max_length=50)
 
 
 class SSpendingOut(SSpendingBase):
+    category_name: str | None = Field(None, max_length=50)
     date: datetime
