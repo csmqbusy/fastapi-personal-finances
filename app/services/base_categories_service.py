@@ -2,8 +2,6 @@ from typing import Generic, TypeVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import SpendingCategoriesModel
-
 
 T = TypeVar('T')
 
@@ -30,7 +28,7 @@ class BaseCategoriesService(Generic[T]):
         self,
         category_name: str,
         session: AsyncSession,
-    ) -> SpendingCategoriesModel:
+    ):
         category = await self.category_repo.add(
             session,
             dict(name=category_name),
@@ -40,7 +38,7 @@ class BaseCategoriesService(Generic[T]):
     async def get_default_category(
         self,
         session: AsyncSession,
-    ) -> SpendingCategoriesModel:
+    ):
         category = await self.category_repo.get_by_filter(
             session,
             dict(
@@ -59,7 +57,7 @@ class BaseCategoriesService(Generic[T]):
         self,
         name: str,
         session: AsyncSession,
-    ) -> SpendingCategoriesModel:
+    ):
         category = await self.category_repo.get_by_filter(
             session,
             dict(
