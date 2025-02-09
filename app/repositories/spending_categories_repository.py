@@ -7,4 +7,4 @@ class SpendingCategoriesRepository(BaseRepository[SpendingCategoriesModel]):
         super().__init__(SpendingCategoriesModel)
 
 
-spending_categories_repo = SpendingCategoriesRepository()
+spend_cat_repo = SpendingCategoriesRepository()
