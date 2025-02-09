@@ -7,7 +7,11 @@ T = TypeVar('T')
 
 
 class BaseCategoriesService(Generic[T]):
-    def __init__(self, category_repo, default_category_name: str):
+    def __init__(
+        self,
+        category_repo,
+        default_category_name: str,
+    ):
         self.category_repo = category_repo
         self.default_category_name = default_category_name
 
