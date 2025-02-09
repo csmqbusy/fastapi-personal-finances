@@ -24,7 +24,7 @@ async def add_spending(
     return await add_spending_to_db(spending, user.id, db_session)
 
 
-@router.post("/add_spending_category/")
+@router.post("/spending_category/add/")
 async def add_spending_category(
     spending_category: SSpendingCategoryIn,
     db_session: AsyncSession = Depends(get_db_session),
