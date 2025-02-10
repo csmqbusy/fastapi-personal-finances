@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.post("/spending/add/")
-async def add_spending(
+async def spending_add(
     spending: SSpendingIn,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
