@@ -49,6 +49,7 @@ class BaseCategoriesService(Generic[T]):
 
     async def get_default_category(
         self,
+        user_id: int,
         session: AsyncSession,
     ):
         category = await self.category_repo.get_by_filter(
@@ -60,6 +61,7 @@ class BaseCategoriesService(Generic[T]):
         else:
             return await self.add_category_to_db(
                 self.default_category_name,
+                user_id,
                 session,
             )
 
