@@ -11,10 +11,12 @@ class BaseCategoriesService(Generic[T]):
     def __init__(
         self,
         category_repo,
+        user_categories_repo,
         default_category_name: str,
         out_schema: Type[BaseModel],
     ):
         self.category_repo = category_repo
+        self.user_category_repo = user_categories_repo
         self.default_category_name = default_category_name
         self.out_schema = out_schema
 
