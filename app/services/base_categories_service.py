@@ -25,9 +25,7 @@ class BaseCategoriesService(Generic[T]):
     ) -> bool:
         category = await self.category_repo.get_by_filter(
             session,
-            dict(
-                name=category_name,
-            ),
+            dict(name=category_name),
         )
         return bool(category)
 
@@ -38,9 +36,7 @@ class BaseCategoriesService(Generic[T]):
     ):
         category = await self.category_repo.add(
             session,
-            dict(
-                name=category_name
-            ),
+            dict(name=category_name),
         )
         return self.out_schema.model_validate(category)
 
@@ -50,9 +46,7 @@ class BaseCategoriesService(Generic[T]):
     ):
         category = await self.category_repo.get_by_filter(
             session,
-            dict(
-                name=self.default_category_name,
-            ),
+            dict(name=self.default_category_name),
         )
         if category:
             return self.out_schema.model_validate(category)
@@ -69,8 +63,6 @@ class BaseCategoriesService(Generic[T]):
     ):
         category = await self.category_repo.get_by_filter(
             session,
-            dict(
-                name=name,
-            ),
+            dict(name=name),
         )
         return self.out_schema.model_validate(category)
