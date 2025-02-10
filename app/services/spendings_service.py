@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.exceptions.spending_exceptions import SpendingNotFound
 from app.repositories import spendings_repo
 from app.schemas.spendings_schemas import (
     SSpendingIn,
@@ -30,6 +31,17 @@ async def add_spending_to_db(
         spending_to_create.model_dump(),
     )
     return SSpendingOut.model_validate(spending)
+
+
+async def delete_spending(
+    spending_id: int,
+    user_id: int,
+    session: AsyncSession,
+):
+    spending = await spendings_repo.get(session, spending_id)
+    if not spending or spending.user_id != user_id:
+        raise SpendingNotFound
+    await spendings_repo.delete(session, spending_id)
 
 
 async def _get_category_id(
