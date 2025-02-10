@@ -34,11 +34,16 @@ class BaseCategoriesService(Generic[T]):
     async def add_category_to_db(
         self,
         category_name: str,
+        user_id: int,
         session: AsyncSession,
     ):
         category = await self.category_repo.add(
             session,
             dict(name=category_name),
+        )
+        await self.user_category_repo.add(
+            session,
+            dict(user_id=user_id, category_id=category.id),
         )
         return self.out_schema.model_validate(category)
 
