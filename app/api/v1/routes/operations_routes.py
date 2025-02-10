@@ -44,7 +44,7 @@ async def spending_delete(
 
 
 @router.post("/spending_category/add/")
-async def add_spending_category(
+async def spending_category_add(
     spending_category: SSpendingCategoryIn,
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingCategoryOut:
