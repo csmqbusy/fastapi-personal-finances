@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -10,12 +11,15 @@ class SSpendingBase(BaseModel):
     description: str | None = Field(None, max_length=100)
 
 
-class SSpendingIn(SSpendingBase):
-    category_name: str | None = Field(None, max_length=50)
+class SSpendingWithCategory(SSpendingBase):
+    category_name: Optional[str] = Field(None, max_length=50)
 
 
-class SSpendingOut(SSpendingBase):
-    category_name: str | None = Field(None, max_length=50)
+class SSpendingIn(SSpendingWithCategory):
+    pass
+
+
+class SSpendingOut(SSpendingWithCategory):
     date: datetime
     id: int
 
