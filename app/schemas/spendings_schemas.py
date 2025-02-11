@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field, ConfigDict
 class SSpendingBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    description: str | None = Field(None, max_length=100)
     amount: int
+    description: Optional[str] = Field(None, max_length=100)
 
 
 class SSpendingWithCategory(SSpendingBase):
