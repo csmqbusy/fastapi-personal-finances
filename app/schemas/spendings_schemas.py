@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class SSpendingBase(BaseModel):
@@ -9,6 +9,12 @@ class SSpendingBase(BaseModel):
 
     amount: int
     description: Optional[str] = Field(None, max_length=100)
+
+    @field_validator("amount")
+    def validate_amount(cls, value):
+        if value < 0:
+            raise ValueError("Price cannot be negative")
+        return value
 
 
 class SSpendingWithCategory(SSpendingBase):
