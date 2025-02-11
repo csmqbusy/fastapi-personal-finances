@@ -19,7 +19,7 @@ async def add_spending_to_db(
     category_name = spending.category_name
     if not category_name:
         category_name = settings.app.default_spending_category_name
-    category_id = await _get_category_id(category_name, session)
+    category_id = await _get_category_id(category_name, user_id, session)
     spending_to_create = SSpendingCreate(
         amount=spending.amount,
         description=spending.description,
@@ -46,6 +46,7 @@ async def delete_spending(
 
 async def _get_category_id(
     category_name: str,
+    user_id: int,
     session: AsyncSession,
 ) -> int:
     category_exists = await spend_cat_service.is_category_exists(
@@ -60,6 +61,7 @@ async def _get_category_id(
     else:
         category = await spend_cat_service.add_category_to_db(
             category_name,
+            user_id,
             session,
         )
     return category.id
