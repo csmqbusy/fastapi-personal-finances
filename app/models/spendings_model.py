@@ -10,7 +10,7 @@ from app.models.mixins import IdIntPKMixin
 class SpendingsModel(IdIntPKMixin, Base):
     __tablename__ = "spendings"
 
-    amount: Mapped[float] = mapped_column(nullable=False)
+    amount: Mapped[int] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(String(100), nullable=True)
     date: Mapped[datetime] = mapped_column(
         server_default=text("TIMEZONE ('utc', now())"),
