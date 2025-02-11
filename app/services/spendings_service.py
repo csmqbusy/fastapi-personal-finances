@@ -30,7 +30,9 @@ async def add_spending_to_db(
         session,
         spending_to_create.model_dump(),
     )
-    return SSpendingOut.model_validate(spending)
+    spending_out = SSpendingOut.model_validate(spending)
+    spending_out.category_name = category_name
+    return spending_out
 
 
 async def delete_spending(
