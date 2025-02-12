@@ -14,9 +14,14 @@ from app.schemas.spending_category_schemas import (
 from app.schemas.spendings_schemas import (
     SSpendingCreate,
     SSpendingResponse,
+    SSpendingUpdatePartial,
 )
 from app.services import spend_cat_service
-from app.services.spendings_service import add_spending_to_db, delete_spending
+from app.services.spendings_service import (
+    add_spending_to_db,
+    delete_spending,
+    update_spending,
+)
 
 router = APIRouter()
 
@@ -57,3 +62,22 @@ async def spending_category_add(
         user.id,
         db_session,
     )
+
+
+@router.patch("/spending/update/{}/", status_code=status.HTTP_200_OK)
+async def spending_update(
+    spending_id: int,
+    spending_update_obj: SSpendingUpdatePartial,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> SSpendingResponse:
+    try:
+        updated_spending = await update_spending(
+            spending_id,
+            user.id,
+            spending_update_obj,
+            db_session,
+        )
+    except SpendingNotFound:
+        raise SpendingNotFoundError()
+    return updated_spending
