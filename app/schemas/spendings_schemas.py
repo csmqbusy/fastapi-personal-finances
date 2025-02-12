@@ -38,3 +38,21 @@ class SSpendingResponse(SSpendingWithCategory):
 class SSpendingCreateInDB(SSpendingBase):
     category_id: int
     user_id: int
+
+
+class SSpendingUpdatePartial(BaseModel):
+    amount: Optional[int] = None
+    description: Optional[str] = Field(None, max_length=100)
+    category_name: Optional[str] = Field(None, max_length=50)
+
+    @field_validator("amount")
+    def validate_amount(cls, value):
+        if value and value < 0:
+            raise ValueError("Price cannot be negative")
+        return value
+
+
+class SSpendingUpdatePartialInDB(BaseModel):
+    amount: Optional[int] = None
+    category_id: Optional[int] = None
+    description: Optional[str] = Field(None, max_length=100)
