@@ -7,6 +7,8 @@ from app.schemas.spendings_schemas import (
     SSpendingCreate,
     SSpendingCreateInDB,
     SSpendingResponse,
+    SSpendingUpdatePartial,
+    SSpendingUpdatePartialInDB,
 )
 from app.services import spend_cat_service
 
@@ -31,6 +33,38 @@ async def add_spending_to_db(
         spending_to_create.model_dump(),
     )
     spending_out = SSpendingResponse.model_validate(spending)
+    spending_out.category_name = category_name
+    return spending_out
+
+
+async def update_spending(
+    spending_id: int,
+    user_id: int,
+    spending_update_obj: SSpendingUpdatePartial,
+    session: AsyncSession,
+):
+    spending = await spendings_repo.get(session, spending_id)
+    if not spending or spending.user_id != user_id:
+        raise SpendingNotFound
+
+    if spending_update_obj.category_name:
+        category_name = spending_update_obj.category_name
+        category_id = await _get_category_id(category_name, user_id, session)
+    else:
+        category_name = spending.spending_category.name
+        category_id = spending.spending_category.id
+
+    spending_to_update = SSpendingUpdatePartialInDB(
+        amount=spending_update_obj.amount,
+        description=spending_update_obj.description,
+        category_id=category_id,
+    )
+    updated_spending = await spendings_repo.update(
+        session,
+        spending_id,
+        spending_to_update.model_dump(exclude_none=True),
+    )
+    spending_out = SSpendingResponse.model_validate(updated_spending)
     spending_out.category_name = category_name
     return spending_out
 
