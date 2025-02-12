@@ -31,6 +31,25 @@ router = APIRouter()
 
 
 @router.post(
+    "/registration/",
+    summary="Create new user",
+    status_code=status.HTTP_201_CREATED,
+)
+async def sign_up_user(
+    user: SUserSignUp,
+    db_session: AsyncSession = Depends(get_db_session),
+) -> SUserShortInfo:
+    user.password = hash_password(user.password.decode())
+    try:
+        user_from_db = await create_user(user, db_session)
+    except UsernameAlreadyExists:
+        raise UsernameAlreadyExistsError()
+    except EmailAlreadyExists:
+        raise EmailAlreadyExistsError()
+    return SUserShortInfo.model_validate(user_from_db)
+
+
+@router.post(
     "/login/",
     summary="Authenticate a user",
 )
@@ -50,25 +69,6 @@ async def login(
     return {
         "sign_in": "Success!",
     }
-
-
-@router.post(
-    "/registration/",
-    summary="Create new user",
-    status_code=status.HTTP_201_CREATED,
-)
-async def sign_up_user(
-    user: SUserSignUp,
-    db_session: AsyncSession = Depends(get_db_session),
-) -> SUserShortInfo:
-    user.password = hash_password(user.password.decode())
-    try:
-        user_from_db = await create_user(user, db_session)
-    except UsernameAlreadyExists:
-        raise UsernameAlreadyExistsError()
-    except EmailAlreadyExists:
-        raise EmailAlreadyExistsError()
-    return SUserShortInfo.model_validate(user_from_db)
 
 
 @router.post(
