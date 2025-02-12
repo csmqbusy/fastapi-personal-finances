@@ -50,7 +50,7 @@ async def sign_up_user(
 
 
 @router.post(
-    "/login/",
+    "/sign_in/",
     summary="Authenticate a user",
 )
 async def login(
