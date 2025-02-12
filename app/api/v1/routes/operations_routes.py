@@ -83,7 +83,7 @@ async def spending_delete(
     }
 
 
-@router.post("/spending_category/add/", status_code=status.HTTP_201_CREATED)
+@router.post("/spending_categories/add/", status_code=status.HTTP_201_CREATED)
 async def spending_category_add(
     spending_category: SSpendingCategoryIn,
     user: UserModel = Depends(get_active_verified_user),
