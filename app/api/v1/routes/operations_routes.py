@@ -35,6 +35,25 @@ async def spending_add(
     return await add_spending_to_db(spending, user.id, db_session)
 
 
+@router.patch("/spending/update/{}/", status_code=status.HTTP_200_OK)
+async def spending_update(
+    spending_id: int,
+    spending_update_obj: SSpendingUpdatePartial,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> SSpendingResponse:
+    try:
+        updated_spending = await update_spending(
+            spending_id,
+            user.id,
+            spending_update_obj,
+            db_session,
+        )
+    except SpendingNotFound:
+        raise SpendingNotFoundError()
+    return updated_spending
+
+
 @router.delete("/spending/delete/{}/", status_code=status.HTTP_200_OK)
 async def spending_delete(
     spending_id: int,
@@ -62,22 +81,3 @@ async def spending_category_add(
         user.id,
         db_session,
     )
-
-
-@router.patch("/spending/update/{}/", status_code=status.HTTP_200_OK)
-async def spending_update(
-    spending_id: int,
-    spending_update_obj: SSpendingUpdatePartial,
-    user: UserModel = Depends(get_active_verified_user),
-    db_session: AsyncSession = Depends(get_db_session),
-) -> SSpendingResponse:
-    try:
-        updated_spending = await update_spending(
-            spending_id,
-            user.id,
-            spending_update_obj,
-            db_session,
-        )
-    except SpendingNotFound:
-        raise SpendingNotFoundError()
-    return updated_spending
