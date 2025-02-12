@@ -25,7 +25,7 @@ class BaseCategoriesService(Generic[T]):
         category_name: str,
         session: AsyncSession,
     ) -> bool:
-        category = await self.category_repo.get_by_filter(
+        category = await self.category_repo.get_one_by_filter(
             session,
             dict(name=category_name),
         )
@@ -52,7 +52,7 @@ class BaseCategoriesService(Generic[T]):
         user_id: int,
         session: AsyncSession,
     ):
-        category = await self.category_repo.get_by_filter(
+        category = await self.category_repo.get_one_by_filter(
             session,
             dict(name=self.default_category_name),
         )
@@ -70,7 +70,7 @@ class BaseCategoriesService(Generic[T]):
         name: str,
         session: AsyncSession,
     ):
-        category = await self.category_repo.get_by_filter(
+        category = await self.category_repo.get_one_by_filter(
             session,
             dict(name=name),
         )

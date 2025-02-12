@@ -39,7 +39,7 @@ class BaseRepository(Generic[T]):
         result = (await session.execute(query)).scalars().all()
         return list(result)
 
-    async def get_by_filter(
+    async def get_one_by_filter(
         self,
         session: AsyncSession,
         params: dict,

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import ContextManager
 
 from app.repositories import user_repo
-from app.schemas.user import SUserSignUp
+from app.schemas.user_schemas import SUserSignUp
 
 
 @pytest.mark.asyncio
@@ -161,27 +161,27 @@ async def test_get_user_by_filter(
         email=email,
     )
     await user_repo.add(db_session, user.model_dump())
-    user_from_db = await user_repo.get_by_filter(
+    user_from_db = await user_repo.get_one_by_filter(
         db_session,
         {"email": email},
     )
     assert user_from_db.username == username
     assert user_from_db.email == email
 
-    user_from_db = await user_repo.get_by_filter(
+    user_from_db = await user_repo.get_one_by_filter(
         db_session,
         {"username": username},
     )
     assert user_from_db.username == username
     assert user_from_db.email == email
 
-    none_from_db = await user_repo.get_by_filter(
+    none_from_db = await user_repo.get_one_by_filter(
         db_session,
         {"username": typo_username},
     )
     assert none_from_db is None
 
-    none_from_db = await user_repo.get_by_filter(
+    none_from_db = await user_repo.get_one_by_filter(
         db_session,
         {"email": typo_email},
     )
