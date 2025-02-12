@@ -5,7 +5,8 @@ from app.exceptions.spending_exceptions import SpendingNotFound
 from app.repositories import spendings_repo
 from app.schemas.spendings_schemas import (
     SSpendingCreate,
-    SSpendingOut,
+    SSpendingCreateInDB,
+    SSpendingResponse,
 )
 from app.services import spend_cat_service
 
@@ -19,7 +20,7 @@ async def add_spending_to_db(
     if not category_name:
         category_name = settings.app.default_spending_category_name
     category_id = await _get_category_id(category_name, user_id, session)
-    spending_to_create = SSpendingCreate(
+    spending_to_create = SSpendingCreateInDB(
         amount=spending.amount,
         description=spending.description,
         category_id=category_id,

@@ -35,6 +35,6 @@ class SSpendingResponse(SSpendingWithCategory):
     id: int
 
 
-class SSpendingCreate(SSpendingBase):
+class SSpendingCreateInDB(SSpendingBase):
     category_id: int
     user_id: int
