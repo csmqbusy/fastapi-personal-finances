@@ -23,6 +23,7 @@ from app.services.spendings_service import (
     update_spending,
     get_spending,
 )
+from app.services.users_spending_categories_service import get_user_categories
 
 router = APIRouter()
 
@@ -94,3 +95,11 @@ async def spending_category_add(
         user.id,
         db_session,
     )
+
+
+@router.get("/spending_categories/get/", status_code=status.HTTP_200_OK)
+async def spending_categories_get(
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await get_user_categories(user.id, db_session)
