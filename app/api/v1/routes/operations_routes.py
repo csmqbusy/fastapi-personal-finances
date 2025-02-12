@@ -13,7 +13,7 @@ from app.schemas.spending_category_schemas import (
 )
 from app.schemas.spendings_schemas import (
     SSpendingCreate,
-    SSpendingOut,
+    SSpendingResponse,
 )
 from app.services import spend_cat_service
 from app.services.spendings_service import add_spending_to_db, delete_spending
@@ -26,7 +26,7 @@ async def spending_add(
     spending: SSpendingCreate,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
-) -> SSpendingOut:
+) -> SSpendingResponse:
     return await add_spending_to_db(spending, user.id, db_session)
 
 

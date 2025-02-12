@@ -30,7 +30,7 @@ class SSpendingCreate(SSpendingWithCategory):
     pass
 
 
-class SSpendingOut(SSpendingWithCategory):
+class SSpendingResponse(SSpendingWithCategory):
     date: datetime
     id: int
 
