@@ -4,7 +4,6 @@ from app.core.config import settings
 from app.exceptions.spending_exceptions import SpendingNotFound
 from app.repositories import spendings_repo
 from app.schemas.spendings_schemas import (
-    SSpendingIn,
     SSpendingCreate,
     SSpendingOut,
 )
@@ -12,7 +11,7 @@ from app.services import spend_cat_service
 
 
 async def add_spending_to_db(
-    spending: SSpendingIn,
+    spending: SSpendingCreate,
     user_id: int,
     session: AsyncSession,
 ):
@@ -30,7 +29,7 @@ async def add_spending_to_db(
         session,
         spending_to_create.model_dump(),
     )
-    spending_out = SSpendingOut.model_validate(spending)
+    spending_out = SSpendingResponse.model_validate(spending)
     spending_out.category_name = category_name
     return spending_out
 
