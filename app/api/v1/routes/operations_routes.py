@@ -11,7 +11,10 @@ from app.schemas.spending_category_schemas import (
     SSpendingCategoryIn,
     SSpendingCategoryOut,
 )
-from app.schemas.spendings_schemas import SSpendingIn, SSpendingOut
+from app.schemas.spendings_schemas import (
+    SSpendingCreate,
+    SSpendingOut,
+)
 from app.services import spend_cat_service
 from app.services.spendings_service import add_spending_to_db, delete_spending
 
@@ -20,7 +23,7 @@ router = APIRouter()
 
 @router.post("/spending/add/", status_code=status.HTTP_201_CREATED)
 async def spending_add(
-    spending: SSpendingIn,
+    spending: SSpendingCreate,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingOut:

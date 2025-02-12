@@ -26,7 +26,7 @@ class SSpendingWithCategory(SSpendingBase):
     category_name: Optional[str] = Field(None, max_length=50)
 
 
-class SSpendingIn(SSpendingWithCategory):
+class SSpendingCreate(SSpendingWithCategory):
     pass
 
 
