@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models import Base
@@ -13,4 +13,8 @@ class UsersSpendingCategoriesModel(IdIntPKMixin, Base):
     )
     category_id: Mapped[int] = mapped_column(
         ForeignKey("spending_categories.id"),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "category_id", name="uq_user_category"),
     )
