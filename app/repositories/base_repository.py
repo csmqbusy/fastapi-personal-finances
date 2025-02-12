@@ -48,6 +48,19 @@ class BaseRepository(Generic[T]):
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
+    async def update(
+        self,
+        session: AsyncSession,
+        object_id: int,
+        params: dict,
+    ) -> T | None:
+        object_from_db = await session.get(self.model, object_id)
+        for key, value in params.items():
+            setattr(object_from_db, key, value)
+        await session.commit()
+        await session.refresh(object_from_db)
+        return object_from_db
+
     async def delete(
         self,
         session: AsyncSession,
