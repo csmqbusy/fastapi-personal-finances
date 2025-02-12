@@ -21,6 +21,7 @@ from app.services.spendings_service import (
     add_spending_to_db,
     delete_spending,
     update_spending,
+    get_spending,
 )
 
 router = APIRouter()
@@ -33,6 +34,18 @@ async def spending_add(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingResponse:
     return await add_spending_to_db(spending, user.id, db_session)
+
+
+@router.get("/spending/get/{}/", status_code=status.HTTP_200_OK)
+async def spending_get(
+    spending_id: int,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> SSpendingResponse:
+    try:
+        return await get_spending(spending_id, user.id, db_session)
+    except SpendingNotFound:
+        raise SpendingNotFoundError()
 
 
 @router.patch("/spending/update/{}/", status_code=status.HTTP_200_OK)
