@@ -80,6 +80,19 @@ async def delete_spending(
     await spendings_repo.delete(session, spending_id)
 
 
+async def get_spending(
+    spending_id: int,
+    user_id: int,
+    session: AsyncSession,
+):
+    spending = await spendings_repo.get(session, spending_id)
+    if not spending or spending.user_id != user_id:
+        raise SpendingNotFound
+    spending.category_name = spending.spending_category.name
+    spending_out = SSpendingResponse.model_validate(spending)
+    return spending_out
+
+
 async def _get_category_id(
     category_name: str,
     user_id: int,
