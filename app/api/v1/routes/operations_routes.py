@@ -18,7 +18,7 @@ from app.services.spendings_service import add_spending_to_db, delete_spending
 router = APIRouter()
 
 
-@router.post("/spending/add/")
+@router.post("/spending/add/", status_code=status.HTTP_201_CREATED)
 async def spending_add(
     spending: SSpendingIn,
     user: UserModel = Depends(get_active_verified_user),
@@ -43,7 +43,7 @@ async def spending_delete(
     }
 
 
-@router.post("/spending_category/add/")
+@router.post("/spending_category/add/", status_code=status.HTTP_201_CREATED)
 async def spending_category_add(
     spending_category: SSpendingCategoryIn,
     user: UserModel = Depends(get_active_verified_user),
