@@ -1,10 +1,15 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import Base
 from app.models.mixins import IdIntPKMixin
+
+
+if TYPE_CHECKING:
+    from app.models import SpendingCategoriesModel
 
 
 class SpendingsModel(IdIntPKMixin, Base):
@@ -23,4 +28,8 @@ class SpendingsModel(IdIntPKMixin, Base):
     category_id: Mapped[int] = mapped_column(
         ForeignKey("spending_categories.id"),
         nullable=False,
+    )
+    spending_category: Mapped["SpendingCategoriesModel"] = relationship(
+        "SpendingCategoriesModel",
+        lazy="joined"
     )
