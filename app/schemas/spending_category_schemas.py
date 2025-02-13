@@ -13,3 +13,7 @@ class SSpendingCategoryIn(SSpendingCategoryBase):
 
 class SSpendingCategoryOut(SSpendingCategoryBase):
     id: int
+
+
+class SSpendingCategoryUpdate(SSpendingCategoryBase):
+    pass
