@@ -25,10 +25,7 @@ class SpendingsModel(IdIntPKMixin, Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
-    category_id: Mapped[int] = mapped_column(
-        ForeignKey("spending_categories.id"),
-        nullable=False,
-    )
+
     spending_category: Mapped["SpendingCategoriesModel"] = relationship(
         "SpendingCategoriesModel",
         lazy="joined"

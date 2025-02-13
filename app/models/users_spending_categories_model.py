@@ -11,10 +11,3 @@ class UsersSpendingCategoriesModel(IdIntPKMixin, Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
     )
-    category_id: Mapped[int] = mapped_column(
-        ForeignKey("spending_categories.id"),
-    )
-
-    __table_args__ = (
-        UniqueConstraint("user_id", "category_id", name="uq_user_category"),
-    )
