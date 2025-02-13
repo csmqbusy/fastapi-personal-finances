@@ -20,3 +20,7 @@ class SpendingsModel(IdIntPKMixin, Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
+    category_id: Mapped[int] = mapped_column(
+        ForeignKey("users_spending_categories.id"),
+        nullable=False,
+    )
