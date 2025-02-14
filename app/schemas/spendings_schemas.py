@@ -54,5 +54,4 @@ class SSpendingUpdatePartial(BaseModel):
 
 class SSpendingUpdatePartialInDB(BaseModel):
     amount: Optional[int] = None
-    category_id: Optional[int] = None
     description: Optional[str] = Field(None, max_length=100)
