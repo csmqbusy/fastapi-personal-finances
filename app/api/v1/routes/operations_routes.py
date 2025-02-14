@@ -3,8 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
-from app.api.exceptions.operations_exceptions import SpendingNotFoundError
+from app.api.exceptions.operations_exceptions import (
+    SpendingNotFoundError,
+    CategoryNotFoundError,
+    CategoryAlreadyExistsError,
+)
 from app.db import get_db_session
+from app.exceptions.categories_exceptions import (
+    CategoryNotFound,
+    CategoryAlreadyExists,
+)
 from app.exceptions.spending_exceptions import SpendingNotFound
 from app.models import UserModel
 from app.schemas.spending_category_schemas import (
@@ -65,6 +73,8 @@ async def spending_update(
         )
     except SpendingNotFound:
         raise SpendingNotFoundError()
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
     return updated_spending
 
 
