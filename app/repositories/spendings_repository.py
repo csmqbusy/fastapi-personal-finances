@@ -1,3 +1,7 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+
 from app.models import SpendingsModel
 from app.repositories.base_repository import BaseRepository
 
@@ -5,6 +9,19 @@ from app.repositories.base_repository import BaseRepository
 class SpendingsRepository(BaseRepository[SpendingsModel]):
     def __init__(self):
         super().__init__(SpendingsModel)
+
+    async def get_spending_with_category(
+        self,
+        session: AsyncSession,
+        spending_id: int,
+    ) -> SpendingsModel:
+        query = (
+            select(self.model)
+            .filter_by(id=spending_id)
+            .options(joinedload(self.model.category))
+        )
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
 
 
 spendings_repo = SpendingsRepository()
