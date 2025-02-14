@@ -42,7 +42,10 @@ async def spending_add(
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingResponse:
-    return await add_spending_to_db(spending, user.id, db_session)
+    try:
+        return await add_spending_to_db(spending, user.id, db_session)
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
 
 
 @router.get("/spending/get/{}/", status_code=status.HTTP_200_OK)
