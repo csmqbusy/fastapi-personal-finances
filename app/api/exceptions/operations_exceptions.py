@@ -12,6 +12,6 @@ class SpendingNotFoundError(HTTPException):
 class CategoryAlreadyExistsError(HTTPException):
     def __init__(self):
         super().__init__(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_409_CONFLICT,
             detail="You already have a category with that name.",
         )
