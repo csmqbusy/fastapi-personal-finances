@@ -102,8 +102,8 @@ async def get_spending(
 
 
 async def _get_category_id(
-    category_name: str,
     user_id: int,
+    category_name: str,
     session: AsyncSession,
 ) -> int:
     category_exists = await spend_cat_service.is_category_exists(
