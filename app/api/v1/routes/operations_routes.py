@@ -102,11 +102,15 @@ async def spending_category_add(
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingCategoryOut:
-    return await spend_cat_service.add_category_to_db(
-        spending_category.name,
-        user.id,
-        db_session,
-    )
+    try:
+        category = await user_spend_cat_service.add_category_to_db(
+            user.id,
+            spending_category.category_name,
+            db_session,
+        )
+    except CategoryAlreadyExists:
+        raise CategoryAlreadyExistsError()
+    return category
 
 
 @router.get("/spending_categories/get/", status_code=status.HTTP_200_OK)
