@@ -69,3 +69,14 @@ class BaseCategoriesService(Generic[T]):
         )
         categories = [c.category_name for c in user_categories]
         return category_name in categories
+
+    async def add_user_default_category(
+        self,
+        user_id: int,
+        session: AsyncSession,
+    ) -> None:
+        await self.add_category_to_db(
+            user_id,
+            self.default_category_name,
+            session,
+        )
