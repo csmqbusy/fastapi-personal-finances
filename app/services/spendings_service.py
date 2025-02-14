@@ -85,7 +85,9 @@ async def get_spending(
     user_id: int,
     session: AsyncSession,
 ):
-    spending = await spendings_repo.get(session, spending_id)
+    spending = await spendings_repo.get_spending_with_category(
+        session, spending_id
+    )
     if not spending or spending.user_id != user_id:
         raise SpendingNotFound
     spending.category_name = spending.spending_category.name
