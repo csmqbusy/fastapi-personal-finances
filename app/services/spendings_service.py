@@ -43,8 +43,11 @@ async def update_spending(
     user_id: int,
     spending_update_obj: SSpendingUpdatePartial,
     session: AsyncSession,
-    spending = await spendings_repo.get(session, spending_id)
 ) -> SSpendingResponse:
+    spending = await spendings_repo.get_spending_with_category(
+        session,
+        spending_id,
+    )
     if not spending or spending.user_id != user_id:
         raise SpendingNotFound
 
