@@ -24,14 +24,13 @@ from app.schemas.spendings_schemas import (
     SSpendingResponse,
     SSpendingUpdatePartial,
 )
-from app.services import spend_cat_service
 from app.services.spendings_service import (
     add_spending_to_db,
     delete_spending,
     update_spending,
     get_spending,
 )
-from app.services.users_spending_categories_service import get_user_categories
+from app.services.users_spending_categories_service import user_spend_cat_service
 
 router = APIRouter()
 
@@ -115,4 +114,4 @@ async def spending_categories_get(
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    return await get_user_categories(user.id, db_session)
+    return await user_spend_cat_service.get_user_categories(user.id, db_session)
