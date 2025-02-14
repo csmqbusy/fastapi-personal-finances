@@ -45,3 +45,14 @@ class BaseCategoriesService(Generic[T]):
             dict(user_id=user_id, category_name=category_name),
         )
         return self.out_schema.model_validate(category)
+
+    async def get_user_categories(
+        self,
+        user_id: int,
+        session: AsyncSession,
+    ):
+        user_categories = await self.category_repo.get_all_by_filter(
+            session,
+            dict(user_id=user_id),
+        )
+        return user_categories
