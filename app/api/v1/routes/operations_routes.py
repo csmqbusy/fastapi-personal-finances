@@ -18,6 +18,7 @@ from app.models import UserModel
 from app.schemas.spending_category_schemas import (
     SSpendingCategoryCreate,
     SSpendingCategoryOut,
+    SSpendingCategoryUpdate,
 )
 from app.schemas.spendings_schemas import (
     SSpendingCreate,
@@ -119,3 +120,24 @@ async def spending_categories_get(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     return await user_spend_cat_service.get_user_categories(user.id, db_session)
+
+
+@router.patch("/spending_categories/update/{}/", status_code=status.HTTP_200_OK)
+async def spending_category_update(
+    category_name: str,
+    spending_category_update_obj: SSpendingCategoryUpdate,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> SSpendingCategoryOut:
+    try:
+        category = await user_spend_cat_service.update_category(
+            category_name,
+            user.id,
+            spending_category_update_obj,
+            db_session,
+        )
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
+    except CategoryAlreadyExists:
+        raise CategoryAlreadyExistsError()
+    return category
