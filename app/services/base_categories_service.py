@@ -3,6 +3,8 @@ from typing import Generic, TypeVar, Type
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.exceptions.categories_exceptions import CategoryAlreadyExists
+
 T = TypeVar('T')
 
 
@@ -28,3 +30,18 @@ class BaseCategoriesService(Generic[T]):
             dict(user_id=user_id, category_name=category_name),
         )
         return category
+
+    async def add_category_to_db(
+        self,
+        user_id: int,
+        category_name: str,
+        session: AsyncSession,
+    ):
+        category = await self.get_category(user_id, category_name, session)
+        if category:
+            raise CategoryAlreadyExists
+        category = await self.category_repo.add(
+            session,
+            dict(user_id=user_id, category_name=category_name),
+        )
+        return self.out_schema.model_validate(category)
