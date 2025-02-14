@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.spending_exceptions import SpendingNotFound
 from app.repositories import spendings_repo
 from app.schemas.spendings_schemas import (
@@ -10,7 +11,7 @@ from app.schemas.spendings_schemas import (
     SSpendingUpdatePartial,
     SSpendingUpdatePartialInDB,
 )
-from app.services import spend_cat_service
+from app.services.users_spending_categories_service import user_spend_cat_service
 
 
 async def add_spending_to_db(
@@ -106,19 +107,11 @@ async def _get_category_id(
     category_name: str,
     session: AsyncSession,
 ) -> int:
-    category_exists = await spend_cat_service.is_category_exists(
+    category = await user_spend_cat_service.get_category(
+        user_id,
         category_name,
         session,
     )
-    if category_exists:
-        category = await spend_cat_service.get_category_by_name(
-            category_name,
-            session,
-        )
-    else:
-        category = await spend_cat_service.add_category_to_db(
-            category_name,
-            user_id,
-            session,
-        )
+    if not category:
+        raise CategoryNotFound
     return category.id
