@@ -3,7 +3,11 @@ from typing import Generic, TypeVar, Type
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.categories_exceptions import CategoryAlreadyExists
+from app.exceptions.categories_exceptions import (
+    CategoryAlreadyExists,
+    CategoryNotFound,
+)
+from app.schemas.spending_category_schemas import SSpendingCategoryUpdate
 
 T = TypeVar('T')
 
@@ -80,3 +84,26 @@ class BaseCategoriesService(Generic[T]):
             self.default_category_name,
             session,
         )
+
+    async def update_category(
+        self,
+        category_name: str,
+        user_id: int,
+        category_update_obj: SSpendingCategoryUpdate,
+        session: AsyncSession,
+    ):
+        category = await self.get_category(user_id, category_name, session)
+        if not category:
+            raise CategoryNotFound
+
+        new_category = await self.get_category(
+            user_id, category_update_obj.category_name, session)
+        if new_category:
+            raise CategoryAlreadyExists
+
+        updated_category = await self.category_repo.update(
+            session=session,
+            object_id=category.id,
+            params=dict(category_name=category_update_obj.category_name),
+        )
+        return self.out_schema.model_validate(updated_category)
