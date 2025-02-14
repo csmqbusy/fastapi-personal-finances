@@ -36,8 +36,8 @@ class SSpendingResponse(SSpendingWithCategory):
 
 
 class SSpendingCreateInDB(SSpendingBase):
-    category_id: int
     user_id: int
+    category_id: int
 
 
 class SSpendingUpdatePartial(BaseModel):
