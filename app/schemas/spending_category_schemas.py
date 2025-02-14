@@ -7,7 +7,7 @@ class SSpendingCategoryBase(BaseModel):
     name: str = Field(..., max_length=50)
 
 
-class SSpendingCategoryIn(SSpendingCategoryBase):
+class SSpendingCategoryCreate(SSpendingCategoryBase):
     pass
 
 

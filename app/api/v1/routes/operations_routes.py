@@ -8,7 +8,7 @@ from app.db import get_db_session
 from app.exceptions.spending_exceptions import SpendingNotFound
 from app.models import UserModel
 from app.schemas.spending_category_schemas import (
-    SSpendingCategoryIn,
+    SSpendingCategoryCreate,
     SSpendingCategoryOut,
 )
 from app.schemas.spendings_schemas import (
@@ -86,7 +86,7 @@ async def spending_delete(
 
 @router.post("/spending_categories/add/", status_code=status.HTTP_201_CREATED)
 async def spending_category_add(
-    spending_category: SSpendingCategoryIn,
+    spending_category: SSpendingCategoryCreate,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingCategoryOut:
