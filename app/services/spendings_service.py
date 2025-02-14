@@ -90,9 +90,15 @@ async def get_spending(
     )
     if not spending or spending.user_id != user_id:
         raise SpendingNotFound
-    spending.category_name = spending.spending_category.name
-    spending_out = SSpendingResponse.model_validate(spending)
-    return spending_out
+
+    spending_response = SSpendingResponse(
+        amount=spending.amount,
+        description=spending.description,
+        category_name=spending.category.category_name,
+        date=spending.date,
+        id=spending.id,
+    )
+    return spending_response
 
 
 async def _get_category_id(
