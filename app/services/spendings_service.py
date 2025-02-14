@@ -51,26 +51,38 @@ async def update_spending(
     if not spending or spending.user_id != user_id:
         raise SpendingNotFound
 
-    if spending_update_obj.category_name:
-        category_name = spending_update_obj.category_name
-        category_id = await _get_category_id(category_name, user_id, session)
-    else:
-        category_name = spending.spending_category.name
-        category_id = spending.spending_category.id
-
     spending_to_update = SSpendingUpdatePartialInDB(
         amount=spending_update_obj.amount,
         description=spending_update_obj.description,
-        category_id=category_id,
     )
+
+    new_cat_name = spending_update_obj.category_name
+    if new_cat_name and new_cat_name != spending.category.category_name:
+        new_category = await user_spend_cat_service.get_category(
+            user_id=user_id,
+            category_name=new_cat_name,
+            session=session,
+            )
+        if new_category is None:
+            raise CategoryNotFound
+        spending.category_id = new_category.id
+        await session.commit()
+        await session.refresh(spending)
+
     updated_spending = await spendings_repo.update(
         session,
         spending_id,
         spending_to_update.model_dump(exclude_none=True),
     )
-    spending_out = SSpendingResponse.model_validate(updated_spending)
-    spending_out.category_name = category_name
-    return spending_out
+
+    spending_response = SSpendingResponse(
+        amount=updated_spending.amount,
+        description=updated_spending.description,
+        category_name=spending.category.category_name,
+        date=updated_spending.date,
+        id=updated_spending.id,
+    )
+    return spending_response
 
 
 async def delete_spending(
