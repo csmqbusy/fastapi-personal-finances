@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, ConfigDict
 class SSpendingCategoryBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    name: str = Field(..., max_length=50)
+    category_name: str = Field(..., max_length=50)
 
 
 class SSpendingCategoryCreate(SSpendingCategoryBase):
@@ -12,7 +12,7 @@ class SSpendingCategoryCreate(SSpendingCategoryBase):
 
 
 class SSpendingCategoryOut(SSpendingCategoryBase):
-    id: int
+    user_id: int
 
 
 class SSpendingCategoryUpdate(SSpendingCategoryBase):
