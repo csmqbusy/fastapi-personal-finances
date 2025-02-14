@@ -21,12 +21,12 @@ async def add_spending_to_db(
     category_name = spending.category_name
     if not category_name:
         category_name = settings.app.default_spending_category_name
-    category_id = await _get_category_id(category_name, user_id, session)
+    category_id = await _get_category_id(user_id, category_name, session)
     spending_to_create = SSpendingCreateInDB(
         amount=spending.amount,
         description=spending.description,
-        category_id=category_id,
         user_id=user_id,
+        category_id=category_id,
     )
     spending = await spendings_repo.add(
         session,
