@@ -12,3 +12,7 @@ class CategoryNotFound(CategoriesException):
 
 class CategoryNameNotFound(CategoriesException):
     pass
+
+
+class CannotDeleteDefaultCategory(CategoriesException):
+    pass
