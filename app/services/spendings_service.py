@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.spending_exceptions import SpendingNotFound
-from app.repositories import spendings_repo
+from app.repositories import spendings_repo, user_spend_cat_repo
 from app.schemas.spendings_schemas import (
     SSpendingCreate,
     SSpendingCreateInDB,
@@ -11,7 +11,6 @@ from app.schemas.spendings_schemas import (
     SSpendingUpdatePartial,
     SSpendingUpdatePartialInDB,
 )
-from app.services.users_spending_categories_service import user_spend_cat_service
 
 
 async def add_spending_to_db(
@@ -58,11 +57,10 @@ async def update_spending(
 
     new_cat_name = spending_update_obj.category_name
     if new_cat_name and new_cat_name != spending.category.category_name:
-        new_category = await user_spend_cat_service.get_category(
-            user_id=user_id,
-            category_name=new_cat_name,
-            session=session,
-            )
+        new_category = await user_spend_cat_repo.get_one_by_filter(
+            session,
+            dict(user_id=user_id, category_name=new_cat_name),
+        )
         if new_category is None:
             raise CategoryNotFound
         spending.category_id = new_category.id
@@ -122,10 +120,9 @@ async def _get_category_id(
     category_name: str,
     session: AsyncSession,
 ) -> int:
-    category = await user_spend_cat_service.get_category(
-        user_id,
-        category_name,
+    category = await user_spend_cat_repo.get_one_by_filter(
         session,
+        dict(user_id=user_id, category_name=category_name),
     )
     if not category:
         raise CategoryNotFound
