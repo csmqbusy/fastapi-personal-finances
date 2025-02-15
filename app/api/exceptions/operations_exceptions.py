@@ -23,3 +23,12 @@ class CategoryNotFoundError(HTTPException):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Create this category before adding operations to it.",
         )
+
+
+class CategoryNameNotFoundError(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Please enter the name of the category for transactions "
+                   "moving or select the DEFAULT mode.",
+        )
