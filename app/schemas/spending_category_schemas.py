@@ -1,3 +1,5 @@
+from enum import Enum
+
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -18,3 +20,10 @@ class SSpendingCategoryOut(SSpendingCategoryBase):
 
 class SSpendingCategoryUpdate(SSpendingCategoryBase):
     pass
+
+
+class SpendingsOnDeleteActions(str, Enum):
+    DELETE = "DELETE"
+    TO_DEFAULT = "TO_DEFAULT"
+    TO_EXISTS_CAT = "TO_EXISTS_CATEGORY"
+    TO_NEW_CAT = "TO_NEW_CATEGORY"
