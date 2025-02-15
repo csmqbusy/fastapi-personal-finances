@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Type
+from typing import Generic, TypeVar, Type, Iterable
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -121,3 +121,20 @@ class BaseCategoriesService(Generic[T]):
             params=dict(category_name=category_update_obj.category_name),
         )
         return self.out_schema.model_validate(updated_category)
+
+    async def change_transactions_category(
+        self,
+        transactions: Iterable,
+        new_category_id: int,
+        session: AsyncSession,
+    ):
+        repo = self.transaction_repo
+
+        for t in transactions:
+            transaction_in_db = await repo.get_spending_with_category(
+                session,
+                t.id,
+            )
+            transaction_in_db.category_id = new_category_id
+
+        await session.commit()
