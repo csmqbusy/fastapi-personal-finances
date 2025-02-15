@@ -32,3 +32,11 @@ class CategoryNameNotFoundError(HTTPException):
             detail="Please enter the name of the category for transactions "
                    "moving or select the DEFAULT mode.",
         )
+
+
+class CannotDeleteDefaultCategoryError(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="You cannot delete the default category.",
+        )
