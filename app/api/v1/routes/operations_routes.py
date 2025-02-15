@@ -53,7 +53,7 @@ async def spending_add(
         raise CategoryNotFoundError()
 
 
-@router.get("/spending/get/{}/", status_code=status.HTTP_200_OK)
+@router.get("/spending/get/{spending_id}/", status_code=status.HTTP_200_OK)
 async def spending_get(
     spending_id: int,
     user: UserModel = Depends(get_active_verified_user),
@@ -65,7 +65,10 @@ async def spending_get(
         raise SpendingNotFoundError()
 
 
-@router.patch("/spending/update/{}/", status_code=status.HTTP_200_OK)
+@router.patch(
+    "/spending/update/{spending_id}/",
+    status_code=status.HTTP_200_OK,
+)
 async def spending_update(
     spending_id: int,
     spending_update_obj: SSpendingUpdatePartial,
@@ -86,7 +89,10 @@ async def spending_update(
     return updated_spending
 
 
-@router.delete("/spending/delete/{}/", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/spending/delete/{spending_id}/",
+    status_code=status.HTTP_200_OK,
+)
 async def spending_delete(
     spending_id: int,
     user: UserModel = Depends(get_active_verified_user),
@@ -127,7 +133,10 @@ async def spending_categories_get(
     return await user_spend_cat_service.get_user_categories(user.id, db_session)
 
 
-@router.patch("/spending_categories/update/{}/", status_code=status.HTTP_200_OK)
+@router.patch(
+    "/spending_categories/update/{category_name}/",
+    status_code=status.HTTP_200_OK,
+)
 async def spending_category_update(
     category_name: str,
     spending_category_update_obj: SSpendingCategoryUpdate,
