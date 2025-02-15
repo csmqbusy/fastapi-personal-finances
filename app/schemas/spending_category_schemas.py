@@ -12,6 +12,7 @@ class SSpendingCategoryCreate(SSpendingCategoryBase):
 
 
 class SSpendingCategoryOut(SSpendingCategoryBase):
+    id: int
     user_id: int
 
 
