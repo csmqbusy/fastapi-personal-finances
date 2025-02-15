@@ -15,6 +15,19 @@ class SUserSignUp(SUserSignIn):
     email: EmailStr
     active: bool = True
 
+    model_config = {
+        "json_schema_extra": {
+            "examples":
+                [
+                    {
+                        "username": "username",
+                        "password": "password",
+                        "email": "mail@example.com",
+                    }
+                ]
+        }
+    }
+
 
 class SUserShortInfo(SUserBase):
     email: EmailStr
