@@ -8,3 +8,7 @@ class CategoryAlreadyExists(CategoriesException):
 
 class CategoryNotFound(CategoriesException):
     pass
+
+
+class CategoryNameNotFound(CategoriesException):
+    pass
