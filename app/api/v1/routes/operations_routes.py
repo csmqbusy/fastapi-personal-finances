@@ -7,11 +7,15 @@ from app.api.exceptions.operations_exceptions import (
     SpendingNotFoundError,
     CategoryNotFoundError,
     CategoryAlreadyExistsError,
+    CategoryNameNotFoundError,
+    CannotDeleteDefaultCategoryError,
 )
 from app.db import get_db_session
 from app.exceptions.categories_exceptions import (
     CategoryNotFound,
     CategoryAlreadyExists,
+    CategoryNameNotFound,
+    CannotDeleteDefaultCategory,
 )
 from app.exceptions.spending_exceptions import SpendingNotFound
 from app.models import UserModel
@@ -19,6 +23,7 @@ from app.schemas.spending_category_schemas import (
     SSpendingCategoryCreate,
     SSpendingCategoryOut,
     SSpendingCategoryUpdate,
+    SpendingsOnDeleteActions,
 )
 from app.schemas.spendings_schemas import (
     SSpendingCreate,
@@ -141,3 +146,31 @@ async def spending_category_update(
     except CategoryAlreadyExists:
         raise CategoryAlreadyExistsError()
     return category
+
+
+@router.delete(
+    "/spending_categories/delete/{category_name}/",
+    status_code=status.HTTP_200_OK,
+)
+async def spending_category_delete(
+    category_name: str,
+    handle_spendings_on_deletion: SpendingsOnDeleteActions,
+    new_category_name: str | None = None,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    try:
+        await user_spend_cat_service.delete_category(
+            category_name=category_name,
+            user_id=user.id,
+            transactions_actions=handle_spendings_on_deletion,
+            new_category_name=new_category_name,
+            session=db_session,
+        )
+    except CannotDeleteDefaultCategory:
+        raise CannotDeleteDefaultCategoryError()
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
+    except CategoryNameNotFound:
+        raise CategoryNameNotFoundError()
+
