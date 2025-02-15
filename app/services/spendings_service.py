@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.spending_exceptions import SpendingNotFound
+from app.models import SpendingsModel
 from app.repositories import spendings_repo, user_spend_cat_repo
 from app.schemas.spendings_schemas import (
     SSpendingCreate,
@@ -113,6 +114,18 @@ async def get_spending(
         id=spending.id,
     )
     return spending_response
+
+
+async def get_all_spendings_by_category(
+    category_id: int,
+    user_id: int,
+    session: AsyncSession,
+) -> list[SpendingsModel]:
+    spendings = await spendings_repo.get_all_by_filter(
+        session,
+        dict(category_id=category_id, user_id=user_id),
+    )
+    return spendings
 
 
 async def _get_category_id(
