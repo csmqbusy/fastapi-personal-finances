@@ -5,21 +5,14 @@ from pydantic import (
     BaseModel,
     Field,
     ConfigDict,
-    field_validator,
 )
 
 
 class SSpendingBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    amount: int
+    amount: int = Field(..., gt=0)
     description: Optional[str] = Field(None, max_length=100)
-
-    @field_validator("amount")
-    def validate_amount(cls, value):
-        if value < 0:
-            raise ValueError("Price cannot be negative")
-        return value
 
 
 class SSpendingWithCategory(SSpendingBase):
@@ -41,15 +34,9 @@ class SSpendingCreateInDB(SSpendingBase):
 
 
 class SSpendingUpdatePartial(BaseModel):
-    amount: Optional[int] = None
+    amount: Optional[int] = Field(None, gt=0)
     description: Optional[str] = Field(None, max_length=100)
     category_name: Optional[str] = Field(None, max_length=50)
-
-    @field_validator("amount")
-    def validate_amount(cls, value):
-        if value and value < 0:
-            raise ValueError("Price cannot be negative")
-        return value
 
 
 class SSpendingUpdatePartialInDB(BaseModel):
