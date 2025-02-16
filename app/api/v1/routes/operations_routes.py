@@ -30,12 +30,7 @@ from app.schemas.spendings_schemas import (
     SSpendingResponse,
     SSpendingUpdatePartial,
 )
-from app.services.spendings_service import (
-    add_spending_to_db,
-    delete_spending,
-    update_spending,
-    get_spending,
-)
+from app.services import spendings_service
 from app.services.users_spending_categories_service import user_spend_cat_service
 
 router = APIRouter()
@@ -48,7 +43,11 @@ async def spending_add(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingResponse:
     try:
-        return await add_spending_to_db(spending, user.id, db_session)
+        return await spendings_service.add_transaction_to_db(
+            spending,
+            user.id,
+            db_session,
+        )
     except CategoryNotFound:
         raise CategoryNotFoundError()
 
@@ -60,7 +59,11 @@ async def spending_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingResponse:
     try:
-        return await get_spending(spending_id, user.id, db_session)
+        return await spendings_service.get_transaction(
+            spending_id,
+            user.id,
+            db_session,
+        )
     except TransactionNotFound:
         raise SpendingNotFoundError()
 
@@ -76,7 +79,7 @@ async def spending_update(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingResponse:
     try:
-        updated_spending = await update_spending(
+        updated_spending = await spendings_service.update_transaction(
             spending_id,
             user.id,
             spending_update_obj,
@@ -99,7 +102,11 @@ async def spending_delete(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     try:
-        await delete_spending(spending_id, user.id, db_session)
+        await spendings_service.delete_transaction(
+            spending_id,
+            user.id,
+            db_session,
+        )
     except TransactionNotFound:
         raise SpendingNotFoundError()
     return {
