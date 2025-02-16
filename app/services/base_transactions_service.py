@@ -3,7 +3,10 @@ from typing import Type, Any
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.categories_exceptions import CategoryNotFound
+from app.exceptions.categories_exceptions import (
+    CategoryNotFound,
+    MissingCategory,
+)
 from app.exceptions.transaction_exceptions import TransactionNotFound
 
 
@@ -120,11 +123,18 @@ class TransactionsService:
 
     async def get_all_transactions_by_category(
         self,
-        category_id: int,
-        user_id: int,
         session: AsyncSession,
+        user_id: int,
+        category_id: int | None = None,
+        category_name: str | None = None,
     ) -> list[Any]:
-        transactions = await self.tx_repo.get_all_by_filter(
+        if category_id is None and category_name is None:
+            raise MissingCategory
+
+        if category_id is None:
+            category_id = await self._get_category_id(
+                user_id, category_name, session)
+
         transactions = await self.tx_repo.get_transactions_by_category(
             session,
             dict(category_id=category_id, user_id=user_id),
