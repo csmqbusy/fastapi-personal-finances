@@ -109,6 +109,17 @@ class TransactionsService:
         )
         return transactions
 
+    async def delete_transaction(
+        self,
+        spending_id: int,
+        user_id: int,
+        session: AsyncSession,
+    ):
+        spending = await self.tx_repo.get(session, spending_id)
+        if not spending or spending.user_id != user_id:
+            raise TransactionNotFound
+        await self.tx_repo.delete(session, spending_id)
+
     async def _get_category_id(
         self,
         user_id: int,
