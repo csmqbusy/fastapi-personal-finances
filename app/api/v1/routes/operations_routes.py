@@ -17,7 +17,7 @@ from app.exceptions.categories_exceptions import (
     CategoryNameNotFound,
     CannotDeleteDefaultCategory,
 )
-from app.exceptions.spending_exceptions import SpendingNotFound
+from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
 from app.schemas.spending_category_schemas import (
     SSpendingCategoryCreate,

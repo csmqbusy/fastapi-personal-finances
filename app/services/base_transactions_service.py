@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.categories_exceptions import CategoryNotFound
+from app.exceptions.transaction_exceptions import TransactionNotFound
 
 
 class TransactionsService:

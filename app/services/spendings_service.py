@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.exceptions.categories_exceptions import CategoryNotFound
-from app.exceptions.spending_exceptions import SpendingNotFound
+from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import SpendingsModel
 from app.repositories import spendings_repo, user_spend_cat_repo
 from app.schemas.spendings_schemas import (
