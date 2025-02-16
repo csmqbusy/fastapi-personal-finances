@@ -49,7 +49,7 @@ async def update_spending(
         spending_id,
     )
     if not spending or spending.user_id != user_id:
-        raise SpendingNotFound
+        raise TransactionNotFound
 
     spending_to_update = SSpendingUpdatePartialInDB(
         amount=spending_update_obj.amount,
@@ -91,7 +91,7 @@ async def delete_spending(
 ):
     spending = await spendings_repo.get(session, spending_id)
     if not spending or spending.user_id != user_id:
-        raise SpendingNotFound
+        raise TransactionNotFound
     await spendings_repo.delete(session, spending_id)
 
 
@@ -104,7 +104,7 @@ async def get_spending(
         session, spending_id
     )
     if not spending or spending.user_id != user_id:
-        raise SpendingNotFound
+        raise TransactionNotFound
 
     spending_response = SSpendingResponse(
         amount=spending.amount,

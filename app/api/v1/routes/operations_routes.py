@@ -61,7 +61,7 @@ async def spending_get(
 ) -> SSpendingResponse:
     try:
         return await get_spending(spending_id, user.id, db_session)
-    except SpendingNotFound:
+    except TransactionNotFound:
         raise SpendingNotFoundError()
 
 
@@ -82,7 +82,7 @@ async def spending_update(
             spending_update_obj,
             db_session,
         )
-    except SpendingNotFound:
+    except TransactionNotFound:
         raise SpendingNotFoundError()
     except CategoryNotFound:
         raise CategoryNotFoundError()
@@ -100,7 +100,7 @@ async def spending_delete(
 ):
     try:
         await delete_spending(spending_id, user.id, db_session)
-    except SpendingNotFound:
+    except TransactionNotFound:
         raise SpendingNotFoundError()
     return {
         "delete": "ok",
