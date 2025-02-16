@@ -3,12 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
+from app.api.dependencies.pagination_dependencies import get_pagination_params
 from app.api.exceptions.operations_exceptions import (
     SpendingNotFoundError,
     CategoryNotFoundError,
     CategoryAlreadyExistsError,
     CategoryNameNotFoundError,
     CannotDeleteDefaultCategoryError,
+    MissingCategoryError,
 )
 from app.db import get_db_session
 from app.exceptions.categories_exceptions import (
@@ -16,9 +18,11 @@ from app.exceptions.categories_exceptions import (
     CategoryAlreadyExists,
     CategoryNameNotFound,
     CannotDeleteDefaultCategory,
+    MissingCategory,
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
+from app.schemas.pagination_schemas import SPagination
 from app.schemas.spending_category_schemas import (
     SSpendingCategoryCreate,
     SSpendingCategoryOut,
@@ -31,6 +35,7 @@ from app.schemas.spendings_schemas import (
     SSpendingUpdatePartial,
 )
 from app.services import spendings_service
+from app.services.common_services import apply_pagination
 from app.services.users_spending_categories_service import user_spend_cat_service
 
 router = APIRouter()
@@ -66,6 +71,32 @@ async def spending_get(
         )
     except TransactionNotFound:
         raise SpendingNotFoundError()
+
+
+@router.get(
+    "/spending/get/by_category/{category_name}/",
+    status_code=status.HTTP_200_OK,
+    summary="Get spendings by category",
+)
+async def spending_get_by_category(
+    category_name: str,
+    pagination: SPagination = Depends(get_pagination_params),
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    try:
+        all_spendings = await spendings_service.get_all_transactions_by_category(
+            category_name=category_name,
+            user_id=user.id,
+            session=db_session,
+        )
+        selected_spendings = apply_pagination(all_spendings, pagination)
+    except MissingCategory:
+        raise MissingCategoryError()
+
+    if len(selected_spendings) == 0:
+        raise SpendingNotFoundError()
+    return selected_spendings
 
 
 @router.patch(
