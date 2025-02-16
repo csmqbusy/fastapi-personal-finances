@@ -97,6 +97,27 @@ class TransactionsService:
         )
         return transaction_out
 
+    async def get_transaction(
+        self,
+        transaction_id: int,
+        user_id: int,
+        session: AsyncSession,
+    ):
+        transaction = await self.tx_repo.get_transaction_with_category(
+            session, transaction_id
+        )
+        if not transaction or transaction.user_id != user_id:
+            raise TransactionNotFound
+
+        transaction_out = self.out_schema(
+            amount=transaction.amount,
+            description=transaction.description,
+            category_name=transaction.category.category_name,
+            date=transaction.date,
+            id=transaction.id,
+        )
+        return transaction_out
+
     async def get_all_transactions_by_category(
         self,
         category_id: int,
