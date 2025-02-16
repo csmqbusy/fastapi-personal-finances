@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Type, Iterable
+from typing import Type, Iterable
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,10 +15,7 @@ from app.schemas.spending_category_schemas import (
 )
 
 
-T = TypeVar('T')
-
-
-class BaseCategoriesService(Generic[T]):
+class BaseCategoriesService:
     def __init__(
         self,
         category_repo,
@@ -36,7 +33,7 @@ class BaseCategoriesService(Generic[T]):
         user_id: int,
         category_name: str,
         session: AsyncSession,
-    ) -> T | None:
+    ):
         category = await self.category_repo.get_one_by_filter(
             session,
             dict(user_id=user_id, category_name=category_name),
