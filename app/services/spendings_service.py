@@ -44,7 +44,7 @@ async def update_spending(
     spending_update_obj: SSpendingUpdatePartial,
     session: AsyncSession,
 ) -> SSpendingResponse:
-    spending = await spendings_repo.get_spending_with_category(
+    spending = await spendings_repo.get_transaction_with_category(
         session,
         spending_id,
     )
@@ -100,7 +100,7 @@ async def get_spending(
     user_id: int,
     session: AsyncSession,
 ):
-    spending = await spendings_repo.get_spending_with_category(
+    spending = await spendings_repo.get_transaction_with_category(
         session, spending_id
     )
     if not spending or spending.user_id != user_id:

@@ -10,7 +10,7 @@ class SpendingsRepository(BaseRepository[SpendingsModel]):
     def __init__(self):
         super().__init__(SpendingsModel)
 
-    async def get_spending_with_category(
+    async def get_transaction_with_category(
         self,
         session: AsyncSession,
         spending_id: int,

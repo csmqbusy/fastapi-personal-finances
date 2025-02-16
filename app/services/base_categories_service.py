@@ -190,7 +190,7 @@ class BaseCategoriesService(Generic[T]):
         repo = self.transaction_repo
 
         for t in transactions:
-            transaction_in_db = await repo.get_spending_with_category(
+            transaction_in_db = await repo.get_transaction_with_category(
                 session,
                 t.id,
             )
