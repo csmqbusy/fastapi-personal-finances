@@ -23,6 +23,31 @@ class TransactionsService:
         self.creation_in_db_schema = creation_in_db_schema
         self.out_schema = out_schema
 
+    async def add_transaction_to_db(
+        self,
+        transaction: Type[BaseModel],
+        user_id: int,
+        session: AsyncSession,
+    ):
+        category_name = transaction.category_name
+        if not category_name:
+            category_name = self.default_tx_category_name
+        category_id = await self._get_category_id(
+            user_id, category_name, session)
+        transaction_to_create = self.creation_in_db_schema(
+            amount=transaction.amount,
+            description=transaction.description,
+            user_id=user_id,
+            category_id=category_id,
+        )
+        transaction_from_db = await self.tx_repo.add(
+            session,
+            transaction_to_create.model_dump(),
+        )
+        transaction_out = self.out_schema.model_validate(transaction_from_db)
+        transaction_out.category_name = category_name
+        return transaction_out
+
     async def _get_category_id(
         self,
         user_id: int,
