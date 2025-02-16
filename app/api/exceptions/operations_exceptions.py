@@ -25,6 +25,14 @@ class CategoryNotFoundError(HTTPException):
         )
 
 
+class MissingCategoryError(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Either category_id or category_name must be provided.",
+        )
+
+
 class CategoryNameNotFoundError(HTTPException):
     def __init__(self):
         super().__init__(
