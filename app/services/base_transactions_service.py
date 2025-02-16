@@ -125,6 +125,7 @@ class TransactionsService:
         session: AsyncSession,
     ) -> list[Any]:
         transactions = await self.tx_repo.get_all_by_filter(
+        transactions = await self.tx_repo.get_transactions_by_category(
             session,
             dict(category_id=category_id, user_id=user_id),
         )
