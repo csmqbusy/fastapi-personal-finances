@@ -8,7 +8,7 @@ from app.repositories.base_repository import BaseRepository
 
 class SpendingsRepository(BaseRepository[SpendingsModel]):
     def __init__(self):
-        super().__init__(SpendingsModel)
+        super().__init__(model=SpendingsModel)
 
     async def get_transaction_with_category(
         self,
