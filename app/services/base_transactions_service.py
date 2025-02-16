@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, Any
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,6 +47,18 @@ class TransactionsService:
         transaction_out = self.out_schema.model_validate(transaction_from_db)
         transaction_out.category_name = category_name
         return transaction_out
+
+    async def get_all_transactions_by_category(
+        self,
+        category_id: int,
+        user_id: int,
+        session: AsyncSession,
+    ) -> list[Any]:
+        transactions = await self.tx_repo.get_all_by_filter(
+            session,
+            dict(category_id=category_id, user_id=user_id),
+        )
+        return transactions
 
     async def _get_category_id(
         self,
