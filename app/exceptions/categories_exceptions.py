@@ -10,6 +10,10 @@ class CategoryNotFound(CategoriesException):
     pass
 
 
+class MissingCategory(CategoriesException):
+    pass
+
+
 class CategoryNameNotFound(CategoriesException):
     pass
 
