@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
-from app.api.dependencies.pagination_dependencies import get_pagination_params
+from app.api.dependencies.operations_dependencies import get_pagination_params
 from app.api.exceptions.operations_exceptions import (
     SpendingNotFoundError,
     CategoryNotFoundError,
