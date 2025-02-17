@@ -39,7 +39,8 @@ class TransactionsService:
         if not category_name:
             category_name = self.default_tx_category_name
         category_id = await self._get_category_id(
-            user_id, category_name, session)
+            user_id, category_name, session
+        )
         transaction_to_create = self.creation_in_db_schema(
             amount=transaction.amount,
             description=transaction.description,
@@ -133,7 +134,8 @@ class TransactionsService:
 
         if category_id is None:
             category_id = await self._get_category_id(
-                user_id, category_name, session)
+                user_id, category_name, session
+            )
 
         transactions = await self.tx_repo.get_all(
             params=dict(category_id=category_id, user_id=user_id),
