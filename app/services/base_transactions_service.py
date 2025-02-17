@@ -1,4 +1,4 @@
-from typing import Type, Any
+from typing import Type, Any, Literal
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +8,8 @@ from app.exceptions.categories_exceptions import (
     MissingCategory,
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
+from app.schemas.date_range_schemas import SDateRange
+from app.schemas.spendings_schemas import STransactionsQueryParams
 
 
 class TransactionsService:
@@ -182,3 +184,34 @@ class TransactionsService:
         if not category:
             raise CategoryNotFound
         return category.id
+
+    async def get_transactions(
+        self,
+        session: AsyncSession,
+        query_params: STransactionsQueryParams,
+        date_range: SDateRange,
+        order_by: str | None = None,
+        order_direction: Literal["asc", "desc"] = "asc",
+    ):
+        if query_params.category_name and query_params.category_id is None:
+            category = await self.tx_categories_repo.get_one_by_filter(
+                session,
+                dict(
+                    user_id=query_params.user_id,
+                    category_name=query_params.category_name,
+                ),
+            )
+            query_params.category_id = category.id
+            if not category:
+                raise CategoryNotFound
+
+        query_params.category_name = None
+
+        return await self.tx_repo.get_transactions(
+            session,
+            query_params.model_dump(exclude_none=True),
+            order_by=order_by,
+            order_direction=order_direction,
+            date_from=date_range.start,
+            date_to=date_range.end,
+        )
