@@ -28,10 +28,12 @@ class SpendingsRepository(BaseRepository[SpendingsModel]):
         session: AsyncSession,
         params: dict,
     ):
-        query = select(self.model).filter_by(**params)
-        query = query.order_by(self.model.id.desc())
-        result = await session.execute(query)
-        result = list(result.scalars().all())
+        result = await self.get_all(
+            params=params,
+            order_by="id",
+            order_direction="desc",
+            session=session,
+        )
         return result
 
 
