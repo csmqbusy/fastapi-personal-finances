@@ -1,4 +1,4 @@
-from typing import Type, TypeVar, Generic, Any
+from typing import Type, TypeVar, Generic, Any, Literal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,10 +34,19 @@ class BaseRepository(Generic[T]):
         self,
         session: AsyncSession,
         params: dict,
+        order_by: str | None = None,
+        order_direction: Literal["asc", "desc"] = "asc",
     ) -> list[T]:
         query = select(self.model).filter_by(**params)
-        result = (await session.execute(query)).scalars().all()
-        return list(result)
+
+        if order_by:
+            if order_direction == "asc":
+                query = query.order_by(getattr(self.model, order_by).asc())
+            else:
+                query = query.order_by(getattr(self.model, order_by).desc())
+
+        result = await session.execute(query)
+        return list(result.scalars().all())
 
     async def get_one_by_filter(
         self,
