@@ -41,7 +41,7 @@ from app.services.users_spending_categories_service import user_spend_cat_servic
 router = APIRouter()
 
 
-@router.post("/spending/add/", status_code=status.HTTP_201_CREATED)
+@router.post("/spending/", status_code=status.HTTP_201_CREATED)
 async def spending_add(
     spending: SSpendingCreate,
     user: UserModel = Depends(get_active_verified_user),
@@ -58,7 +58,7 @@ async def spending_add(
 
 
 @router.get(
-    "/spending/get/recent/",
+    "/spending/recent/",
     status_code=status.HTTP_200_OK,
     summary="Get recent spendings across all categories",
 )
@@ -81,7 +81,7 @@ async def spending_get_recent(
     return selected_spendings
 
 
-@router.get("/spending/get/{spending_id}/", status_code=status.HTTP_200_OK)
+@router.get("/spending/{spending_id}/", status_code=status.HTTP_200_OK)
 async def spending_get(
     spending_id: int,
     user: UserModel = Depends(get_active_verified_user),
@@ -98,7 +98,7 @@ async def spending_get(
 
 
 @router.get(
-    "/spending/get/by_category/{category_name}/",
+    "/spending/by_category/{category_name}/",
     status_code=status.HTTP_200_OK,
     summary="Get spendings by category",
 )
@@ -124,7 +124,7 @@ async def spending_get_by_category(
 
 
 @router.patch(
-    "/spending/update/{spending_id}/",
+    "/spending/{spending_id}/",
     status_code=status.HTTP_200_OK,
 )
 async def spending_update(
@@ -148,7 +148,7 @@ async def spending_update(
 
 
 @router.delete(
-    "/spending/delete/{spending_id}/",
+    "/spending/{spending_id}/",
     status_code=status.HTTP_200_OK,
 )
 async def spending_delete(
@@ -170,7 +170,7 @@ async def spending_delete(
     }
 
 
-@router.post("/spending_categories/add/", status_code=status.HTTP_201_CREATED)
+@router.post("/spending_categories/", status_code=status.HTTP_201_CREATED)
 async def spending_category_add(
     spending_category: SSpendingCategoryCreate,
     user: UserModel = Depends(get_active_verified_user),
@@ -187,7 +187,7 @@ async def spending_category_add(
     return category
 
 
-@router.get("/spending_categories/get/", status_code=status.HTTP_200_OK)
+@router.get("/spending_categories/", status_code=status.HTTP_200_OK)
 async def spending_categories_get(
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
@@ -196,7 +196,7 @@ async def spending_categories_get(
 
 
 @router.patch(
-    "/spending_categories/update/{category_name}/",
+    "/spending_categories/{category_name}/",
     status_code=status.HTTP_200_OK,
 )
 async def spending_category_update(
@@ -220,7 +220,7 @@ async def spending_category_update(
 
 
 @router.delete(
-    "/spending_categories/delete/{category_name}/",
+    "/spending_categories/{category_name}/",
     status_code=status.HTTP_200_OK,
 )
 async def spending_category_delete(
