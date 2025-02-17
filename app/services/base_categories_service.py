@@ -72,7 +72,7 @@ class BaseCategoriesService:
         user_id: int,
         session: AsyncSession,
     ):
-        user_categories = await self.category_repo.get_all_by_filter(
+        user_categories = await self.category_repo.get_all(
             session,
             dict(user_id=user_id),
         )
@@ -141,7 +141,7 @@ class BaseCategoriesService:
         if category_for_delete is None:
             raise CategoryNotFound
 
-        transactions = await self.transaction_repo.get_all_by_filter(
+        transactions = await self.transaction_repo.get_all(
             session, dict(category_id=category_for_delete.id, user_id=user_id))
 
         if transactions_actions == SpendingsOnDeleteActions.DELETE:
