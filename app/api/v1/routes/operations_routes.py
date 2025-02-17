@@ -41,7 +41,11 @@ from app.services.users_spending_categories_service import user_spend_cat_servic
 router = APIRouter()
 
 
-@router.post("/spending/", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/spending/",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create new spending",
+)
 async def spending_add(
     spending: SSpendingCreate,
     user: UserModel = Depends(get_active_verified_user),
@@ -81,7 +85,11 @@ async def spending_get_recent(
     return selected_spendings
 
 
-@router.get("/spending/{spending_id}/", status_code=status.HTTP_200_OK)
+@router.get(
+    "/spending/{spending_id}/",
+    status_code=status.HTTP_200_OK,
+    summary="Get spending details",
+)
 async def spending_get(
     spending_id: int,
     user: UserModel = Depends(get_active_verified_user),
@@ -126,6 +134,7 @@ async def spending_get_by_category(
 @router.patch(
     "/spending/{spending_id}/",
     status_code=status.HTTP_200_OK,
+    summary="Partial update spending details",
 )
 async def spending_update(
     spending_id: int,
@@ -150,6 +159,7 @@ async def spending_update(
 @router.delete(
     "/spending/{spending_id}/",
     status_code=status.HTTP_200_OK,
+    summary="Delete spending",
 )
 async def spending_delete(
     spending_id: int,
@@ -170,7 +180,11 @@ async def spending_delete(
     }
 
 
-@router.post("/spending_categories/", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/spending_categories/",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create new spending category",
+)
 async def spending_category_add(
     spending_category: SSpendingCategoryCreate,
     user: UserModel = Depends(get_active_verified_user),
@@ -187,7 +201,11 @@ async def spending_category_add(
     return category
 
 
-@router.get("/spending_categories/", status_code=status.HTTP_200_OK)
+@router.get(
+    "/spending_categories/",
+    status_code=status.HTTP_200_OK,
+    summary="Get user's spending categories",
+)
 async def spending_categories_get(
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
@@ -198,6 +216,7 @@ async def spending_categories_get(
 @router.patch(
     "/spending_categories/{category_name}/",
     status_code=status.HTTP_200_OK,
+    summary="Partial update spending category details",
 )
 async def spending_category_update(
     category_name: str,
@@ -222,6 +241,7 @@ async def spending_category_update(
 @router.delete(
     "/spending_categories/{category_name}/",
     status_code=status.HTTP_200_OK,
+    summary="Delete spending category",
 )
 async def spending_category_delete(
     category_name: str,
