@@ -17,10 +17,10 @@ def get_pagination_params(
 
 
 def get_date_range(
-    start_date: date = Query(None),
-    end_date: date = Query(None)
+    date_from: date = Query(None),
+    date_to: date = Query(None)
 ) -> SDateRange:
     return SDateRange(
-        start=start_date,
-        end=end_date,
+        start=date_from,
+        end=date_to,
     )
