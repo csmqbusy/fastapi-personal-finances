@@ -28,6 +28,9 @@ class BaseRepository(Generic[T]):
         session: AsyncSession,
         id_: Any,
     ) -> T | None:
+        """
+        Get an entry by id
+        """
         return await session.get(self.model, id_)
 
     async def get_all(
