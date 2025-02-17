@@ -48,16 +48,6 @@ class BaseRepository(Generic[T]):
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_all_by_filter(
-        self,
-        session: AsyncSession,
-        params: dict,
-    ) -> list[T]:
-        query = select(self.model).filter_by(**params)
-        result = await session.execute(query)
-        result = list(result.scalars().all())
-        return result
-
     async def update(
         self,
         session: AsyncSession,
