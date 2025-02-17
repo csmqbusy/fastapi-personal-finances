@@ -4,3 +4,7 @@ class TransactionException(Exception):
 
 class TransactionNotFound(TransactionException):
     pass
+
+
+class InvalidDateRange(TransactionException):
+    pass
