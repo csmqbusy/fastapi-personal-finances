@@ -48,3 +48,11 @@ class CannotDeleteDefaultCategoryError(HTTPException):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="You cannot delete the default category.",
         )
+
+
+class InvalidDataRangeError(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The start date must be less than the end date.",
+        )
