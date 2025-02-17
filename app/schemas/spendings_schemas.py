@@ -42,3 +42,9 @@ class SSpendingUpdatePartial(BaseModel):
 class SSpendingUpdatePartialInDB(BaseModel):
     amount: Optional[int] = None
     description: Optional[str] = Field(None, max_length=100)
+
+
+class STransactionsQueryParams(BaseModel):
+    user_id: int | None = None
+    category_id: int | None = None
+    category_name: str | None = None
