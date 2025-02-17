@@ -135,9 +135,11 @@ class TransactionsService:
             category_id = await self._get_category_id(
                 user_id, category_name, session)
 
-            session,
-            dict(category_id=category_id, user_id=user_id),
         transactions = await self.tx_repo.get_all(
+            params=dict(category_id=category_id, user_id=user_id),
+            order_by="id",
+            order_direction="desc",
+            session=session,
         )
         return transactions
 
