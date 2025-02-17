@@ -143,6 +143,19 @@ class TransactionsService:
         )
         return transactions
 
+    async def get_all_user_transactions(
+        self,
+        session: AsyncSession,
+        user_id: int,
+    ) -> list[Any]:
+        transactions = await self.tx_repo.get_all(
+            params=dict(user_id=user_id),
+            order_by="id",
+            order_direction="desc",
+            session=session,
+        )
+        return transactions
+
     async def delete_transaction(
         self,
         transaction_id: int,
