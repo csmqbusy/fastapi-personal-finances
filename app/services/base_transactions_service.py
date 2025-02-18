@@ -201,9 +201,9 @@ class TransactionsService:
                     category_name=query_params.category_name,
                 ),
             )
-            query_params.category_id = category.id
             if not category:
                 raise CategoryNotFound
+            query_params.category_id = category.id
 
         query_params.category_name = None
 
