@@ -151,6 +151,8 @@ async def spendings_get(
             session=db_session,
             query_params=query_params,
             date_range=date_range,
+            order_by="id",
+            order_direction="desc",
         )
     except CategoryNotFound:
         raise CategoryNotFoundError()
