@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 
 from fastapi import Query
 
@@ -21,12 +21,12 @@ def get_pagination_params(
 
 
 def get_date_range(
-    date_from: date = Query(None, description="Date included"),
-    date_to: date = Query(None, description="Date included")
-        start=date_from,
-        end=date_to,
+    datetime_from: datetime = Query(None, description="Date included"),
+    datetime_to: datetime = Query(None, description="Date included")
 ) -> SDatetimeRange:
     return SDatetimeRange(
+        start=datetime_from,
+        end=datetime_to,
     )
 
 

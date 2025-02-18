@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from typing import Self
 
 from pydantic import BaseModel, model_validator
@@ -6,9 +6,9 @@ from pydantic import BaseModel, model_validator
 from app.exceptions.transaction_exceptions import InvalidDateRange
 
 
-    start: date | None = None
-    end: date | None = None
 class SDatetimeRange(BaseModel):
+    start: datetime | None = None
+    end: datetime | None = None
 
     @model_validator(mode="after")
     def validate_date_range(self) -> Self:
