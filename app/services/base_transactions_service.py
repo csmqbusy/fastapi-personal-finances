@@ -194,8 +194,7 @@ class TransactionsService:
         session: AsyncSession,
         query_params: STransactionsQueryParams,
         date_range: SDateRange,
-        order_by: str | None = None,
-        order_direction: Literal["asc", "desc"] = "asc",
+        sort_params: STransactionsSortParams | None,
     ):
         if query_params.category_name and query_params.category_id is None:
             category = await self.tx_categories_repo.get_one_by_filter(
@@ -210,12 +209,13 @@ class TransactionsService:
             query_params.category_id = category.id
 
         query_params.category_name = None
+        if sort_params:
+            sort_params = self._parse_sort_params_for_query(sort_params)
 
         return await self.tx_repo.get_transactions(
             session,
             query_params.model_dump(exclude_none=True),
-            order_by=order_by,
-            order_direction=order_direction,
+            sort_params=sort_params,
             date_from=date_range.start,
             date_to=date_range.end,
         )
