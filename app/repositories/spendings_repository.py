@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Literal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +6,7 @@ from sqlalchemy.orm import joinedload
 
 from app.models import SpendingsModel
 from app.repositories.base_repository import BaseRepository
+from app.schemas.spendings_schemas import SortParam
 
 
 class SpendingsRepository(BaseRepository[SpendingsModel]):
@@ -45,22 +45,25 @@ class SpendingsRepository(BaseRepository[SpendingsModel]):
         query_params: dict,
         date_from: date | None = None,
         date_to: date | None = None,
-        order_by: str | None = None,
-        order_direction: Literal["asc", "desc"] = "asc",
+        sort_params: list[SortParam] | None = None,
     ):
-        query = select(self.model).filter_by(
-            **query_params)
+        query = select(self.model).filter_by(**query_params)
 
         if date_from:
             query = query.where(self.model.date >= date_from)
         if date_to:
             query = query.where(self.model.date <= date_to)
 
-        if order_by:
-            if order_direction == "asc":
-                query = query.order_by(getattr(self.model, order_by).asc())
-            else:
-                query = query.order_by(getattr(self.model, order_by).desc())
+        if sort_params:
+            for param in sort_params:
+                if param.order_direction == "asc":
+                    query = query.order_by(
+                        getattr(self.model, param.order_by).asc()
+                    )
+                else:
+                    query = query.order_by(
+                        getattr(self.model, param.order_by).desc()
+                    )
 
         result = await session.execute(query)
         return list(result.scalars().all())
