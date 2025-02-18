@@ -14,7 +14,6 @@ from app.api.exceptions.operations_exceptions import (
     CategoryAlreadyExistsError,
     CategoryNameNotFoundError,
     CannotDeleteDefaultCategoryError,
-    MissingCategoryError,
 )
 from app.db import get_db_session
 from app.exceptions.categories_exceptions import (
@@ -22,7 +21,6 @@ from app.exceptions.categories_exceptions import (
     CategoryAlreadyExists,
     CategoryNameNotFound,
     CannotDeleteDefaultCategory,
-    MissingCategory,
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
