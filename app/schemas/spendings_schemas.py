@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 
 from pydantic import (
     BaseModel,
@@ -70,3 +70,7 @@ class STransactionsSortParams(BaseModel):
                 value.append(field)
         return value
 
+
+class SortParam(BaseModel):
+    order_by: str
+    order_direction: Literal["asc", "desc"]
