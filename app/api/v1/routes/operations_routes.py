@@ -148,11 +148,14 @@ async def spendings_get(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query_params.user_id = user.id
-    spendings = await spendings_service.get_transactions(
-        session=db_session,
-        query_params=query_params,
-        date_range=date_range,
-    )
+    try:
+        spendings = await spendings_service.get_transactions(
+            session=db_session,
+            query_params=query_params,
+            date_range=date_range,
+        )
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
     spendings = apply_pagination(spendings, pagination)
     return spendings
 
