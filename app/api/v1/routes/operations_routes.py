@@ -7,6 +7,7 @@ from app.api.dependencies.operations_dependencies import (
     get_pagination_params,
     get_date_range,
     get_transactions_query_params,
+    get_transactions_sort_params,
 )
 from app.api.exceptions.operations_exceptions import (
     SpendingNotFoundError,
@@ -37,6 +38,7 @@ from app.schemas.spendings_schemas import (
     SSpendingResponse,
     SSpendingUpdatePartial,
     STransactionsQueryParams,
+    STransactionsSortParams,
 )
 from app.services import spendings_service
 from app.services.common_services import apply_pagination
@@ -155,6 +157,7 @@ async def spendings_get(
     query_params: STransactionsQueryParams = Depends(get_transactions_query_params),
     date_range: SDateRange = Depends(get_date_range),
     pagination: SPagination = Depends(get_pagination_params),
+    sort_params: STransactionsSortParams = Depends(get_transactions_sort_params),
     db_session: AsyncSession = Depends(get_db_session),
 ):
     query_params.user_id = user.id
@@ -163,8 +166,7 @@ async def spendings_get(
             session=db_session,
             query_params=query_params,
             date_range=date_range,
-            order_by="id",
-            order_direction="desc",
+            sort_params=sort_params,
         )
     except CategoryNotFound:
         raise CategoryNotFoundError()
