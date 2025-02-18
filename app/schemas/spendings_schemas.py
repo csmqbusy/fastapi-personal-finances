@@ -5,7 +5,10 @@ from pydantic import (
     BaseModel,
     Field,
     ConfigDict,
+    field_validator,
 )
+
+from app.models import SpendingsModel
 
 
 class SSpendingBase(BaseModel):
@@ -48,3 +51,22 @@ class STransactionsQueryParams(BaseModel):
     user_id: int | None = None
     category_id: int | None = None
     category_name: str | None = None
+
+
+class STransactionsSortParams(BaseModel):
+    sort_by: Optional[list[str]] = None
+
+    @field_validator("sort_by")
+    def validate_sort_by(cls, value: list[str]):
+        if not value:
+            return value
+
+        allowed_fields = [a for a in dir(SpendingsModel) if not a.startswith("_")]
+
+        value_copy = value.copy()
+        value.clear()
+        for field in value_copy:
+            if field.lstrip("-") in allowed_fields:
+                value.append(field)
+        return value
+
