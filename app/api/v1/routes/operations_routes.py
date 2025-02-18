@@ -182,7 +182,7 @@ async def spending_category_add(
 
 
 @router.get(
-    "/spending_categories/",
+    "/spendings/categories/",
     status_code=status.HTTP_200_OK,
     summary="Get user's spending categories",
 )
