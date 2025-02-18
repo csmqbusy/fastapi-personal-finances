@@ -9,7 +9,7 @@ from app.schemas.spendings_schemas import STransactionsQueryParams
 
 def get_pagination_params(
     page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(10, ge=1, le=100, description="Page size limit"),
+    page_size: int = Query(10, ge=1, le=100, description="Objects per page"),
 ) -> SPagination:
     return SPagination(
         page=page,
