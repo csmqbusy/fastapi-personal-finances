@@ -81,32 +81,6 @@ async def spending_get(
         raise SpendingNotFoundError()
 
 
-@router.get(
-    "/spending/by_category/{category_name}/",
-    status_code=status.HTTP_200_OK,
-    summary="Get spendings by category",
-)
-async def spending_get_by_category(
-    category_name: str,
-    pagination: SPagination = Depends(get_pagination_params),
-    user: UserModel = Depends(get_active_verified_user),
-    db_session: AsyncSession = Depends(get_db_session),
-):
-    try:
-        all_spendings = await spendings_service.get_all_transactions_by_category(
-            category_name=category_name,
-            user_id=user.id,
-            session=db_session,
-        )
-        selected_spendings = apply_pagination(all_spendings, pagination)
-    except MissingCategory:
-        raise MissingCategoryError()
-
-    if len(selected_spendings) == 0:
-        raise SpendingNotFoundError()
-    return selected_spendings
-
-
 @router.patch(
     "/spendings/{spending_id}/",
     status_code=status.HTTP_200_OK,
