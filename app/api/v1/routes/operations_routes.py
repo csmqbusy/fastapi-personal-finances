@@ -62,30 +62,6 @@ async def spending_add(
 
 
 @router.get(
-    "/spending/recent/",
-    status_code=status.HTTP_200_OK,
-    summary="Get recent spendings across all categories",
-)
-async def spending_get_recent(
-    pagination: SPagination = Depends(get_pagination_params),
-    user: UserModel = Depends(get_active_verified_user),
-    db_session: AsyncSession = Depends(get_db_session),
-):
-    try:
-        all_spendings = await spendings_service.get_all_user_transactions(
-            user_id=user.id,
-            session=db_session,
-        )
-        selected_spendings = apply_pagination(all_spendings, pagination)
-    except MissingCategory:
-        raise MissingCategoryError()
-
-    if len(selected_spendings) == 0:
-        raise SpendingNotFoundError()
-    return selected_spendings
-
-
-@router.get(
     "/spendings/{spending_id}/",
     status_code=status.HTTP_200_OK,
     summary="Get spending details",
