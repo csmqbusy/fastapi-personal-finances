@@ -1,4 +1,4 @@
-from typing import Type, Any, Literal
+from typing import Type, Any
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +9,11 @@ from app.exceptions.categories_exceptions import (
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.schemas.date_range_schemas import SDateRange
-from app.schemas.spendings_schemas import STransactionsQueryParams
+from app.schemas.spendings_schemas import (
+    STransactionsQueryParams,
+    STransactionsSortParams,
+    SortParam,
+)
 
 
 class TransactionsService:
@@ -215,3 +219,27 @@ class TransactionsService:
             date_from=date_range.start,
             date_to=date_range.end,
         )
+
+    @staticmethod
+    def _parse_sort_params_for_query(
+        sort_params: STransactionsSortParams,
+    ) -> list[SortParam]:
+        result = []
+
+        for param in sort_params.sort_by:
+            if param.startswith("-"):
+                result.append(
+                    SortParam(
+                        order_by=param.lstrip("-"),
+                        order_direction="desc",
+                    ),
+                )
+            else:
+                result.append(
+                    SortParam(
+                        order_by=param,
+                        order_direction="asc",
+                    ),
+                )
+
+        return result
