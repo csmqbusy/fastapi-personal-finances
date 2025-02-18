@@ -49,6 +49,7 @@ class TransactionsService:
         transaction_to_create = self.creation_in_db_schema(
             amount=transaction.amount,
             description=transaction.description,
+            date=transaction.date,
             user_id=user_id,
             category_id=category_id,
         )

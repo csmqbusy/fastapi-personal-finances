@@ -16,6 +16,7 @@ class SSpendingBase(BaseModel):
 
     amount: int = Field(..., gt=0)
     description: Optional[str] = Field(None, max_length=100)
+    date: datetime | None
 
 
 class SSpendingWithCategory(SSpendingBase):
