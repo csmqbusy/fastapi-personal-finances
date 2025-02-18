@@ -42,7 +42,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/spending/",
+    "/spendings/",
     status_code=status.HTTP_201_CREATED,
     summary="Create new spending",
 )
@@ -86,7 +86,7 @@ async def spending_get_recent(
 
 
 @router.get(
-    "/spending/{spending_id}/",
+    "/spendings/{spending_id}/",
     status_code=status.HTTP_200_OK,
     summary="Get spending details",
 )
@@ -132,7 +132,7 @@ async def spending_get_by_category(
 
 
 @router.patch(
-    "/spending/{spending_id}/",
+    "/spendings/{spending_id}/",
     status_code=status.HTTP_200_OK,
     summary="Partial update spending details",
 )
@@ -157,7 +157,7 @@ async def spending_update(
 
 
 @router.delete(
-    "/spending/{spending_id}/",
+    "/spendings/{spending_id}/",
     status_code=status.HTTP_200_OK,
     summary="Delete spending",
 )
