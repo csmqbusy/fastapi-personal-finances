@@ -4,7 +4,10 @@ from fastapi import Query
 
 from app.schemas.date_range_schemas import SDateRange
 from app.schemas.pagination_schemas import SPagination
-from app.schemas.spendings_schemas import STransactionsQueryParams
+from app.schemas.spendings_schemas import (
+    STransactionsQueryParams,
+    STransactionsSortParams,
+)
 
 
 def get_pagination_params(
@@ -48,3 +51,10 @@ def get_transactions_query_params(
         category_id=category_id,
         category_name=category_name,
     )
+
+
+def get_transactions_sort_params(
+    sort_params: list[str] | None = Query(None, description="`-` is desc")
+) -> STransactionsSortParams:
+    if sort_params is not None:
+        return STransactionsSortParams(sort_by=sort_params)
