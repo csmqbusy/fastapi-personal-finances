@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -155,6 +155,7 @@ async def spending_delete(
 async def spendings_get(
     user: UserModel = Depends(get_active_verified_user),
     query_params: STransactionsQueryParams = Depends(get_transactions_query_params),
+    search_term: str | None = Query(None),
     datetime_range: SDatetimeRange = Depends(get_date_range),
     pagination: SPagination = Depends(get_pagination_params),
     sort_params: STransactionsSortParams = Depends(get_transactions_sort_params),
@@ -165,6 +166,7 @@ async def spendings_get(
         spendings = await spendings_service.get_transactions(
             session=db_session,
             query_params=query_params,
+            search_term=search_term,
             datetime_range=datetime_range,
             sort_params=sort_params,
         )

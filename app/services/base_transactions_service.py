@@ -158,6 +158,7 @@ class TransactionsService:
         self,
         session: AsyncSession,
         query_params: STransactionsQueryParams,
+        search_term: str | None,
         datetime_range: SDatetimeRange,
         sort_params: STransactionsSortParams | None,
     ):
@@ -181,6 +182,7 @@ class TransactionsService:
             session,
             query_params.model_dump(exclude_none=True),
             sort_params=sort_params,
+            search_term=search_term,
             datetime_from=datetime_range.start,
             datetime_to=datetime_range.end,
         )

@@ -43,11 +43,17 @@ class SpendingsRepository(BaseRepository[SpendingsModel]):
         self,
         session: AsyncSession,
         query_params: dict,
+        search_term: str,
         datetime_from: datetime | None = None,
         datetime_to: datetime | None = None,
         sort_params: list[SortParam] | None = None,
     ):
         query = select(self.model).filter_by(**query_params)
+
+        if search_term:
+            query = query.filter(
+                self.model.description.ilike(f"%{search_term}%")
+            )
 
         if datetime_from:
             query = query.where(self.model.date >= datetime_from)
