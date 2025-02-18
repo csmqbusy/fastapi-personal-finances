@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,16 +43,16 @@ class SpendingsRepository(BaseRepository[SpendingsModel]):
         self,
         session: AsyncSession,
         query_params: dict,
-        date_from: date | None = None,
-        date_to: date | None = None,
+        datetime_from: datetime | None = None,
+        datetime_to: datetime | None = None,
         sort_params: list[SortParam] | None = None,
     ):
         query = select(self.model).filter_by(**query_params)
 
-        if date_from:
-            query = query.where(self.model.date >= date_from)
-        if date_to:
-            query = query.where(self.model.date <= date_to)
+        if datetime_from:
+            query = query.where(self.model.date >= datetime_from)
+        if datetime_to:
+            query = query.where(self.model.date <= datetime_to)
 
         if sort_params:
             for param in sort_params:

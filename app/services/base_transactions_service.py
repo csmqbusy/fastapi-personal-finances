@@ -181,8 +181,8 @@ class TransactionsService:
             session,
             query_params.model_dump(exclude_none=True),
             sort_params=sort_params,
-            date_from=date_range.start,
-            date_to=date_range.end,
+            datetime_from=datetime_range.start,
+            datetime_to=datetime_range.end,
         )
 
     @staticmethod
