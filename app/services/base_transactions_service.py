@@ -1,11 +1,10 @@
-from typing import Type, Any
+from typing import Type
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.categories_exceptions import (
     CategoryNotFound,
-    MissingCategory,
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.schemas.date_range_schemas import SDateRange
@@ -127,42 +126,6 @@ class TransactionsService:
             id=transaction.id,
         )
         return transaction_out
-
-    async def get_all_transactions_by_category(
-        self,
-        session: AsyncSession,
-        user_id: int,
-        category_id: int | None = None,
-        category_name: str | None = None,
-    ) -> list[Any]:
-        if category_id is None and category_name is None:
-            raise MissingCategory
-
-        if category_id is None:
-            category_id = await self._get_category_id(
-                user_id, category_name, session
-            )
-
-        transactions = await self.tx_repo.get_all(
-            params=dict(category_id=category_id, user_id=user_id),
-            order_by="id",
-            order_direction="desc",
-            session=session,
-        )
-        return transactions
-
-    async def get_all_user_transactions(
-        self,
-        session: AsyncSession,
-        user_id: int,
-    ) -> list[Any]:
-        transactions = await self.tx_repo.get_all(
-            params=dict(user_id=user_id),
-            order_by="id",
-            order_direction="desc",
-            session=session,
-        )
-        return transactions
 
     async def delete_transaction(
         self,
