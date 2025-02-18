@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import Query
 
-from app.schemas.date_range_schemas import SDateRange
+from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.pagination_schemas import SPagination
 from app.schemas.spendings_schemas import (
     STransactionsQueryParams,
@@ -23,10 +23,10 @@ def get_pagination_params(
 def get_date_range(
     date_from: date = Query(None, description="Date included"),
     date_to: date = Query(None, description="Date included")
-) -> SDateRange:
-    return SDateRange(
         start=date_from,
         end=date_to,
+) -> SDatetimeRange:
+    return SDatetimeRange(
     )
 
 

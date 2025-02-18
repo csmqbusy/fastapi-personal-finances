@@ -7,7 +7,7 @@ from app.exceptions.categories_exceptions import (
     CategoryNotFound,
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
-from app.schemas.date_range_schemas import SDateRange
+from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.spendings_schemas import (
     STransactionsQueryParams,
     STransactionsSortParams,
@@ -158,7 +158,7 @@ class TransactionsService:
         self,
         session: AsyncSession,
         query_params: STransactionsQueryParams,
-        date_range: SDateRange,
+        datetime_range: SDatetimeRange,
         sort_params: STransactionsSortParams | None,
     ):
         if query_params.category_name and query_params.category_id is None:
