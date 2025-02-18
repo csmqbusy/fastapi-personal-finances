@@ -40,12 +40,14 @@ class SSpendingCreateInDB(SSpendingBase):
 class SSpendingUpdatePartial(BaseModel):
     amount: Optional[int] = Field(None, gt=0)
     description: Optional[str] = Field(None, max_length=100)
+    date: datetime | None
     category_name: Optional[str] = Field(None, max_length=50)
 
 
 class SSpendingUpdatePartialInDB(BaseModel):
     amount: Optional[int] = None
     description: Optional[str] = Field(None, max_length=100)
+    date: datetime | None
 
 
 class STransactionsQueryParams(BaseModel):

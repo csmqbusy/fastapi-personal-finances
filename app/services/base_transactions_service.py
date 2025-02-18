@@ -78,6 +78,7 @@ class TransactionsService:
         transaction_to_update = self.update_partial_in_db_schema(
             amount=transaction_update_obj.amount,
             description=transaction_update_obj.description,
+            date=transaction_update_obj.date,
         )
 
         new_cat_name = transaction_update_obj.category_name
