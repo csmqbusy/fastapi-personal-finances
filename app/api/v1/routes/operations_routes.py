@@ -66,6 +66,18 @@ async def spending_add(
 
 
 @router.get(
+    "/spendings/categories/",
+    status_code=status.HTTP_200_OK,
+    summary="Get user's spending categories",
+)
+async def spendings_categories_get(
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await user_spend_cat_service.get_user_categories(user.id, db_session)
+
+
+@router.get(
     "/spendings/{spending_id}/",
     status_code=status.HTTP_200_OK,
     summary="Get spending details",
@@ -179,18 +191,6 @@ async def spending_category_add(
     except CategoryAlreadyExists:
         raise CategoryAlreadyExistsError()
     return category
-
-
-@router.get(
-    "/spendings/categories/",
-    status_code=status.HTTP_200_OK,
-    summary="Get user's spending categories",
-)
-async def spending_categories_get(
-    user: UserModel = Depends(get_active_verified_user),
-    db_session: AsyncSession = Depends(get_db_session),
-):
-    return await user_spend_cat_service.get_user_categories(user.id, db_session)
 
 
 @router.patch(
