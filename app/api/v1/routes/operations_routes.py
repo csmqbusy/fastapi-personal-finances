@@ -181,7 +181,7 @@ async def spending_delete(
 
 
 @router.post(
-    "/spending_categories/",
+    "/spendings/categories/",
     status_code=status.HTTP_201_CREATED,
     summary="Create new spending category",
 )
@@ -214,7 +214,7 @@ async def spending_categories_get(
 
 
 @router.patch(
-    "/spending_categories/{category_name}/",
+    "/spendings/categories/{category_name}/",
     status_code=status.HTTP_200_OK,
     summary="Partial update spending category details",
 )
@@ -239,7 +239,7 @@ async def spending_category_update(
 
 
 @router.delete(
-    "/spending_categories/{category_name}/",
+    "/spendings/categories/{category_name}/",
     status_code=status.HTTP_200_OK,
     summary="Delete spending category",
 )
