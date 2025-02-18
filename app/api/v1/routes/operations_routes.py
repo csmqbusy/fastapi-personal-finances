@@ -3,7 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
-from app.api.dependencies.operations_dependencies import get_pagination_params
+from app.api.dependencies.operations_dependencies import (
+    get_pagination_params,
+    get_date_range,
+    get_transactions_query_params,
+)
 from app.api.exceptions.operations_exceptions import (
     SpendingNotFoundError,
     CategoryNotFoundError,
@@ -22,6 +26,7 @@ from app.exceptions.categories_exceptions import (
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
+from app.schemas.date_range_schemas import SDateRange
 from app.schemas.pagination_schemas import SPagination
 from app.schemas.spending_category_schemas import (
     SSpendingCategoryCreate,
@@ -33,6 +38,7 @@ from app.schemas.spendings_schemas import (
     SSpendingCreate,
     SSpendingResponse,
     SSpendingUpdatePartial,
+    STransactionsQueryParams,
 )
 from app.services import spendings_service
 from app.services.common_services import apply_pagination
@@ -128,6 +134,27 @@ async def spending_delete(
         "delete": "ok",
         "id": spending_id,
     }
+
+
+@router.get(
+    "/spendings/",
+    status_code=status.HTTP_200_OK,
+)
+async def spendings_get(
+    user: UserModel = Depends(get_active_verified_user),
+    query_params: STransactionsQueryParams = Depends(get_transactions_query_params),
+    date_range: SDateRange = Depends(get_date_range),
+    pagination: SPagination = Depends(get_pagination_params),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    query_params.user_id = user.id
+    spendings = await spendings_service.get_transactions(
+        session=db_session,
+        query_params=query_params,
+        date_range=date_range,
+    )
+    spendings = apply_pagination(spendings, pagination)
+    return spendings
 
 
 @router.post(
