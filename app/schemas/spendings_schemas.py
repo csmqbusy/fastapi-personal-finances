@@ -19,15 +19,15 @@ class STransactionBase(BaseModel):
     date: datetime | None
 
 
-class SSpendingWithCategory(STransactionBase):
+class STransactionWithCategory(STransactionBase):
     category_name: str | None = Field(None, max_length=50)
 
 
-class SSpendingCreate(SSpendingWithCategory):
+class SSpendingCreate(STransactionWithCategory):
     pass
 
 
-class SSpendingResponse(SSpendingWithCategory):
+class SSpendingResponse(STransactionWithCategory):
     date: datetime
     id: int
 
