@@ -30,7 +30,7 @@ from app.schemas.pagination_schemas import SPagination
 from app.schemas.spending_category_schemas import (
     STransactionCategoryCreate,
     STransactionCategoryOut,
-    SSpendingCategoryUpdate,
+    STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
 )
 from app.schemas.spendings_schemas import (
@@ -204,7 +204,7 @@ async def spending_category_add(
 )
 async def spending_category_update(
     category_name: str,
-    spending_category_update_obj: SSpendingCategoryUpdate,
+    spending_category_update_obj: STransactionCategoryUpdate,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> STransactionCategoryOut:

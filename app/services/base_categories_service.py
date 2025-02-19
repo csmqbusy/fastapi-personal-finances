@@ -10,7 +10,7 @@ from app.exceptions.categories_exceptions import (
     CannotDeleteDefaultCategory,
 )
 from app.schemas.spending_category_schemas import (
-    SSpendingCategoryUpdate,
+    STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
 )
 
@@ -94,7 +94,7 @@ class BaseCategoriesService:
         self,
         category_name: str,
         user_id: int,
-        category_update_obj: SSpendingCategoryUpdate,
+        category_update_obj: STransactionCategoryUpdate,
         session: AsyncSession,
     ):
         category = await self.get_category(user_id, category_name, session)

@@ -22,7 +22,7 @@ class STransactionCategoryOut(STransactionCategoryBase):
     user_id: int
 
 
-class SSpendingCategoryUpdate(STransactionCategoryBase):
+class STransactionCategoryUpdate(STransactionCategoryBase):
     pass
 
 
