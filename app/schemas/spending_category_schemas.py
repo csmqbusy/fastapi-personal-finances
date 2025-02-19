@@ -17,7 +17,7 @@ class STransactionCategoryCreate(STransactionCategoryBase):
     pass
 
 
-class SSpendingCategoryOut(STransactionCategoryBase):
+class STransactionCategoryOut(STransactionCategoryBase):
     id: int
     user_id: int
 

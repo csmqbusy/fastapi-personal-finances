@@ -29,7 +29,7 @@ from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.pagination_schemas import SPagination
 from app.schemas.spending_category_schemas import (
     STransactionCategoryCreate,
-    SSpendingCategoryOut,
+    STransactionCategoryOut,
     SSpendingCategoryUpdate,
     TransactionsOnDeleteActions,
 )
@@ -185,7 +185,7 @@ async def spending_category_add(
     spending_category: STransactionCategoryCreate,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
-) -> SSpendingCategoryOut:
+) -> STransactionCategoryOut:
     try:
         category = await user_spend_cat_service.add_category_to_db(
             user.id,
@@ -207,7 +207,7 @@ async def spending_category_update(
     spending_category_update_obj: SSpendingCategoryUpdate,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
-) -> SSpendingCategoryOut:
+) -> STransactionCategoryOut:
     try:
         category = await user_spend_cat_service.update_category(
             category_name,
