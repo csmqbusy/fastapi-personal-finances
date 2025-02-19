@@ -1,6 +1,6 @@
 import pytest
 
-from app.services.auth import (
+from app.services.auth_service import (
     create_access_token,
     decode_access_token,
     hash_password,
