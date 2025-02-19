@@ -1,4 +1,4 @@
 from app.models import SpendingsModel
-from app.repositories.base_transactions_repository import BaseTransactionsRepository
+from app.repositories import BaseTransactionsRepository
 
 spendings_repo = BaseTransactionsRepository(model=SpendingsModel)
