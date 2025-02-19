@@ -83,9 +83,10 @@ class TransactionsService:
 
         new_cat_name = transaction_update_obj.category_name
         if new_cat_name and new_cat_name != transaction.category.category_name:
-            new_category = await self.tx_categories_repo.get_one_by_filter(
-                session,
-                dict(user_id=user_id, category_name=new_cat_name),
+            new_category = await self.tx_categories_repo.get_category(
+                session=session,
+                user_id=user_id,
+                category_name=new_cat_name,
             )
             if new_category is None:
                 raise CategoryNotFound
@@ -146,9 +147,10 @@ class TransactionsService:
         category_name: str,
         session: AsyncSession,
     ) -> int:
-        category = await self.tx_categories_repo.get_one_by_filter(
-            session,
-            dict(user_id=user_id, category_name=category_name),
+        category = await self.tx_categories_repo.get_category(
+            session=session,
+            user_id=user_id,
+            category_name=category_name,
         )
         if not category:
             raise CategoryNotFound
@@ -163,12 +165,10 @@ class TransactionsService:
         sort_params: STransactionsSortParams | None,
     ):
         if query_params.category_name and query_params.category_id is None:
-            category = await self.tx_categories_repo.get_one_by_filter(
-                session,
-                dict(
-                    user_id=query_params.user_id,
-                    category_name=query_params.category_name,
-                ),
+            category = await self.tx_categories_repo.get_category(
+                session=session,
+                user_id=query_params.user_id,
+                category_name=query_params.category_name,
             )
             if not category:
                 raise CategoryNotFound
