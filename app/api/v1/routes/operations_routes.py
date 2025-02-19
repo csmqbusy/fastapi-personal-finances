@@ -10,7 +10,7 @@ from app.api.dependencies.operations_dependencies import (
     get_transactions_sort_params,
 )
 from app.api.exceptions.operations_exceptions import (
-    SpendingNotFoundError,
+    TransactionNotFoundError,
     CategoryNotFoundError,
     CategoryAlreadyExistsError,
     CategoryNameNotFoundError,
@@ -96,7 +96,7 @@ async def spending_get(
             db_session,
         )
     except TransactionNotFound:
-        raise SpendingNotFoundError()
+        raise TransactionNotFoundError()
 
 
 @router.patch(
@@ -118,7 +118,7 @@ async def spending_update(
             db_session,
         )
     except TransactionNotFound:
-        raise SpendingNotFoundError()
+        raise TransactionNotFoundError()
     except CategoryNotFound:
         raise CategoryNotFoundError()
     return updated_spending
@@ -141,7 +141,7 @@ async def spending_delete(
             db_session,
         )
     except TransactionNotFound:
-        raise SpendingNotFoundError()
+        raise TransactionNotFoundError()
     return {
         "delete": "ok",
         "id": spending_id,
