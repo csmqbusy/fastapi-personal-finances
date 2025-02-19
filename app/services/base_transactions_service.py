@@ -81,7 +81,7 @@ class TransactionsService:
             date=transaction_update_obj.date,
         )
 
-        new_cat_name = transaction_update_obj.category_name
+        new_cat_name = transaction_update_obj.category_name.strip()
         if new_cat_name and new_cat_name != transaction.category.category_name:
             new_category = await self.tx_categories_repo.get_category(
                 session=session,
