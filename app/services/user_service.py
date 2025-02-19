@@ -11,7 +11,10 @@ from app.schemas.user_schemas import SUserSignUp
 from app.services.users_spending_categories_service import user_spend_cat_service
 
 
-async def create_user(user: SUserSignUp, session: AsyncSession) -> UserModel:
+async def create_user(
+    user: SUserSignUp,
+    session: AsyncSession,
+) -> UserModel:
     if not (await _check_unique_username(user.username, session)):
         raise UsernameAlreadyExists
     if not (await _check_unique_email(user.email, session)):
@@ -32,14 +35,20 @@ async def get_user_by_username(
     return await user_repo.get_by_username(session, username)
 
 
-async def _check_unique_username(username: str, session: AsyncSession) -> bool:
+async def _check_unique_username(
+    username: str,
+    session: AsyncSession,
+) -> bool:
     user = await get_user_by_username(username, session)
     if user is None:
         return True
     return False
 
 
-async def _check_unique_email(email: EmailStr, session: AsyncSession) -> bool:
+async def _check_unique_email(
+    email: EmailStr,
+    session: AsyncSession,
+) -> bool:
     user = await user_repo.get_by_email(session, email)
     if user is None:
         return True
