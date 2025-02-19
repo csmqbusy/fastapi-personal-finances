@@ -1,6 +1,6 @@
 from app.core.config import settings
 from app.repositories import user_spend_cat_repo, spendings_repo
-from app.schemas.spending_category_schemas import STransactionCategoryOut
+from app.schemas.transaction_category_schemas import STransactionCategoryOut
 from app.services.base_categories_service import BaseCategoriesService
 
 

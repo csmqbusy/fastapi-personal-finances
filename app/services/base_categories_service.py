@@ -9,7 +9,7 @@ from app.exceptions.categories_exceptions import (
     CategoryNameNotFound,
     CannotDeleteDefaultCategory,
 )
-from app.schemas.spending_category_schemas import (
+from app.schemas.transaction_category_schemas import (
     STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
 )
