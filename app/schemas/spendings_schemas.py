@@ -27,7 +27,7 @@ class STransactionCreate(STransactionWithCategory):
     pass
 
 
-class SSpendingResponse(STransactionWithCategory):
+class STransactionResponse(STransactionWithCategory):
     date: datetime
     id: int
 

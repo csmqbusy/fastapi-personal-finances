@@ -3,7 +3,7 @@ from app.repositories import spendings_repo, user_spend_cat_repo
 from app.schemas.spendings_schemas import (
     STransactionCreate,
     SSpendingCreateInDB,
-    SSpendingResponse,
+    STransactionResponse,
     SSpendingUpdatePartial,
 )
 from app.services.base_transactions_service import TransactionsService
@@ -16,5 +16,5 @@ spendings_service = TransactionsService(
     creation_schema=STransactionCreate,
     creation_in_db_schema=SSpendingCreateInDB,
     update_partial_in_db_schema=SSpendingUpdatePartial,
-    out_schema=SSpendingResponse,
+    out_schema=STransactionResponse,
 )
