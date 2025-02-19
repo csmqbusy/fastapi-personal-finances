@@ -11,7 +11,7 @@ from pydantic import (
 from app.models import SpendingsModel
 
 
-class SSpendingBase(BaseModel):
+class STransactionBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     amount: int = Field(..., gt=0)
@@ -19,7 +19,7 @@ class SSpendingBase(BaseModel):
     date: datetime | None
 
 
-class SSpendingWithCategory(SSpendingBase):
+class SSpendingWithCategory(STransactionBase):
     category_name: str | None = Field(None, max_length=50)
 
 
@@ -32,7 +32,7 @@ class SSpendingResponse(SSpendingWithCategory):
     id: int
 
 
-class SSpendingCreateInDB(SSpendingBase):
+class SSpendingCreateInDB(STransactionBase):
     user_id: int
     category_id: int
 
