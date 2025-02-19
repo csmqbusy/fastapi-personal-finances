@@ -34,7 +34,7 @@ from app.schemas.transaction_category_schemas import (
     TransactionsOnDeleteActions,
 )
 from app.schemas.spendings_schemas import (
-    SSpendingCreate,
+    STransactionCreate,
     SSpendingResponse,
     SSpendingUpdatePartial,
     STransactionsQueryParams,
@@ -53,7 +53,7 @@ router = APIRouter()
     summary="Create new spending",
 )
 async def spending_add(
-    spending: SSpendingCreate,
+    spending: STransactionCreate,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingResponse:

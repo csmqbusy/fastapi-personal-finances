@@ -23,7 +23,7 @@ class STransactionWithCategory(STransactionBase):
     category_name: str | None = Field(None, max_length=50)
 
 
-class SSpendingCreate(STransactionWithCategory):
+class STransactionCreate(STransactionWithCategory):
     pass
 
 
