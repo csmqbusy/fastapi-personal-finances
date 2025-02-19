@@ -34,9 +34,10 @@ class BaseCategoriesService:
         category_name: str,
         session: AsyncSession,
     ):
-        category = await self.category_repo.get_one_by_filter(
-            session,
-            dict(user_id=user_id, category_name=category_name),
+        category = await self.category_repo.get_category(
+            session=session,
+            user_id=user_id,
+            category_name=category_name,
         )
         return category
 
