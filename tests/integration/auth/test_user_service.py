@@ -118,7 +118,7 @@ async def test_get_user_by_username(
             nullcontext(),
         ),
         (
-            "salah",
+            "SALAH",
             "password",
             "mosalah@example.com",
             pytest.raises(UsernameAlreadyExists),
@@ -126,7 +126,7 @@ async def test_get_user_by_username(
         (
             "mosalah",
             "password",
-            "salah@example.com",
+            "SALAH@example.com",
             pytest.raises(EmailAlreadyExists),
         ),
         (
