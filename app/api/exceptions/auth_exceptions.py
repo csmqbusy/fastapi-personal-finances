@@ -55,3 +55,12 @@ class EmailAlreadyExistsError(HTTPException):
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already exists.",
         )
+
+
+class InvalidUsernameError(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The username must be 3-24 characters long and consist of "
+                   "a-Z letters, numbers, and an underscore.",
+        )
