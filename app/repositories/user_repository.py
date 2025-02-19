@@ -15,6 +15,12 @@ class UserRepository(BaseRepository[UserModel]):
         user = await session.execute(query)
         return user.scalar_one_or_none()
 
+    async def get_by_email(self, session, email):
+        query = select(self.model).filter(
+            self.model.email.ilike(f"%{email}%")
+        )
+        user = await session.execute(query)
+        return user.scalar_one_or_none()
 
 
 user_repo = UserRepository()
