@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.repositories.base_repository import BaseRepository
-from app.schemas.spendings_schemas import SortParam
+from app.schemas.transactions_schemas import SortParam
 
 
 class BaseTransactionsRepository(BaseRepository):

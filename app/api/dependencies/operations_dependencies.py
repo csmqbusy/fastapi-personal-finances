@@ -4,7 +4,7 @@ from fastapi import Query
 
 from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.pagination_schemas import SPagination
-from app.schemas.spendings_schemas import (
+from app.schemas.transactions_schemas import (
     STransactionsQueryParams,
     STransactionsSortParams,
 )

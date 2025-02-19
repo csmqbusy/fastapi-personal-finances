@@ -33,7 +33,7 @@ from app.schemas.transaction_category_schemas import (
     STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
 )
-from app.schemas.spendings_schemas import (
+from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartial,

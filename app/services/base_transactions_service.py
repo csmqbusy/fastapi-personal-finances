@@ -8,7 +8,7 @@ from app.exceptions.categories_exceptions import (
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.schemas.date_range_schemas import SDatetimeRange
-from app.schemas.spendings_schemas import (
+from app.schemas.transactions_schemas import (
     STransactionsQueryParams,
     STransactionsSortParams,
     SortParam,

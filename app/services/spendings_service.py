@@ -1,6 +1,6 @@
 from app.core.config import settings
 from app.repositories import spendings_repo, user_spend_cat_repo
-from app.schemas.spendings_schemas import (
+from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionCreateInDB,
     STransactionResponse,
