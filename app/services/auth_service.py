@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, UTC
 
 import bcrypt
@@ -45,3 +46,8 @@ def hash_password(password: str) -> bytes:
 
 def verify_password(password: str, hashed_password: bytes) -> bool:
     return bcrypt.checkpw(password.encode(), hashed_password)
+
+
+def validate_username(username: str) -> bool:
+    valid_pattern = re.compile(r"^[a-zA-Z0-9_]{3,24}$")
+    return bool(valid_pattern.match(username))
