@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Literal
+from typing import Literal
 
 from pydantic import (
     BaseModel,
@@ -15,12 +15,12 @@ class SSpendingBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     amount: int = Field(..., gt=0)
-    description: Optional[str] = Field(None, max_length=100)
+    description: str | None = Field(None, max_length=100)
     date: datetime | None
 
 
 class SSpendingWithCategory(SSpendingBase):
-    category_name: Optional[str] = Field(None, max_length=50)
+    category_name: str | None = Field(None, max_length=50)
 
 
 class SSpendingCreate(SSpendingWithCategory):
@@ -38,15 +38,15 @@ class SSpendingCreateInDB(SSpendingBase):
 
 
 class SSpendingUpdatePartial(BaseModel):
-    amount: Optional[int] = Field(None, gt=0)
-    description: Optional[str] = Field(None, max_length=100)
+    amount: int | None = Field(None, gt=0)
+    description: str | None = Field(None, max_length=100)
     date: datetime | None
-    category_name: Optional[str] = Field(None, max_length=50)
+    category_name: str | None = Field(None, max_length=50)
 
 
 class SSpendingUpdatePartialInDB(BaseModel):
-    amount: Optional[int] = None
-    description: Optional[str] = Field(None, max_length=100)
+    amount: int | None = None
+    description: str | None = Field(None, max_length=100)
     date: datetime | None
 
 
@@ -57,7 +57,7 @@ class STransactionsQueryParams(BaseModel):
 
 
 class STransactionsSortParams(BaseModel):
-    sort_by: Optional[list[str]] = None
+    sort_by: list[str] | None = None
 
     @field_validator("sort_by")
     def validate_sort_by(cls, value: list[str]):
