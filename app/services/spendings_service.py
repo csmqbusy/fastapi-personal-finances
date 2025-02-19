@@ -4,7 +4,7 @@ from app.schemas.spendings_schemas import (
     STransactionCreate,
     STransactionCreateInDB,
     STransactionResponse,
-    STransactionUpdatePartial,
+    STransactionUpdatePartialInDB,
 )
 from app.services.base_transactions_service import TransactionsService
 
@@ -15,6 +15,6 @@ spendings_service = TransactionsService(
     default_tx_category_name=settings.app.default_spending_category_name,
     creation_schema=STransactionCreate,
     creation_in_db_schema=STransactionCreateInDB,
-    update_partial_in_db_schema=STransactionUpdatePartial,
+    update_partial_in_db_schema=STransactionUpdatePartialInDB,
     out_schema=STransactionResponse,
 )

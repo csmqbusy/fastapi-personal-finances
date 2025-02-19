@@ -44,7 +44,7 @@ class STransactionUpdatePartial(BaseModel):
     category_name: str | None = Field(None, max_length=50)
 
 
-class SSpendingUpdatePartialInDB(BaseModel):
+class STransactionUpdatePartialInDB(BaseModel):
     amount: int | None = None
     description: str | None = Field(None, max_length=100)
     date: datetime | None
