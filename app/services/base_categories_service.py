@@ -134,7 +134,7 @@ class BaseCategoriesService:
         new_category_name: str | None,
         session: AsyncSession,
     ):
-        if category_name == self.default_category_name:
+        if category_name.capitalize() == self.default_category_name:
             raise CannotDeleteDefaultCategory
 
         category_for_delete = await self.get_category(
