@@ -13,7 +13,7 @@ from app.services.user_service import get_user_by_username
 from app.api.exceptions.auth_exceptions import (
     InvalidCredentialsError,
     TokenNotFoundError,
-    InvalidTokenException,
+    InvalidTokenError,
     UserNotFoundError,
     UserInactiveError,
 )
@@ -44,7 +44,7 @@ async def validate_access_token(
     try:
         payload = decode_access_token(access_token)
     except InvalidTokenError:
-        raise InvalidTokenException()
+        raise InvalidTokenError()
     return payload
 
 
