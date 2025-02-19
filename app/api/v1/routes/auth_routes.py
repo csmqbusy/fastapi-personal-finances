@@ -13,10 +13,12 @@ from app.api.dependencies.auth_dependencies import (
 from app.api.exceptions.auth_exceptions import (
     UsernameAlreadyExistsError,
     EmailAlreadyExistsError,
+    InvalidUsernameError,
 )
 from app.services.auth_service import (
     hash_password,
     create_access_token,
+    validate_username,
 )
 from app.db import get_db_session
 from app.exceptions.user_exceptions import (
@@ -40,6 +42,8 @@ async def sign_up_user(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SUserShortInfo:
     user.password = hash_password(user.password.decode())
+    if not validate_username(user.username):
+        raise InvalidUsernameError()
     try:
         user_from_db = await create_user(user, db_session)
     except UsernameAlreadyExists:
