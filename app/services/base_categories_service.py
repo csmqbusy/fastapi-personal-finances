@@ -11,7 +11,7 @@ from app.exceptions.categories_exceptions import (
 )
 from app.schemas.spending_category_schemas import (
     SSpendingCategoryUpdate,
-    SpendingsOnDeleteActions,
+    TransactionsOnDeleteActions,
 )
 
 
@@ -117,7 +117,7 @@ class BaseCategoriesService:
         self,
         category_name: str,
         user_id: int,
-        transactions_actions: SpendingsOnDeleteActions,
+        transactions_actions: TransactionsOnDeleteActions,
         new_category_name: str | None,
         session: AsyncSession,
     ):
@@ -132,10 +132,10 @@ class BaseCategoriesService:
         transactions = await self.transaction_repo.get_all(
             session, dict(category_id=category_for_delete.id, user_id=user_id))
 
-        if transactions_actions == SpendingsOnDeleteActions.DELETE:
+        if transactions_actions == TransactionsOnDeleteActions.DELETE:
             for spending in transactions:
                 await self.transaction_repo.delete(session, spending.id)
-        elif transactions_actions == SpendingsOnDeleteActions.TO_DEFAULT:
+        elif transactions_actions == TransactionsOnDeleteActions.TO_DEFAULT:
             default_category = await self.get_default_category(user_id, session)
             await self._change_transactions_category(
                 transactions,
@@ -145,7 +145,7 @@ class BaseCategoriesService:
         else:
             if new_category_name is None:
                 raise CategoryNameNotFound
-            if transactions_actions == SpendingsOnDeleteActions.TO_NEW_CAT:
+            if transactions_actions == TransactionsOnDeleteActions.TO_NEW_CAT:
                 await self.add_category_to_db(
                     user_id,
                     new_category_name,

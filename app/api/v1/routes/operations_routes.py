@@ -31,7 +31,7 @@ from app.schemas.spending_category_schemas import (
     SSpendingCategoryCreate,
     SSpendingCategoryOut,
     SSpendingCategoryUpdate,
-    SpendingsOnDeleteActions,
+    TransactionsOnDeleteActions,
 )
 from app.schemas.spendings_schemas import (
     SSpendingCreate,
@@ -229,7 +229,7 @@ async def spending_category_update(
 )
 async def spending_category_delete(
     category_name: str,
-    handle_spendings_on_deletion: SpendingsOnDeleteActions,
+    handle_spendings_on_deletion: TransactionsOnDeleteActions,
     new_category_name: str | None = None,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),

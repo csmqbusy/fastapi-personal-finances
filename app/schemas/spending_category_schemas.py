@@ -26,7 +26,7 @@ class SSpendingCategoryUpdate(SSpendingCategoryBase):
     pass
 
 
-class SpendingsOnDeleteActions(str, Enum):
+class TransactionsOnDeleteActions(str, Enum):
     DELETE = "DELETE"
     TO_DEFAULT = "TO_DEFAULT"
     TO_EXISTS_CAT = "TO_EXISTS_CATEGORY"
