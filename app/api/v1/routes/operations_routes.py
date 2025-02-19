@@ -36,7 +36,7 @@ from app.schemas.transaction_category_schemas import (
 from app.schemas.spendings_schemas import (
     STransactionCreate,
     STransactionResponse,
-    SSpendingUpdatePartial,
+    STransactionUpdatePartial,
     STransactionsQueryParams,
     STransactionsSortParams,
 )
@@ -106,7 +106,7 @@ async def spending_get(
 )
 async def spending_update(
     spending_id: int,
-    spending_update_obj: SSpendingUpdatePartial,
+    spending_update_obj: STransactionUpdatePartial,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> STransactionResponse:

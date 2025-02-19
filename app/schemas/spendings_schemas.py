@@ -37,7 +37,7 @@ class STransactionCreateInDB(STransactionBase):
     category_id: int
 
 
-class SSpendingUpdatePartial(BaseModel):
+class STransactionUpdatePartial(BaseModel):
     amount: int | None = Field(None, gt=0)
     description: str | None = Field(None, max_length=100)
     date: datetime | None
