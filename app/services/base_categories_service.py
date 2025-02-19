@@ -133,8 +133,8 @@ class BaseCategoriesService:
             session, dict(category_id=category_for_delete.id, user_id=user_id))
 
         if transactions_actions == TransactionsOnDeleteActions.DELETE:
-            for spending in transactions:
-                await self.transaction_repo.delete(session, spending.id)
+            for transaction in transactions:
+                await self.transaction_repo.delete(session, transaction.id)
         elif transactions_actions == TransactionsOnDeleteActions.TO_DEFAULT:
             default_category = await self.get_default_category(user_id, session)
             await self._change_transactions_category(
