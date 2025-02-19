@@ -7,9 +7,9 @@ from .routes import (
 router_v1 = APIRouter()
 router_v1.include_router(
     authentication_router,
-    tags=["authentication"],
+    tags=["Authentication"],
 )
 router_v1.include_router(
     spendings_router,
-    tags=["spendings"],
+    tags=["Spendings"],
 )
