@@ -137,7 +137,7 @@ class BaseCategoriesService:
                 await self.transaction_repo.delete(session, spending.id)
         elif transactions_actions == SpendingsOnDeleteActions.TO_DEFAULT:
             default_category = await self.get_default_category(user_id, session)
-            await self.change_transactions_category(
+            await self._change_transactions_category(
                 transactions,
                 default_category.id,
                 session,
@@ -159,14 +159,14 @@ class BaseCategoriesService:
             if category is None:
                 raise CategoryNotFound
 
-            await self.change_transactions_category(
+            await self._change_transactions_category(
                 transactions,
                 category.id,
                 session,
             )
         await self.category_repo.delete(session, category_for_delete.id)
 
-    async def change_transactions_category(
+    async def _change_transactions_category(
         self,
         transactions: Iterable,
         new_category_id: int,
