@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from .routes import (
     authentication_router,
-    operations_router,
+    spendings_router,
 )
 
 router_v1 = APIRouter()
@@ -10,6 +10,6 @@ router_v1.include_router(
     tags=["authentication"],
 )
 router_v1.include_router(
-    operations_router,
-    tags=["operations"],
+    spendings_router,
+    tags=["spendings"],
 )

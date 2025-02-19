@@ -1,8 +1,8 @@
 from .auth_routes import router as authentication_router
-from .operations_routes import router as operations_router
+from .spendings_routes import router as spendings_router
 
 
 __all__ = [
     "authentication_router",
-    "operations_router",
+    "spendings_router",
 ]
