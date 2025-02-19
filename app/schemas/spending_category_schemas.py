@@ -3,7 +3,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
-class SSpendingCategoryBase(BaseModel):
+class STransactionCategoryBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     category_name: str = Field(..., max_length=50)
@@ -13,16 +13,16 @@ class SSpendingCategoryBase(BaseModel):
         return value.strip()
 
 
-class SSpendingCategoryCreate(SSpendingCategoryBase):
+class SSpendingCategoryCreate(STransactionCategoryBase):
     pass
 
 
-class SSpendingCategoryOut(SSpendingCategoryBase):
+class SSpendingCategoryOut(STransactionCategoryBase):
     id: int
     user_id: int
 
 
-class SSpendingCategoryUpdate(SSpendingCategoryBase):
+class SSpendingCategoryUpdate(STransactionCategoryBase):
     pass
 
 
