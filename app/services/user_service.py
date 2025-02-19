@@ -29,7 +29,7 @@ async def get_user_by_username(
     username: str,
     session: AsyncSession,
 ) -> UserModel | None:
-    return await user_repo.get_one_by_filter(session, {"username": username})
+    return await user_repo.get_by_username(session, username)
 
 
 async def _check_unique_username(username: str, session: AsyncSession) -> bool:
