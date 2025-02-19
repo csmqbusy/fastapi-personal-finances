@@ -79,19 +79,6 @@ class BaseCategoriesService:
         )
         return user_categories
 
-    async def is_category_exists(
-        self,
-        user_id: int,
-        category_name: str,
-        session: AsyncSession,
-    ):
-        user_categories = await self.get_user_categories(
-            user_id,
-            session,
-        )
-        categories = [c.category_name for c in user_categories]
-        return category_name in categories
-
     async def add_user_default_category(
         self,
         user_id: int,
