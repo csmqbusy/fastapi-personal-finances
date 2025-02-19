@@ -32,7 +32,7 @@ class STransactionResponse(STransactionWithCategory):
     id: int
 
 
-class SSpendingCreateInDB(STransactionBase):
+class STransactionCreateInDB(STransactionBase):
     user_id: int
     category_id: int
 
