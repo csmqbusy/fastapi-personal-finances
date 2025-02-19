@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from app.models import UsersSpendingCategoriesModel
 from app.repositories.base_repository import BaseRepository
 
@@ -7,6 +9,17 @@ class UserSpendingCategoriesRepository(
 ):
     def __init__(self):
         super().__init__(UsersSpendingCategoriesModel)
+
+    async def get_category(self, session, user_id, category_name):
+        query = (
+            select(self.model)
+            .filter(
+                self.model.category_name.ilike(f"%{category_name}%"),
+                self.model.user_id == user_id,
+            )
+        )
+        user = await session.execute(query)
+        return user.scalar_one_or_none()
 
 
 user_spend_cat_repo = UserSpendingCategoriesRepository()
