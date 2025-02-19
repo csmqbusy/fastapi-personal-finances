@@ -13,7 +13,7 @@ class STransactionCategoryBase(BaseModel):
         return value.strip()
 
 
-class SSpendingCategoryCreate(STransactionCategoryBase):
+class STransactionCategoryCreate(STransactionCategoryBase):
     pass
 
 

@@ -28,7 +28,7 @@ from app.models import UserModel
 from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.pagination_schemas import SPagination
 from app.schemas.spending_category_schemas import (
-    SSpendingCategoryCreate,
+    STransactionCategoryCreate,
     SSpendingCategoryOut,
     SSpendingCategoryUpdate,
     TransactionsOnDeleteActions,
@@ -182,7 +182,7 @@ async def spendings_get(
     summary="Create new spending category",
 )
 async def spending_category_add(
-    spending_category: SSpendingCategoryCreate,
+    spending_category: STransactionCategoryCreate,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSpendingCategoryOut:
