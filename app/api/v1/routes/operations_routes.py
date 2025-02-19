@@ -234,6 +234,10 @@ async def spending_category_delete(
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ):
+    category_name = category_name.strip()
+    if new_category_name:
+        new_category_name = new_category_name.strip()
+
     try:
         await user_spend_cat_service.delete_category(
             category_name=category_name,
