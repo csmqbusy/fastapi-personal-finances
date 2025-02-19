@@ -81,7 +81,7 @@ def test_sign_up_user(
         expected_json_answer = {"detail": "Email already exists."}
 
     response = client.post(
-        url=f"{settings.api.prefix_v1}/registration/",
+        url=f"{settings.api.prefix_v1}/sign_up/",
         json={
             "username": username,
             "password": password,
@@ -131,7 +131,7 @@ def test_login(
     json_answer: dict,
 ):
     signup_response = client.post(
-        url=f"{settings.api.prefix_v1}/registration/",
+        url=f"{settings.api.prefix_v1}/sign_up/",
         json={
             "username": username,
             "password": password,
@@ -143,7 +143,7 @@ def test_login(
     if fail_type == LoginFailType.NO_FAIL:
         assert client.cookies.get("access_token") is None
         login_response = client.post(
-            url=f"{settings.api.prefix_v1}/login/",
+            url=f"{settings.api.prefix_v1}/sign_in/",
             data={
                 "username": username,
                 "password": password,
@@ -161,7 +161,7 @@ def test_login(
 
         assert client.cookies.get("access_token") is None
         login_response = client.post(
-            url=f"{settings.api.prefix_v1}/login/",
+            url=f"{settings.api.prefix_v1}/sign_in/",
             data={
                 "username": username,
                 "password": password,
@@ -193,7 +193,7 @@ def test_logout(
     json_answer: dict,
 ):
     signup_response = client.post(
-        url=f"{settings.api.prefix_v1}/registration/",
+        url=f"{settings.api.prefix_v1}/sign_up/",
         json={
             "username": username,
             "password": password,
@@ -203,7 +203,7 @@ def test_logout(
     assert signup_response.status_code == status.HTTP_201_CREATED
 
     login_response = client.post(
-        url=f"{settings.api.prefix_v1}/login/",
+        url=f"{settings.api.prefix_v1}/sign_in/",
         data={
             "username": username,
             "password": password,
@@ -254,7 +254,7 @@ def test_auth_user_get_info(
     fail_type: GetInfoFailType,
 ):
     signup_response = client.post(
-        url=f"{settings.api.prefix_v1}/registration/",
+        url=f"{settings.api.prefix_v1}/sign_up/",
         json={
             "username": username,
             "password": password,
@@ -264,7 +264,7 @@ def test_auth_user_get_info(
     assert signup_response.status_code == status.HTTP_201_CREATED
 
     login_response = client.post(
-        url=f"{settings.api.prefix_v1}/login/",
+        url=f"{settings.api.prefix_v1}/sign_in/",
         data={
             "username": username,
             "password": password,
