@@ -8,8 +8,6 @@ from pydantic import (
     field_validator,
 )
 
-from app.models import SpendingsModel
-
 
 class STransactionBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -64,7 +62,7 @@ class STransactionsSortParams(BaseModel):
         if not value:
             return value
 
-        allowed_fields = [a for a in dir(SpendingsModel) if not a.startswith("_")]
+        allowed_fields = STransactionResponse.model_fields
 
         value_copy = value.copy()
         value.clear()
