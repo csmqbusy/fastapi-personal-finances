@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.categories_exceptions import CategoryAlreadyExists
 from app.repositories import user_repo
+from app.schemas.transaction_category_schemas import STransactionCategoryCreate
 from app.services import user_spend_cat_service
 from tests.integration.spendings_categories.helpers import add_mock_user
 
@@ -42,12 +43,13 @@ async def test_add_category_to_db(
         await add_mock_user(db_session, mock_user_username)
     user = await user_repo.get_by_username(db_session, mock_user_username)
 
+    category_schema = STransactionCategoryCreate(category_name=category_name)
     with expectation:
         category = await user_spend_cat_service.add_category_to_db(
             user.id,
-            category_name,
+            category_schema.category_name,
             db_session,
         )
         assert type(category) is user_spend_cat_service.out_schema
-        assert category.category_name == category_name
+        assert category.category_name == category_schema.category_name
         assert category.user_id == user.id
