@@ -75,3 +75,54 @@ async def test_add_category(
             dict(user_id=user.id),
         )
         assert len(categories) == curr_num_of_categories
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "category_name, add_user,",
+    [
+        (
+            "Food2",
+            True,
+        ),
+        (
+            "Food",
+            False,
+        ),
+        (
+            "foo",
+            False,
+        )
+    ]
+)
+async def test_get_category(
+    db_session: AsyncSession,
+    category_name: str,
+    add_user: bool,
+):
+    mock_user_username = "RONALDO"
+    if add_user:
+        await _add_mock_user(db_session, mock_user_username)
+
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    category = await user_spend_cat_repo.get_category(
+        db_session,
+        user.id,
+        category_name,
+    )
+    assert category is None
+
+    await user_spend_cat_repo.add(
+        db_session,
+        dict(user_id=user.id, category_name=category_name),
+    )
+
+    category = await user_spend_cat_repo.get_category(
+        db_session,
+        user.id,
+        category_name,
+    )
+    assert category.category_name == category_name
+    assert category.user_id == user.id
+
