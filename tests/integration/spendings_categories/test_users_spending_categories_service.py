@@ -123,3 +123,50 @@ async def test_create_and_get_default_category(db_session: AsyncSession):
     assert category is not None
     assert category.category_name == user_spend_cat_service.default_category_name
     assert category.user_id == user.id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "mock_user_username, num_of_categories",
+    [
+        (
+            "FORLAN1",
+            1,
+        ),
+        (
+            "FORLAN2",
+            100,
+        ),
+        (
+            "FORLAN3",
+            0,
+        ),
+        (
+            "FORLAN4",
+            9,
+        ),
+    ]
+)
+async def test_get_user_categories(
+    db_session: AsyncSession,
+    mock_user_username,
+    num_of_categories: int,
+):
+    await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    for i in range(num_of_categories):
+        category_schema = STransactionCategoryCreate(
+            category_name=f"Category {i}",
+            )
+        await user_spend_cat_service.add_category_to_db(
+            user.id,
+            category_schema.category_name,
+            db_session,
+        )
+
+    categories = await user_spend_cat_service.get_user_categories(
+        user.id,
+        db_session,
+    )
+    assert len(categories) == num_of_categories
