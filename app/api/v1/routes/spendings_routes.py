@@ -41,7 +41,7 @@ from app.schemas.transactions_schemas import (
     STransactionsSortParams,
 )
 from app.services import spendings_service
-from app.services.common_services import apply_pagination
+from app.services.common_service import apply_pagination
 from app.services.users_spending_categories_service import user_spend_cat_service
 
 router = APIRouter()
