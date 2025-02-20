@@ -4,9 +4,15 @@ from typing import ContextManager
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.categories_exceptions import CategoryAlreadyExists
+from app.exceptions.categories_exceptions import (
+    CategoryAlreadyExists,
+    CategoryNotFound,
+)
 from app.repositories import user_repo
-from app.schemas.transaction_category_schemas import STransactionCategoryCreate
+from app.schemas.transaction_category_schemas import (
+    STransactionCategoryCreate,
+    STransactionCategoryUpdate,
+)
 from app.services import user_spend_cat_service
 from tests.conftest import db_session
 from tests.integration.spendings_categories.helpers import add_mock_user
@@ -158,7 +164,7 @@ async def test_get_user_categories(
     for i in range(num_of_categories):
         category_schema = STransactionCategoryCreate(
             category_name=f"Category {i}",
-            )
+        )
         await user_spend_cat_service.add_category_to_db(
             user.id,
             category_schema.category_name,
@@ -170,3 +176,71 @@ async def test_get_user_categories(
         db_session,
     )
     assert len(categories) == num_of_categories
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "category_name, new_category_name, create_category, expectation, create_user",
+    [
+        (
+            "Food",
+            "Luxury food ",
+            True,
+            nullcontext(),
+            True,
+        ),
+        (
+            "Food",
+            "FOOD ",
+            True,
+            pytest.raises(CategoryAlreadyExists),
+            False,
+        ),
+        (
+            "Cat food",
+            "Pet food",
+            False,
+            pytest.raises(CategoryNotFound),
+            False,
+        ),
+    ]
+)
+async def test_update_category(
+    db_session: AsyncSession,
+    category_name: str,
+    new_category_name: str,
+    create_category: bool,
+    expectation: ContextManager,
+    create_user: bool,
+):
+    mock_user_username = "RODRI"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    old_category = None
+    if create_category:
+        category_schema = STransactionCategoryCreate(
+            category_name=category_name,
+        )
+        old_category = await user_spend_cat_service.add_category_to_db(
+            user.id,
+            category_schema.category_name,
+            db_session,
+        )
+
+    with expectation:
+        category_update_obj = STransactionCategoryUpdate(
+            category_name=new_category_name,
+        )
+        category = await user_spend_cat_service.update_category(
+            category_name,
+            user.id,
+            category_update_obj,
+            db_session,
+        )
+
+        assert category.category_name == category_update_obj.category_name
+        assert category.user_id == user.id
+        if old_category:
+            assert category.id == old_category.id
