@@ -14,7 +14,7 @@ class UserSpendingCategoriesRepository(
         query = (
             select(self.model)
             .filter(
-                self.model.category_name.ilike(f"%{category_name}%"),
+                self.model.category_name.ilike(category_name),
                 self.model.user_id == user_id,
             )
         )
