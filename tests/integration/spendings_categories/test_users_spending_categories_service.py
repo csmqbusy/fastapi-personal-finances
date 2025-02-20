@@ -8,11 +8,12 @@ from app.exceptions.categories_exceptions import (
     CategoryAlreadyExists,
     CategoryNotFound,
 )
-from app.repositories import user_repo
+from app.repositories import user_repo, spendings_repo
 from app.schemas.transaction_category_schemas import (
     STransactionCategoryCreate,
     STransactionCategoryUpdate,
 )
+from app.schemas.transactions_schemas import STransactionCreateInDB
 from app.services import user_spend_cat_service
 from tests.conftest import db_session
 from tests.integration.spendings_categories.helpers import add_mock_user
@@ -244,3 +245,91 @@ async def test_update_category(
         assert category.user_id == user.id
         if old_category:
             assert category.id == old_category.id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "original_category, changed_category, num_of_transactions, create_user",
+    [
+        (
+            "Food",
+            "Luxury food",
+            10,
+            True,
+        ),
+        (
+            "Health",
+            "Mental Health",
+            0,
+            False,
+        ),
+    ]
+)
+async def test__change_transactions_category(
+    db_session: AsyncSession,
+    original_category: str,
+    changed_category: str,
+    num_of_transactions: int,
+    create_user: bool,
+):
+    mock_user_username = "BOJAN"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    # add original category
+    category_schema = STransactionCategoryCreate(
+        category_name=original_category,
+    )
+    original_category = await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_schema.category_name,
+        db_session,
+    )
+
+    # add transactions
+    for i in range(num_of_transactions):
+        transaction_to_create = STransactionCreateInDB(
+            amount=1000 + i,
+            description=None,
+            date=None,
+            user_id=user.id,
+            category_id=original_category.id,
+        )
+        await spendings_repo.add(
+            db_session,
+            transaction_to_create.model_dump(),
+        )
+
+    # add changed category
+    category_schema = STransactionCategoryCreate(
+        category_name=changed_category,
+    )
+    changed_category_from_db = await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_schema.category_name,
+        db_session,
+    )
+    new_category_id = changed_category_from_db.id
+
+    transactions = await spendings_repo.get_all(
+        db_session, dict(category_id=original_category.id, user_id=user.id)
+    )
+
+    assert len(transactions) == num_of_transactions
+
+    await user_spend_cat_service._change_transactions_category(
+        transactions,
+        new_category_id,
+        db_session,
+    )
+
+    transactions_with_original_category = await spendings_repo.get_all(
+        db_session, dict(category_id=original_category.id, user_id=user.id)
+    )
+    assert len(transactions_with_original_category) == 0
+
+    transactions_with_changed_category = await spendings_repo.get_all(
+        db_session, dict(category_id=new_category_id, user_id=user.id)
+    )
+    assert len(transactions_with_changed_category) == num_of_transactions
