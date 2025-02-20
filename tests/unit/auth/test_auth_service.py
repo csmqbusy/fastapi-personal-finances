@@ -5,6 +5,7 @@ from app.services.auth_service import (
     decode_access_token,
     hash_password,
     verify_password,
+    validate_username,
 )
 
 
@@ -38,3 +39,52 @@ def test_hash_password(
     hashed_password = hash_password(password)
     assert hashed_password is not None
     assert verify_password(password, hashed_password)
+
+
+@pytest.mark.parametrize(
+    "username, result",
+    [
+        (
+            "qwerty",
+            True,
+        ),
+        (
+            "12345",
+            True,
+        ),
+        (
+            "1_2_3",
+            True,
+        ),
+        (
+            "_Q_W_E_",
+            True,
+        ),
+        (
+            "q" * 2,
+            False,
+        ),
+        (
+            "q" * 25,
+            False,
+        ),
+        (
+            "",
+            False,
+        ),
+        (
+            "qwe rty",
+            False,
+        ),
+        (
+            "@werty",
+            False,
+        ),
+    ]
+)
+def test_validate_username(
+    username: str,
+    result: bool,
+):
+    assert validate_username(username) == result
+
