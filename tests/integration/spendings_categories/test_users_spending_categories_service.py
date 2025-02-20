@@ -4,14 +4,17 @@ from typing import ContextManager
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.exceptions.categories_exceptions import (
     CategoryAlreadyExists,
     CategoryNotFound,
+    CannotDeleteDefaultCategory,
 )
 from app.repositories import user_repo, spendings_repo
 from app.schemas.transaction_category_schemas import (
     STransactionCategoryCreate,
     STransactionCategoryUpdate,
+    TransactionsOnDeleteActions,
 )
 from app.schemas.transactions_schemas import STransactionCreateInDB
 from app.services import user_spend_cat_service
@@ -333,3 +336,49 @@ async def test__change_transactions_category(
         db_session, dict(category_id=new_category_id, user_id=user.id)
     )
     assert len(transactions_with_changed_category) == num_of_transactions
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "category_name, transactions_actions, expectation, create_user",
+    [
+        (
+            settings.app.default_spending_category_name,
+            TransactionsOnDeleteActions.DELETE,
+            pytest.raises(CannotDeleteDefaultCategory),
+            True,
+        ),
+        (
+            settings.app.default_spending_category_name.upper(),
+            TransactionsOnDeleteActions.DELETE,
+            pytest.raises(CannotDeleteDefaultCategory),
+            False,
+        ),
+    ]
+)
+async def test_delete_category__delete_default_category(
+    db_session: AsyncSession,
+    category_name: str,
+    transactions_actions: TransactionsOnDeleteActions,
+    expectation: ContextManager,
+    create_user: bool,
+):
+    mock_user_username = "MAKELELE"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    if create_user:
+        await user_spend_cat_service.add_user_default_category(
+            user.id,
+            db_session,
+        )
+
+    with expectation:
+        await user_spend_cat_service.delete_category(
+            category_name=category_name,
+            user_id=user.id,
+            transactions_actions=transactions_actions,
+            new_category_name=None,
+            session=db_session,
+        )
