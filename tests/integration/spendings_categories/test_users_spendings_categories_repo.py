@@ -11,7 +11,7 @@ from tests.integration.spendings_categories.helpers import add_mock_user
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "category_name, curr_num_of_categories, expectation, add_user,",
+    "category_name, curr_num_of_categories, expectation, create_user,",
     [
         (
             "Food",
@@ -38,10 +38,10 @@ async def test_add_category(
     category_name: str,
     curr_num_of_categories: int,
     expectation: ContextManager,
-    add_user: bool,
+    create_user: bool,
 ):
     mock_user_username = "MESSI"
-    if add_user:
+    if create_user:
         await add_mock_user(db_session, mock_user_username)
 
     user = await user_repo.get_by_username(db_session, mock_user_username)
@@ -68,7 +68,7 @@ async def test_add_category(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "category_name, add_user,",
+    "category_name, create_user,",
     [
         (
             "Food2",
@@ -87,10 +87,10 @@ async def test_add_category(
 async def test_get_category(
     db_session: AsyncSession,
     category_name: str,
-    add_user: bool,
+    create_user: bool,
 ):
     mock_user_username = "RONALDO"
-    if add_user:
+    if create_user:
         await add_mock_user(db_session, mock_user_username)
 
     user = await user_repo.get_by_username(db_session, mock_user_username)
