@@ -40,7 +40,7 @@ async def test_add_category(
     expectation: ContextManager,
     create_user: bool,
 ):
-    mock_user_username = "MESSI"
+    mock_user_username = "MESSI10"
     if create_user:
         await add_mock_user(db_session, mock_user_username)
 
@@ -89,7 +89,7 @@ async def test_get_category(
     category_name: str,
     create_user: bool,
 ):
-    mock_user_username = "RONALDO"
+    mock_user_username = "RONALDO7"
     if create_user:
         await add_mock_user(db_session, mock_user_username)
 
