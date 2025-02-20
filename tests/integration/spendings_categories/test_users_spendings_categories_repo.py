@@ -1,5 +1,6 @@
 from contextlib import nullcontext
 from typing import ContextManager
+from random import randint
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -7,6 +8,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories import user_spend_cat_repo, user_repo
 from app.schemas.user_schemas import SUserSignUp
+
+
+async def _add_mock_user(db_session: AsyncSession, username: str) -> None:
+    mock_email = f"mock{randint(1, 100_000_000)}{randint(1, 100_000_000)}@i.ai"
+    user_schema = SUserSignUp(
+        username=username,
+        password=b"qwerty",
+        email=mock_email,  # type: ignore
+    )
+    await user_repo.add(db_session, user_schema.model_dump())
 
 
 @pytest.mark.asyncio
@@ -40,31 +51,27 @@ async def test_add_category(
     expectation: ContextManager,
     add_user: bool,
 ):
+    mock_user_username = "MESSI"
     if add_user:
-        user_schema = SUserSignUp(
-            username="messi",
-            password=b"qwerty",
-            email="messi@example.com",  # type: ignore
-        )
-        await user_repo.add(db_session, user_schema.model_dump())
+        await _add_mock_user(db_session, mock_user_username)
 
-    user_id = (await user_repo.get_by_username(db_session, "messi")).id
+    user = await user_repo.get_by_username(db_session, mock_user_username)
 
     with expectation:
         await user_spend_cat_repo.add(
             db_session,
-            dict(user_id=user_id, category_name=category_name),
+            dict(user_id=user.id, category_name=category_name),
         )
 
         category = await user_spend_cat_repo.get_category(
             db_session,
-            user_id,
+            user.id,
             category_name,
         )
         assert category.category_name == category_name
 
         categories = await user_spend_cat_repo.get_all(
             db_session,
-            dict(user_id=user_id),
+            dict(user_id=user.id),
         )
         assert len(categories) == curr_num_of_categories
