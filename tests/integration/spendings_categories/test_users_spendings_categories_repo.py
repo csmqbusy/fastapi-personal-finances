@@ -1,23 +1,12 @@
 from contextlib import nullcontext
 from typing import ContextManager
-from random import randint
 
 import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories import user_spend_cat_repo, user_repo
-from app.schemas.user_schemas import SUserSignUp
-
-
-async def _add_mock_user(db_session: AsyncSession, username: str) -> None:
-    mock_email = f"mock{randint(1, 100_000_000)}{randint(1, 100_000_000)}@i.ai"
-    user_schema = SUserSignUp(
-        username=username,
-        password=b"qwerty",
-        email=mock_email,  # type: ignore
-    )
-    await user_repo.add(db_session, user_schema.model_dump())
+from tests.integration.spendings_categories.helpers import add_mock_user
 
 
 @pytest.mark.asyncio
@@ -53,7 +42,7 @@ async def test_add_category(
 ):
     mock_user_username = "MESSI"
     if add_user:
-        await _add_mock_user(db_session, mock_user_username)
+        await add_mock_user(db_session, mock_user_username)
 
     user = await user_repo.get_by_username(db_session, mock_user_username)
 
@@ -102,7 +91,7 @@ async def test_get_category(
 ):
     mock_user_username = "RONALDO"
     if add_user:
-        await _add_mock_user(db_session, mock_user_username)
+        await add_mock_user(db_session, mock_user_username)
 
     user = await user_repo.get_by_username(db_session, mock_user_username)
 
