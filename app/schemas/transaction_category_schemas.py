@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 class STransactionCategoryBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    category_name: str = Field(..., max_length=50)
+    category_name: str = Field(..., min_length=1, max_length=50)
 
     @field_validator("category_name")
     def validate_category_name(cls, value):
