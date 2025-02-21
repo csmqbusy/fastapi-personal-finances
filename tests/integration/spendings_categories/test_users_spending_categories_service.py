@@ -488,3 +488,80 @@ async def test_delete_category__delete_spendings_with_category(
         db_session, dict(user_id=user.id)
     )
     assert len(all_transactions) == num_of_spendings
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "category_name, num_of_spendings, transactions_action, create_user",
+    [
+        (
+            "Games",
+            50,
+            TransactionsOnDeleteActions.TO_DEFAULT,
+            True,
+        ),
+    ]
+)
+async def test_delete_category__move_spendings_to_default_category(
+    db_session: AsyncSession,
+    category_name: str,
+    num_of_spendings: int,
+    transactions_action: TransactionsOnDeleteActions,
+    create_user: bool,
+):
+    mock_user_username = "HENRY"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    if create_user:
+        await user_spend_cat_service.add_user_default_category(
+            user.id,
+            db_session,
+        )
+
+    category_schema = STransactionCategoryCreate(category_name=category_name)
+    category = await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_schema.category_name,
+        db_session,
+    )
+
+    await create_spendings(num_of_spendings, user.id, None, db_session)
+    await create_spendings(num_of_spendings, user.id, category.id, db_session)
+
+    category_transactions = await spendings_repo.get_all(
+        db_session, dict(category_id=category.id, user_id=user.id)
+    )
+    all_transactions = await spendings_repo.get_all(
+        db_session, dict(user_id=user.id)
+    )
+    assert len(category_transactions) == num_of_spendings
+    assert len(all_transactions) == num_of_spendings * 2
+
+    await user_spend_cat_service.delete_category(
+        category_name=category_name,
+        user_id=user.id,
+        transactions_actions=transactions_action,
+        new_category_name=None,
+        session=db_session,
+    )
+
+    transactions = await spendings_repo.get_all(
+        db_session, dict(category_id=category.id, user_id=user.id)
+    )
+    assert len(transactions) == 0
+
+    all_transactions = await spendings_repo.get_all(
+        db_session, dict(user_id=user.id)
+    )
+    assert len(all_transactions) == num_of_spendings * 2
+
+    default_category = await user_spend_cat_service.get_default_category(
+            user.id,
+            db_session,
+        )
+    default_category_transactions = await spendings_repo.get_all(
+        db_session, dict(user_id=user.id, category_id=default_category.id)
+    )
+    assert len(default_category_transactions) == num_of_spendings * 2
