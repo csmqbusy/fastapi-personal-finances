@@ -20,7 +20,7 @@ from app.schemas.transaction_category_schemas import (
 from app.schemas.transactions_schemas import STransactionCreateInDB
 from app.services import user_spend_cat_service
 from tests.conftest import db_session
-from tests.integration.spendings_categories.helpers import (
+from tests.integration.helpers import (
     add_mock_user,
     create_spendings,
 )

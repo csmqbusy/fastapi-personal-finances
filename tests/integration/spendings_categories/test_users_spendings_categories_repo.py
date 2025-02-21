@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories import user_spend_cat_repo, user_repo
-from tests.integration.spendings_categories.helpers import add_mock_user
+from tests.integration.helpers import add_mock_user
 
 
 @pytest.mark.asyncio
