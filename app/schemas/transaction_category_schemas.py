@@ -10,7 +10,10 @@ class STransactionCategoryBase(BaseModel):
 
     @field_validator("category_name")
     def validate_category_name(cls, value):
-        return value.strip()
+        value = value.strip()
+        if not value:
+            raise ValueError("category_name cannot be empty")
+        return value
 
 
 class STransactionCategoryCreate(STransactionCategoryBase):
