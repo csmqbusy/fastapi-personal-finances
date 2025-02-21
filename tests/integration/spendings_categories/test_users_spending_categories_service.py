@@ -9,6 +9,7 @@ from app.exceptions.categories_exceptions import (
     CategoryAlreadyExists,
     CategoryNotFound,
     CannotDeleteDefaultCategory,
+    CategoryNameNotFound,
 )
 from app.repositories import user_repo, spendings_repo
 from app.schemas.transaction_category_schemas import (
@@ -459,9 +460,8 @@ async def test_delete_category__delete_spendings_with_category(
     )
 
     await create_spendings(num_of_spendings, user.id, None, db_session)
-
-    # add transactions
     await create_spendings(num_of_spendings, user.id, category.id, db_session)
+
     category_transactions = await spendings_repo.get_all(
         db_session, dict(category_id=category.id, user_id=user.id)
     )
@@ -558,10 +558,96 @@ async def test_delete_category__move_spendings_to_default_category(
     assert len(all_transactions) == num_of_spendings * 2
 
     default_category = await user_spend_cat_service.get_default_category(
-            user.id,
-            db_session,
-        )
+        user.id,
+        db_session,
+    )
     default_category_transactions = await spendings_repo.get_all(
         db_session, dict(user_id=user.id, category_id=default_category.id)
     )
     assert len(default_category_transactions) == num_of_spendings * 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "mock_user_username",
+        "category_name",
+        "num_of_spendings",
+        "new_category_name",
+        "transactions_action",
+        "expectation",
+        "create_user",
+    ),
+    [
+        (
+            "DZEKO",
+            "Games",
+            20,
+            "Donates",
+            TransactionsOnDeleteActions.TO_NEW_CAT,
+            nullcontext(),
+            True,
+        ),
+        (
+            "VARDY",
+            "Games",
+            10,
+            None,
+            TransactionsOnDeleteActions.TO_NEW_CAT,
+            pytest.raises(CategoryNameNotFound),
+            True,
+        ),
+    ]
+)
+async def test_delete_category__move_spendings_to_new_category(
+    db_session: AsyncSession,
+    mock_user_username: str,
+    category_name: str,
+    num_of_spendings: int,
+    new_category_name: str | None,
+    transactions_action: TransactionsOnDeleteActions,
+    expectation: ContextManager,
+    create_user: bool,
+):
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    category_schema = STransactionCategoryCreate(category_name=category_name)
+    category = await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_schema.category_name,
+        db_session,
+    )
+
+    await create_spendings(num_of_spendings, user.id, category.id, db_session)
+
+    category_transactions = await spendings_repo.get_all(
+        db_session, dict(category_id=category.id, user_id=user.id)
+    )
+    assert len(category_transactions) == num_of_spendings
+
+    with expectation:
+        await user_spend_cat_service.delete_category(
+            category_name=category_name,
+            user_id=user.id,
+            transactions_actions=transactions_action,
+            new_category_name=new_category_name,
+            session=db_session,
+        )
+
+        category_transactions = await spendings_repo.get_all(
+            db_session, dict(category_id=category.id, user_id=user.id)
+        )
+        assert len(category_transactions) == 0
+
+        new_category = await user_spend_cat_service.get_category(
+            user_id=user.id,
+            category_name=new_category_name,
+            session=db_session,
+        )
+
+        new_category_transactions = await spendings_repo.get_all(
+            db_session, dict(user_id=user.id, category_id=new_category.id)
+        )
+        assert len(new_category_transactions) == num_of_spendings
