@@ -382,3 +382,37 @@ async def test_delete_category__delete_default_category(
             new_category_name=None,
             session=db_session,
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "category_name, transactions_actions, expectation, create_user",
+    [
+        (
+            "Games",
+            TransactionsOnDeleteActions.DELETE,
+            pytest.raises(CategoryNotFound),
+            True,
+        ),
+    ]
+)
+async def test_delete_category__delete_unknown_category(
+    db_session: AsyncSession,
+    category_name: str,
+    transactions_actions: TransactionsOnDeleteActions,
+    expectation: ContextManager,
+    create_user: bool,
+):
+    mock_user_username = "ONANA"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    with expectation:
+        await user_spend_cat_service.delete_category(
+            category_name=category_name,
+            user_id=user.id,
+            transactions_actions=transactions_actions,
+            new_category_name=None,
+            session=db_session,
+        )
