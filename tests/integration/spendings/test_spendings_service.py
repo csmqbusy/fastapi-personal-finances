@@ -243,3 +243,75 @@ async def test_get_transaction(
         assert spending_from_db is not None
         assert spending_from_db.id == spending.id
         assert spending_from_db.amount == spending.amount
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "create_user",
+        "wrong_spending_id",
+        "wrong_user_id",
+        "expectation_for_delete",
+        "expectation_for_get"),
+    [
+        (
+            True,
+            False,
+            False,
+            nullcontext(),
+            pytest.raises(TransactionNotFound),
+        ),
+        (
+            False,
+            True,
+            False,
+            pytest.raises(TransactionNotFound),
+            nullcontext(),
+        ),
+        (
+            False,
+            False,
+            True,
+            pytest.raises(TransactionNotFound),
+            nullcontext(),
+        ),
+    ]
+)
+async def test_delete_transaction(
+    db_session: AsyncSession,
+    create_user: bool,
+    wrong_spending_id: bool,
+    wrong_user_id: bool,
+    expectation_for_delete: ContextManager,
+    expectation_for_get: ContextManager,
+):
+    mock_user_username = "FERRAN"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    if create_user:
+        await user_spend_cat_service.add_user_default_category(
+            user.id,
+            db_session,
+        )
+
+    spending_schema = STransactionCreate(amount=100)
+    spending = await spendings_service.add_transaction_to_db(
+        spending_schema,
+        user.id,
+        db_session,
+    )
+
+    with expectation_for_delete:
+        await spendings_service.delete_transaction(
+            spending.id + wrong_spending_id,
+            user.id + wrong_user_id,
+            db_session,
+        )
+        with expectation_for_get:
+            await spendings_service.get_transaction(
+                spending.id,
+                user.id,
+                db_session,
+            )
