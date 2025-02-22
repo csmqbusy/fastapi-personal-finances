@@ -29,7 +29,7 @@ class BaseTransactionsRepository(BaseRepository):
         self,
         session: AsyncSession,
         query_params: dict,
-        description_search_term: str,
+        description_search_term: str | None = None,
         datetime_from: datetime | None = None,
         datetime_to: datetime | None = None,
         sort_params: list[SortParam] | None = None,
