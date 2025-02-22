@@ -1,9 +1,13 @@
+from contextlib import nullcontext
 from datetime import datetime
+from typing import ContextManager
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.exceptions.categories_exceptions import CategoryNotFound
+from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.repositories import user_repo
 from app.schemas.transactions_schemas import (
     STransactionCreate,
@@ -69,7 +73,16 @@ async def test_add_transaction_to_db(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "create_user, amount, description, date, new_category_name",
+    (
+        "create_user",
+        "amount",
+        "description",
+        "date",
+        "new_category_name",
+        "create_category",
+        "wrong_spending_id",
+        "expectation",
+    ),
     [
         (
             True,
@@ -77,6 +90,29 @@ async def test_add_transaction_to_db(
             "New description",
             datetime(year=2020, month=12, day=31, hour=23, minute=0, second=0),
             "New category",
+            True,
+            False,
+            nullcontext(),
+        ),
+        (
+            False,
+            8000,
+            "New description",
+            datetime(year=2020, month=12, day=31, hour=23, minute=0, second=0),
+            "Missing",
+            False,
+            False,
+            pytest.raises(CategoryNotFound),
+        ),
+        (
+            False,
+            8000,
+            "New description",
+            datetime(year=2020, month=12, day=31, hour=23, minute=0, second=0),
+            "Missing",
+            True,
+            True,
+            pytest.raises(TransactionNotFound),
         ),
     ]
 )
@@ -87,6 +123,9 @@ async def test_update_transaction(
     description: str,
     date: datetime,
     new_category_name: str,
+    create_category: bool,
+    wrong_spending_id: bool,
+    expectation: ContextManager,
 ):
     mock_user_username = "NICO"
     if create_user:
@@ -98,11 +137,12 @@ async def test_update_transaction(
             user.id,
             db_session,
         )
-    await user_spend_cat_service.add_category_to_db(
-        user.id,
-        new_category_name,
-        db_session,
-    )
+    if create_category:
+        await user_spend_cat_service.add_category_to_db(
+            user.id,
+            new_category_name,
+            db_session,
+        )
 
     spending_schema = STransactionCreate(amount=100)
     spending = await spendings_service.add_transaction_to_db(
@@ -124,21 +164,22 @@ async def test_update_transaction(
         category_name=new_category_name,
     )
 
-    await spendings_service.update_transaction(
-        spending.id,
-        user.id,
-        spending_update,
-        db_session,
-    )
+    with expectation:
+        await spendings_service.update_transaction(
+            spending.id + wrong_spending_id,
+            user.id,
+            spending_update,
+            db_session,
+        )
 
-    updated_spending = await spendings_service.get_transaction(
-        spending.id,
-        user.id,
-        db_session,
-    )
+        updated_spending = await spendings_service.get_transaction(
+            spending.id,
+            user.id,
+            db_session,
+        )
 
-    assert updated_spending is not None
-    assert updated_spending.amount == amount
-    assert updated_spending.description == description
-    assert updated_spending.date == date
-    assert updated_spending.category_name == new_category_name
+        assert updated_spending is not None
+        assert updated_spending.amount == amount
+        assert updated_spending.description == description
+        assert updated_spending.date == date
+        assert updated_spending.category_name == new_category_name
