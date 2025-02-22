@@ -14,7 +14,7 @@ class STransactionBase(BaseModel):
 
     amount: int = Field(..., gt=0)
     description: str | None = Field(None, max_length=100)
-    date: datetime | None
+    date: datetime | None = None
 
 
 class STransactionWithCategory(STransactionBase):
