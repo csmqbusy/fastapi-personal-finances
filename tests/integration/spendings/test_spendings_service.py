@@ -252,7 +252,8 @@ async def test_get_transaction(
         "wrong_spending_id",
         "wrong_user_id",
         "expectation_for_delete",
-        "expectation_for_get"),
+        "expectation_for_get",
+    ),
     [
         (
             True,
@@ -315,3 +316,50 @@ async def test_delete_transaction(
                 user.id,
                 db_session,
             )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "create_user, category_name, create_category, expectation",
+    [
+        (
+            True,
+            "Mock category",
+            True,
+            nullcontext(),
+        ),
+        (
+            False,
+            "Mock category 2",
+            False,
+            pytest.raises(CategoryNotFound),
+        ),
+    ]
+)
+async def test__get_category_id(
+    db_session: AsyncSession,
+    create_user: bool,
+    category_name: str,
+    create_category: bool,
+    expectation: ContextManager,
+):
+    mock_user_username = "RETEGUI"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    category = None
+    if create_category:
+        category = await user_spend_cat_service.add_category_to_db(
+            user.id,
+            category_name,
+            db_session,
+        )
+
+    with expectation:
+        category_id = await spendings_service._get_category_id(
+            user.id,
+            category_name,
+            db_session,
+        )
+        assert category.id == category_id
