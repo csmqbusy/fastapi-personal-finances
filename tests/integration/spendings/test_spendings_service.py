@@ -183,3 +183,63 @@ async def test_update_transaction(
         assert updated_spending.description == description
         assert updated_spending.date == date
         assert updated_spending.category_name == new_category_name
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "create_user, wrong_spending_id, wrong_user_id, expectation",
+    [
+        (
+            True,
+            False,
+            False,
+            nullcontext(),
+        ),
+        (
+            False,
+            True,
+            False,
+            pytest.raises(TransactionNotFound),
+        ),
+        (
+            False,
+            False,
+            True,
+            pytest.raises(TransactionNotFound),
+        ),
+    ]
+)
+async def test_get_transaction(
+    db_session: AsyncSession,
+    create_user: bool,
+    wrong_spending_id: bool,
+    wrong_user_id: bool,
+    expectation: ContextManager,
+):
+    mock_user_username = "INIGO"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    if create_user:
+        await user_spend_cat_service.add_user_default_category(
+            user.id,
+            db_session,
+        )
+
+    spending_schema = STransactionCreate(amount=100)
+    spending = await spendings_service.add_transaction_to_db(
+        spending_schema,
+        user.id,
+        db_session,
+    )
+
+    with expectation:
+        spending_from_db = await spendings_service.get_transaction(
+            spending.id + wrong_spending_id,
+            user.id + wrong_user_id,
+            db_session,
+        )
+        assert spending_from_db is not None
+        assert spending_from_db.id == spending.id
+        assert spending_from_db.amount == spending.amount
