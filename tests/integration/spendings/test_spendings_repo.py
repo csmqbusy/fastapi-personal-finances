@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -115,3 +117,82 @@ async def test_get_transactions__with_sort(
     )
     assert len(spendings) == len(prices)
     assert [s.amount for s in spendings] == sorted_prices
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "category_name",
+        "create_user",
+        "datetimes",
+        "datetime_from",
+        "datetime_to",
+        "expected_spendings_qty",
+    ),
+    [
+        (
+            "Food",
+            True,
+            [
+                datetime(year=2020, month=1, day=11, hour=11, minute=59),
+                datetime(year=2020, month=1, day=11, hour=12, minute=0),
+                datetime(year=2020, month=1, day=11, hour=12, minute=1),
+                datetime(year=2021, month=1, day=11, hour=12, minute=0),
+                datetime(year=2021, month=1, day=11, hour=12, minute=1),
+                datetime(year=2022, month=1, day=11, hour=12, minute=0),
+            ],
+            datetime(year=2020, month=1, day=11, hour=12, minute=0),
+            datetime(year=2021, month=1, day=11, hour=12, minute=0),
+            3,
+        ),
+    ]
+)
+async def test_get_transactions__with_datetime_period(
+    db_session: AsyncSession,
+    category_name: str,
+    create_user: bool,
+    datetimes: list[datetime],
+    datetime_from: datetime,
+    datetime_to: datetime,
+    expected_spendings_qty: int
+) -> None:
+    mock_user_username = "MARCUS"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    category = await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_name,
+        db_session,
+    )
+
+    for dt in datetimes:
+        transaction_to_create = STransactionCreateInDB(
+            amount=999,
+            description="Some description",
+            date=dt,
+            user_id=user.id,
+            category_id=category.id,
+        )
+        await spendings_repo.add(
+            db_session,
+            transaction_to_create.model_dump(),
+        )
+
+    spendings = await spendings_repo.get_transactions(
+        session=db_session,
+        query_params=dict(user_id=user.id, category_id=category.id),
+    )
+    assert [s.date for s in spendings] == datetimes
+
+    spendings = await spendings_repo.get_transactions(
+        session=db_session,
+        query_params=dict(user_id=user.id, category_id=category.id),
+        datetime_from=datetime_from,
+        datetime_to=datetime_to,
+    )
+    assert len(spendings) == expected_spendings_qty
+    for sp in spendings:
+        assert sp.date >= datetime_from
+        assert sp.date <= datetime_to
