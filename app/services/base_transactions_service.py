@@ -184,7 +184,7 @@ class TransactionsService:
             session,
             query_params.model_dump(exclude_none=True),
             sort_params=sort_params,
-            search_term=search_term,
+            description_search_term=search_term,
             datetime_from=datetime_range.start,
             datetime_to=datetime_range.end,
         )
