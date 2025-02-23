@@ -155,3 +155,69 @@ async def test_spendings_categories__get(
     categories.append(settings.app.default_spending_category_name)
     for category in categories_response.json():
         assert category["category_name"] in categories
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "amount",
+        "wrong_spending_id",
+        "sign_in_another_user",
+        "status_code",
+    ),
+    [
+        (
+            "Ronaldo10",
+            800,
+            False,
+            False,
+            status.HTTP_200_OK,
+        ),
+        (
+            "Ronaldo20",
+            300,
+            True,
+            False,
+            status.HTTP_404_NOT_FOUND,
+        ),
+        (
+            "Ronaldo30",
+            500,
+            False,
+            True,
+            status.HTTP_404_NOT_FOUND,
+        ),
+    ]
+)
+async def test_spendings_spending_id__get(
+    client: TestClient,
+    db_session: AsyncSession,
+    username: str,
+    amount: int,
+    wrong_spending_id: bool,
+    sign_in_another_user: bool,
+    status_code: int,
+):
+    sign_up_user(client, username)
+    sign_in_user(client, username)
+
+    response = client.post(
+        url=f"{settings.api.prefix_v1}/spendings/",
+        json={
+            "amount": 800,
+        }
+    )
+    spending_id = response.json()["id"] + wrong_spending_id
+
+    if sign_in_another_user:
+        another_username = f"Another{username}"
+        sign_up_user(client, another_username)
+        sign_in_user(client, another_username)
+
+    categories_response = client.get(
+        url=f"{settings.api.prefix_v1}/spendings/{spending_id}/",
+    )
+    assert categories_response.status_code == status_code
+    if categories_response.status_code == status.HTTP_200_OK:
+        assert categories_response.json()["amount"] == amount
