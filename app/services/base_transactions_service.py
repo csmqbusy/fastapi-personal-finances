@@ -185,8 +185,8 @@ class TransactionsService:
             query_params.model_dump(exclude_none=True),
             sort_params=sort_params,
             description_search_term=search_term,
-            datetime_from=datetime_range.start,
-            datetime_to=datetime_range.end,
+            datetime_from=datetime_range.start if datetime_range else None,
+            datetime_to=datetime_range.end if datetime_range else None,
         )
 
     @staticmethod
