@@ -166,7 +166,7 @@ async def spendings_get(
         spendings = await spendings_service.get_transactions(
             session=db_session,
             query_params=query_params,
-            description_search_term=description_search_term,
+            search_term=description_search_term,
             datetime_range=datetime_range,
             sort_params=sort_params,
         )
