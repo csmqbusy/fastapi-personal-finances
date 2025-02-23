@@ -162,9 +162,9 @@ class TransactionsService:
         self,
         session: AsyncSession,
         query_params: STransactionsQueryParams,
-        search_term: str | None,
-        datetime_range: SDatetimeRange,
-        sort_params: STransactionsSortParams | None,
+        search_term: str | None = None,
+        datetime_range: SDatetimeRange | None = None,
+        sort_params: STransactionsSortParams | None = None,
     ):
         if query_params.category_name and query_params.category_id is None:
             category = await self.tx_categories_repo.get_category(
