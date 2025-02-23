@@ -509,7 +509,7 @@ async def test_delete_category__move_spendings_to_default_category(
     transactions_action: TransactionsOnDeleteActions,
     create_user: bool,
 ):
-    mock_user_username = "HENRY"
+    mock_user_username = "PIRES"
     if create_user:
         await add_mock_user(db_session, mock_user_username)
     user = await user_repo.get_by_username(db_session, mock_user_username)
