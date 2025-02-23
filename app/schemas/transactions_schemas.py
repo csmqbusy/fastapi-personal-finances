@@ -68,6 +68,8 @@ class STransactionsSortParams(BaseModel):
         value.clear()
         for field in value_copy:
             if field.lstrip("-") in allowed_fields:
+                if field.startswith("-"):
+                    field = f"-{field.lstrip("-")}"
                 value.append(field)
         return value
 
