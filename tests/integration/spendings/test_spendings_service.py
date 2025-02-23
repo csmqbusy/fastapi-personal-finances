@@ -11,7 +11,7 @@ from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.repositories import user_repo
 from app.schemas.transactions_schemas import (
     STransactionCreate,
-    STransactionResponse, STransactionUpdatePartial,
+    STransactionResponse, STransactionUpdatePartial, STransactionsQueryParams,
 )
 from app.services import user_spend_cat_service, spendings_service
 from tests.integration.helpers import add_mock_user
@@ -363,3 +363,54 @@ async def test__get_category_id(
             db_session,
         )
         assert category.id == category_id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "create_user, category_name, create_category, send_user_id, expectation",
+    [
+        (
+            True,
+            "Taxi",
+            False,
+            True,
+            pytest.raises(CategoryNotFound),
+        ),
+        (
+            False,
+            "Taxi",
+            True,
+            False,
+            pytest.raises(CategoryNotFound),
+        ),
+    ]
+)
+async def test_get_transactions__errors(
+    db_session: AsyncSession,
+    create_user: bool,
+    category_name: str,
+    create_category: bool,
+    send_user_id: bool,
+    expectation: ContextManager,
+):
+    mock_user_username = "SMITHROWE"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    if create_category:
+        await user_spend_cat_service.add_category_to_db(
+            user.id,
+            category_name,
+            db_session,
+        )
+
+    with expectation:
+        query_params = STransactionsQueryParams(
+            user_id=user.id if send_user_id else None,
+            category_name=category_name,
+        )
+        await spendings_service.get_transactions(
+            query_params=query_params,
+            session=db_session,
+        )
