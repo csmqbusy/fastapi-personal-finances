@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.transaction_exceptions import TransactionNotFound
-from app.repositories import user_repo
+from app.repositories import user_repo, spendings_repo
+from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartial,
     STransactionsQueryParams,
+    STransactionCreateInDB, STransactionsSortParams,
 )
 from app.services import user_spend_cat_service, spendings_service
 from tests.integration.helpers import add_mock_user, create_spendings
@@ -476,3 +478,113 @@ async def test_get_transactions__category_id_priority(
     assert len(spendings) == spendings_qty
     assert [s.category_id for s in spendings] == [cat_1.id] * spendings_qty
     assert [s.category_id for s in spendings] != [cat_2.id] * spendings_qty
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "create_user",
+        "category_name",
+        "search_term",
+        "datetimes",
+        "datetime_from",
+        "datetime_to",
+        "pass_category_name",
+        "expected_spendings_qty",
+    ),
+    [
+        (
+            True,
+            "Candies",
+            "term",
+            [
+                datetime(year=2020, month=1, day=1, hour=12),
+                datetime(year=2021, month=1, day=1, hour=12),
+                datetime(year=2022, month=1, day=1, hour=12),
+                datetime(year=2023, month=1, day=1, hour=12),
+                datetime(year=2024, month=1, day=1, hour=12),
+                datetime(year=2025, month=1, day=1, hour=12),
+                datetime(year=2026, month=1, day=1, hour=12),
+                datetime(year=2027, month=1, day=1, hour=12),
+                datetime(year=2028, month=1, day=1, hour=12),
+            ],
+            datetime(year=2022, month=1, day=1),
+            datetime(year=2027, month=1, day=1, hour=23, minute=59, second=59),
+            False,
+            3,
+        ),
+        (
+            False,
+            "Alcohol",
+            "vodka",
+            [
+                datetime(year=2020, month=1, day=1, hour=12),
+                datetime(year=2021, month=1, day=1, hour=12),
+                datetime(year=2022, month=1, day=1, hour=12),
+                datetime(year=2023, month=1, day=1, hour=12),
+                datetime(year=2024, month=1, day=1, hour=12),
+                datetime(year=2025, month=1, day=1, hour=12),
+                datetime(year=2026, month=1, day=1, hour=12),
+                datetime(year=2027, month=1, day=1, hour=12),
+                datetime(year=2028, month=1, day=1, hour=12),
+            ],
+            None,
+            None,
+            True,
+            4,
+        ),
+    ]
+)
+async def test_get_transactions__correct(
+    db_session: AsyncSession,
+    create_user: bool,
+    category_name: str,
+    search_term: str,
+    datetimes: list[datetime],
+    datetime_from: datetime | None,
+    datetime_to: datetime | None,
+    pass_category_name: bool,
+    expected_spendings_qty: int,
+):
+    mock_user_username = "GREALISH"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    category = await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_name,
+        db_session,
+    )
+    for i, dt in enumerate(datetimes):
+        description = f"{i} {search_term.title()} {i}" if i % 2 else "text"
+        transaction_to_create = STransactionCreateInDB(
+            amount=100,
+            description=description,
+            date=dt,
+            user_id=user.id,
+            category_id=category.id,
+        )
+        await spendings_repo.add(
+            db_session,
+            transaction_to_create.model_dump(),
+        )
+
+    spendings = await spendings_service.get_transactions(
+        query_params=STransactionsQueryParams(
+            user_id=user.id,
+            category_id=category.id if not pass_category_name else None,
+            category_name=category_name if pass_category_name else None,
+        ),
+        search_term=search_term,
+        datetime_range=SDatetimeRange(start=datetime_from, end=datetime_to),
+        sort_params=STransactionsSortParams(
+            sort_by=["id", "date", "some non existent field"],
+        ),
+        session=db_session,
+    )
+    assert len(spendings) == expected_spendings_qty
+    for s in spendings:
+        if datetime_from and datetime_to:
+            assert datetime_from <= s.date <= datetime_to
+        assert search_term.lower() in s.description.lower()
