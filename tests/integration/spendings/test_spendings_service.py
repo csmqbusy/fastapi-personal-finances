@@ -15,7 +15,9 @@ from app.schemas.transactions_schemas import (
     STransactionResponse,
     STransactionUpdatePartial,
     STransactionsQueryParams,
-    STransactionCreateInDB, STransactionsSortParams,
+    STransactionCreateInDB,
+    STransactionsSortParams,
+    SortParam,
 )
 from app.services import user_spend_cat_service, spendings_service
 from tests.integration.helpers import add_mock_user, create_spendings
@@ -588,3 +590,57 @@ async def test_get_transactions__correct(
         if datetime_from and datetime_to:
             assert datetime_from <= s.date <= datetime_to
         assert search_term.lower() in s.description.lower()
+
+
+@pytest.mark.parametrize(
+    "sort_params, expected_result",
+    [
+        (
+            STransactionsSortParams(
+                sort_by=[
+                    "id",
+                    "date",
+                    "-category_name",
+                ],
+            ),
+            [
+                SortParam(order_by="id", order_direction="asc"),
+                SortParam(order_by="date", order_direction="asc"),
+                SortParam(order_by="category_name", order_direction="desc"),
+            ],
+        ),
+        (
+            STransactionsSortParams(
+                sort_by=[
+                    "-id",
+                    "date",
+                    "-category_name",
+                    "some non existent field",
+                ],
+            ),
+            [
+                SortParam(order_by="id", order_direction="desc"),
+                SortParam(order_by="date", order_direction="asc"),
+                SortParam(order_by="category_name", order_direction="desc"),
+            ],
+        ),
+        (
+            STransactionsSortParams(
+                sort_by=[
+                    "-id_non_exist",
+                    "date_non_exist",
+                    "-category_name_non_exist",
+                    "some_non_exist",
+                ],
+            ),
+            [],
+        ),
+    ]
+)
+def test__parse_sort_params_for_query(
+    sort_params: STransactionsSortParams,
+    expected_result: list[SortParam],
+):
+
+    result = spendings_service._parse_sort_params_for_query(sort_params)
+    assert result == expected_result
