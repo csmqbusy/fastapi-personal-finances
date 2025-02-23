@@ -11,10 +11,12 @@ from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.repositories import user_repo
 from app.schemas.transactions_schemas import (
     STransactionCreate,
-    STransactionResponse, STransactionUpdatePartial, STransactionsQueryParams,
+    STransactionResponse,
+    STransactionUpdatePartial,
+    STransactionsQueryParams,
 )
 from app.services import user_spend_cat_service, spendings_service
-from tests.integration.helpers import add_mock_user
+from tests.integration.helpers import add_mock_user, create_spendings
 
 
 @pytest.mark.asyncio
@@ -414,3 +416,63 @@ async def test_get_transactions__errors(
             query_params=query_params,
             session=db_session,
         )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "create_user, category_name, spendings_qty",
+    [
+        (
+            True,
+            "Candies",
+            5,
+        ),
+    ]
+)
+async def test_get_transactions__category_id_priority(
+    db_session: AsyncSession,
+    create_user: bool,
+    category_name: str,
+    spendings_qty: int,
+):
+    mock_user_username = "OBLAK"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    cat_1 = await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_name,
+        db_session,
+    )
+    await create_spendings(
+        qty=spendings_qty,
+        user_id=user.id,
+        category_id=cat_1.id,
+        db_session=db_session,
+    )
+
+    cat_2 = await user_spend_cat_service.add_category_to_db(
+        user.id,
+        f"{category_name}_2",
+        db_session,
+    )
+    await create_spendings(
+        qty=spendings_qty,
+        user_id=user.id,
+        category_id=cat_2.id,
+        db_session=db_session,
+    )
+
+    query_params = STransactionsQueryParams(
+        user_id=user.id,
+        category_id=cat_1.id,
+        category_name=cat_2.category_name,
+    )
+    spendings = await spendings_service.get_transactions(
+        query_params=query_params,
+        session=db_session,
+    )
+    assert len(spendings) == spendings_qty
+    assert [s.category_id for s in spendings] == [cat_1.id] * spendings_qty
+    assert [s.category_id for s in spendings] != [cat_2.id] * spendings_qty
