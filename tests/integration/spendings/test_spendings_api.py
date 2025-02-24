@@ -555,3 +555,66 @@ async def test_spendings__get(
         )
 
         assert response.json() != reversed_response.json()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "category_name",
+        "try_add_again",
+        "status_code",
+    ),
+    [
+        (
+            "Larsson10",
+            "Balls",
+            False,
+            status.HTTP_201_CREATED,
+        ),
+        (
+            "Larsson20",
+            "Balls",
+            True,
+            status.HTTP_409_CONFLICT,
+        ),
+        (
+            "Larsson30",
+            None,
+            False,
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+        ),
+    ]
+)
+async def test_spendings_categories__post(
+    client: TestClient,
+    db_session: AsyncSession,
+    username: str,
+    category_name: str,
+    try_add_again: bool,
+    status_code: int,
+):
+    sign_up_user(client, username)
+    sign_in_user(client, username)
+
+    response = client.post(
+        url=f"{settings.api.prefix_v1}/spendings/categories/",
+        json={
+            "category_name": category_name,
+        }
+    )
+    if try_add_again:
+        response = client.post(
+            url=f"{settings.api.prefix_v1}/spendings/categories/",
+            json={
+                "category_name": category_name,
+            }
+        )
+
+    categories_response = client.get(
+        url=f"{settings.api.prefix_v1}/spendings/categories/",
+    )
+
+    assert response.status_code == status_code
+    if response.status_code != status.HTTP_422_UNPROCESSABLE_ENTITY:
+        assert len(categories_response.json()) == 1 + 1
