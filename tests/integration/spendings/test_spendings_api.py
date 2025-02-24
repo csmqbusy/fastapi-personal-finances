@@ -425,3 +425,133 @@ async def test_spendings_spending_id__delete(
     assert response.status_code == status_code
     if status_code == status.HTTP_200_OK:
         assert response.json()["id"] == spending_id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "category_name",
+        "wrong_category_name",
+        "spendings_qty",
+        "description",
+        "amount_start",
+        "amount_step",
+        "year_start",
+        "datetime_from",
+        "datetime_to",
+        "page_size",
+        "page",
+        "sort_param",
+        "reversed_sort_param",
+        "status_code",
+    ),
+    [
+        (
+            "Lukaku10",
+            "Food",
+            False,
+            30,
+            "text",
+            500,
+            50,
+            2010,
+            datetime(year=2015, month=1, day=1),
+            datetime(year=2030, month=1, day=1),
+            5,
+            2,
+            "amount",
+            "-amount",
+            status.HTTP_200_OK,
+        ),
+        (
+            "Lukaku20",
+            "Food",
+            True,
+            30,
+            "text",
+            500,
+            50,
+            2010,
+            datetime(year=2015, month=1, day=1),
+            datetime(year=2030, month=1, day=1),
+            5,
+            2,
+            "amount",
+            "-amount",
+            status.HTTP_404_NOT_FOUND,
+        ),
+    ]
+)
+async def test_spendings__get(
+    client: TestClient,
+    db_session: AsyncSession,
+    username: str,
+    category_name: str,
+    wrong_category_name: bool,
+    spendings_qty: int,
+    description: str,
+    amount_start: int,
+    amount_step: int,
+    year_start: int,
+    datetime_from: datetime,
+    datetime_to: datetime,
+    page_size: int,
+    page: int,
+    sort_param: str,
+    reversed_sort_param: str,
+    status_code: int,
+):
+    sign_up_user(client, username)
+    sign_in_user(client, username)
+    user = await get_user_by_username(username, db_session)
+
+    await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_name,
+        db_session,
+    )
+    for i in range(spendings_qty):
+        client.post(
+            url=f"{settings.api.prefix_v1}/spendings/",
+            json={
+                "amount": amount_start + amount_step * i,
+                "category_name": category_name,
+                "description": description,
+                "date": datetime(
+                    year=year_start + i, month=1, day=1
+                    ).isoformat(),
+            }
+        )
+
+    response = client.get(
+        url=f"{settings.api.prefix_v1}/spendings/",
+        params={
+            "category_name": category_name if not wrong_category_name else "wc",
+            "datetime_from": datetime_from,
+            "datetime_to": datetime_to,
+            "page_size": page_size,
+            "page": page,
+            "sort_params": sort_param,
+            "description_search_term": description,
+        },
+    )
+
+    assert response.status_code == status_code
+
+    if status_code == status.HTTP_200_OK:
+        assert len(response.json()) == page_size
+
+        reversed_response = client.get(
+            url=f"{settings.api.prefix_v1}/spendings/",
+            params={
+                "category_name": category_name if not wrong_category_name else "wc",
+                "datetime_from": datetime_from,
+                "datetime_to": datetime_to,
+                "page_size": page_size,
+                "page": page,
+                "sort_params": reversed_sort_param,
+            },
+        )
+
+        assert response.json() != reversed_response.json()
