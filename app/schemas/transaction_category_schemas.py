@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
@@ -29,7 +29,7 @@ class STransactionCategoryUpdate(STransactionCategoryBase):
     pass
 
 
-class TransactionsOnDeleteActions(str, Enum):
+class TransactionsOnDeleteActions(StrEnum):
     DELETE = "DELETE"
     TO_DEFAULT = "TO_DEFAULT"
     TO_EXISTS_CAT = "TO_EXISTS_CATEGORY"
