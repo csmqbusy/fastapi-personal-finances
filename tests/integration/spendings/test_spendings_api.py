@@ -9,6 +9,7 @@ from starlette import status
 from starlette.testclient import TestClient
 
 from app.core.config import settings
+from app.schemas.transaction_category_schemas import TransactionsOnDeleteActions
 from app.schemas.transactions_schemas import STransactionResponse, \
     STransactionUpdatePartial
 from app.services import user_spend_cat_service
@@ -719,3 +720,126 @@ async def test_spendings_categories__patch(
         categories = [i["category_name"] for i in categories_response.json()]
         assert category_name_2 in categories
         assert category_name_1 not in categories
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "category_name",
+        "create_category",
+        "new_category_name",
+        "on_delete_action",
+        "status_code",
+    ),
+    [
+        (
+            "Arshavin10",
+            "Balls",
+            True,
+            None,
+            TransactionsOnDeleteActions.DELETE,
+            status.HTTP_200_OK,
+        ),
+        (
+            "Arshavin20",
+            " Balls ",
+            True,
+            None,
+            TransactionsOnDeleteActions.DELETE,
+            status.HTTP_200_OK,
+        ),
+        (
+            "Arshavin30",
+            settings.app.default_spending_category_name,
+            True,
+            None,
+            TransactionsOnDeleteActions.DELETE,
+            status.HTTP_400_BAD_REQUEST,
+        ),
+        (
+            "Arshavin40",
+            "Balls",
+            False,
+            None,
+            TransactionsOnDeleteActions.DELETE,
+            status.HTTP_404_NOT_FOUND,
+        ),
+        (
+            "Arshavin50",
+            "Balls",
+            True,
+            None,
+            TransactionsOnDeleteActions.TO_NEW_CAT,
+            status.HTTP_400_BAD_REQUEST,
+        ),
+        (
+            "Arshavin60",
+            "Balls",
+            True,
+            None,
+            TransactionsOnDeleteActions.TO_EXISTS_CAT,
+            status.HTTP_400_BAD_REQUEST,
+        ),
+        (
+            "Arshavin70",
+            "Balls",
+            True,
+            None,
+            None,
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+        ),
+        (
+            "Arshavin80",
+            None,
+            True,
+            None,
+            None,
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+        ),
+        (
+            "Arshavin90",
+            None,
+            False,
+            None,
+            None,
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+        ),
+    ]
+)
+async def test_spendings_categories__delete(
+    client: TestClient,
+    db_session: AsyncSession,
+    username: str,
+    category_name: str,
+    create_category: bool,
+    new_category_name: str | None,
+    on_delete_action: TransactionsOnDeleteActions,
+    status_code: int,
+):
+    sign_up_user(client, username)
+    sign_in_user(client, username)
+
+    if create_category:
+        client.post(
+            url=f"{settings.api.prefix_v1}/spendings/categories/",
+            json={
+                "category_name": category_name,
+            }
+        )
+
+    response = client.delete(
+        url=f"{settings.api.prefix_v1}/spendings/categories/{category_name}/",
+        params={
+            "handle_spendings_on_deletion": on_delete_action,
+        }
+    )
+
+    assert response.status_code == status_code
+
+    if response.status_code == status.HTTP_200_OK:
+        categories_response = client.get(
+            url=f"{settings.api.prefix_v1}/spendings/categories/",
+        )
+        categories = [i["category_name"] for i in categories_response.json()]
+        assert category_name not in categories
