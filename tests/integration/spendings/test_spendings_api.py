@@ -584,6 +584,18 @@ async def test_spendings__get(
             False,
             status.HTTP_422_UNPROCESSABLE_ENTITY,
         ),
+        (
+            "Larsson40",
+            "",
+            False,
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+        ),
+        (
+            "Larsson50",
+            " ",
+            False,
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+        ),
     ]
 )
 async def test_spendings_categories__post(
