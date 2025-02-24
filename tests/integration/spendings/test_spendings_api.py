@@ -344,3 +344,84 @@ async def test_spendings_spending_id__patch(
         )
         assert response_parsed_datetime == new_date
         assert response.json()["category_name"] == new_category_name
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "new_category_name",
+        "create_category",
+        "wrong_spending_id",
+        "sign_in_another_user",
+        "status_code",
+    ),
+    [
+        (
+            "Balotelli10",
+            "new category",
+            True,
+            False,
+            False,
+            status.HTTP_200_OK,
+        ),
+        (
+            "Balotelli20",
+            "new category",
+            True,
+            True,
+            False,
+            status.HTTP_404_NOT_FOUND,
+        ),
+        (
+            "Balotelli30",
+            "new category",
+            True,
+            False,
+            True,
+            status.HTTP_404_NOT_FOUND,
+        ),
+    ]
+)
+async def test_spendings_spending_id__delete(
+    client: TestClient,
+    db_session: AsyncSession,
+    username: str,
+    new_category_name: str,
+    create_category: bool,
+    wrong_spending_id: bool,
+    sign_in_another_user: bool,
+    status_code: int,
+):
+    sign_up_user(client, username)
+    sign_in_user(client, username)
+    user = await get_user_by_username(username, db_session)
+
+    if create_category:
+        await user_spend_cat_service.add_category_to_db(
+            user.id,
+            new_category_name,
+            db_session,
+        )
+
+    response = client.post(
+        url=f"{settings.api.prefix_v1}/spendings/",
+        json={
+            "amount": 800,
+            "category_name": new_category_name,
+        }
+    )
+    spending_id = response.json()["id"] + wrong_spending_id
+
+    if sign_in_another_user:
+        another_username = f"Another{username}"
+        sign_up_user(client, another_username)
+        sign_in_user(client, another_username)
+
+    response = client.delete(
+        url=f"{settings.api.prefix_v1}/spendings/{spending_id}/",
+    )
+
+    assert response.status_code == status_code
+    if status_code == status.HTTP_200_OK:
+        assert response.json()["id"] == spending_id
