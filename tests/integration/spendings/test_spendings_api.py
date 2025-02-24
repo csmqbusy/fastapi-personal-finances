@@ -630,3 +630,92 @@ async def test_spendings_categories__post(
     assert response.status_code == status_code
     if response.status_code != status.HTTP_422_UNPROCESSABLE_ENTITY:
         assert len(categories_response.json()) == 1 + 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "category_name_1",
+        "create_category_1",
+        "category_name_2",
+        "category_name_3",
+        "status_code",
+    ),
+    [
+        (
+            "Ibrahimovic10",
+            "Balls",
+            True,
+            "New balls",
+            None,
+            status.HTTP_200_OK,
+        ),
+        (
+            "Ibrahimovic20",
+            "Balls",
+            False,
+            "New balls",
+            None,
+            status.HTTP_404_NOT_FOUND,
+        ),
+        (
+            "Ibrahimovic30",
+            "One Balls",
+            True,
+            "Two balls",
+            "Three balls",
+            status.HTTP_409_CONFLICT,
+        ),
+    ]
+)
+async def test_spendings_categories__patch(
+    client: TestClient,
+    db_session: AsyncSession,
+    username: str,
+    category_name_1: str,
+    create_category_1: bool,
+    category_name_2: str,
+    category_name_3: str | None,
+    status_code: int,
+):
+    sign_up_user(client, username)
+    sign_in_user(client, username)
+
+    if create_category_1:
+        client.post(
+            url=f"{settings.api.prefix_v1}/spendings/categories/",
+            json={
+                "category_name": category_name_1,
+            }
+        )
+    if category_name_3:
+        client.post(
+            url=f"{settings.api.prefix_v1}/spendings/categories/",
+            json={
+                "category_name": category_name_3,
+            }
+        )
+
+    if create_category_1:
+        categories_response = client.get(
+            url=f"{settings.api.prefix_v1}/spendings/categories/",
+        )
+        categories = [i["category_name"] for i in categories_response.json()]
+        assert category_name_1 in categories
+
+    response = client.patch(
+        url=f"{settings.api.prefix_v1}/spendings/categories/{category_name_1}/",
+        json={
+            "category_name": category_name_3 or category_name_2,
+        }
+    )
+    assert response.status_code == status_code
+
+    if response.status_code == status.HTTP_200_OK:
+        categories_response = client.get(
+            url=f"{settings.api.prefix_v1}/spendings/categories/",
+        )
+        categories = [i["category_name"] for i in categories_response.json()]
+        assert category_name_2 in categories
+        assert category_name_1 not in categories
