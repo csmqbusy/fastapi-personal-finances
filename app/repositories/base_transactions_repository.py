@@ -29,6 +29,8 @@ class BaseTransactionsRepository(BaseRepository):
         self,
         session: AsyncSession,
         query_params: dict,
+        min_amount: int | None = None,
+        max_amount: int | None = None,
         description_search_term: str | None = None,
         datetime_from: datetime | None = None,
         datetime_to: datetime | None = None,
@@ -40,6 +42,11 @@ class BaseTransactionsRepository(BaseRepository):
             query = query.filter(
                 self.model.description.ilike(f"%{description_search_term}%")
             )
+
+        if min_amount:
+            query = query.where(self.model.amount >= min_amount)
+        if max_amount:
+            query = query.where(self.model.amount <= max_amount)
 
         if datetime_from:
             query = query.where(self.model.date >= datetime_from)
