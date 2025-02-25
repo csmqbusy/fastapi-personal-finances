@@ -1,6 +1,3 @@
-from typing import Type
-
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.categories_exceptions import (
@@ -13,6 +10,11 @@ from app.schemas.transactions_schemas import (
     STransactionsSortParams,
     SortParam,
     SAmountRange,
+    STransactionCreate,
+    STransactionResponse,
+    STransactionUpdatePartialInDB,
+    STransactionCreateInDB,
+    STransactionUpdatePartial,
 )
 
 
@@ -22,10 +24,10 @@ class TransactionsService:
         tx_repo,
         tx_categories_repo,
         default_tx_category_name: str,
-        creation_schema: Type[BaseModel],
-        creation_in_db_schema: Type[BaseModel],
-        update_partial_in_db_schema: Type[BaseModel],
-        out_schema: Type[BaseModel],
+        creation_schema: type[STransactionCreate],
+        creation_in_db_schema: type[STransactionCreateInDB],
+        update_partial_in_db_schema: type[STransactionUpdatePartialInDB],
+        out_schema: type[STransactionResponse],
     ):
         self.tx_repo = tx_repo
         self.tx_categories_repo = tx_categories_repo
@@ -37,7 +39,7 @@ class TransactionsService:
 
     async def add_transaction_to_db(
         self,
-        transaction: Type[BaseModel],
+        transaction: STransactionCreate,
         user_id: int,
         session: AsyncSession,
     ):
@@ -66,7 +68,7 @@ class TransactionsService:
         self,
         transaction_id: int,
         user_id: int,
-        transaction_update_obj: Type[BaseModel],
+        transaction_update_obj: STransactionUpdatePartial,
         session: AsyncSession,
     ):
         transaction = await self.tx_repo.get_transaction_with_category(
