@@ -18,6 +18,7 @@ from app.schemas.transactions_schemas import (
     STransactionCreateInDB,
     STransactionsSortParams,
     SortParam,
+    SAmountRange,
 )
 from app.services import user_spend_cat_service, spendings_service
 from tests.integration.helpers import add_mock_user, create_spendings
@@ -488,6 +489,7 @@ async def test_get_transactions__category_id_priority(
         "create_user",
         "category_name",
         "search_term",
+        "amounts",
         "datetimes",
         "datetime_from",
         "datetime_to",
@@ -499,6 +501,7 @@ async def test_get_transactions__category_id_priority(
             True,
             "Candies",
             "term",
+            [100, 200, 300, 400, 500, 600, 700, 800, 900],
             [
                 datetime(year=2020, month=1, day=1, hour=12),
                 datetime(year=2021, month=1, day=1, hour=12),
@@ -519,6 +522,7 @@ async def test_get_transactions__category_id_priority(
             False,
             "Alcohol",
             "vodka",
+            [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000],
             [
                 datetime(year=2020, month=1, day=1, hour=12),
                 datetime(year=2021, month=1, day=1, hour=12),
@@ -542,6 +546,7 @@ async def test_get_transactions__correct(
     create_user: bool,
     category_name: str,
     search_term: str,
+    amounts: list[int],
     datetimes: list[datetime],
     datetime_from: datetime | None,
     datetime_to: datetime | None,
@@ -561,7 +566,7 @@ async def test_get_transactions__correct(
     for i, dt in enumerate(datetimes):
         description = f"{i} {search_term.title()} {i}" if i % 2 else "text"
         transaction_to_create = STransactionCreateInDB(
-            amount=100,
+            amount=amounts[i],
             description=description,
             date=dt,
             user_id=user.id,
@@ -582,6 +587,10 @@ async def test_get_transactions__correct(
         datetime_range=SDatetimeRange(start=datetime_from, end=datetime_to),
         sort_params=STransactionsSortParams(
             sort_by=["id", "date", "some non existent field"],
+        ),
+        amount_params=SAmountRange(
+            min_amount=min(amounts),
+            max_amount=max(amounts),
         ),
         session=db_session,
     )
