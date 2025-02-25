@@ -31,7 +31,7 @@ def decode_access_token(
     token: str | bytes,
     public_key: str = settings.auth.public_key_path.read_text(),
     algorithm: str = settings.auth.algorithm,
-):
+) -> dict:
     decoded = jwt.decode(
         jwt=token,
         key=public_key,
