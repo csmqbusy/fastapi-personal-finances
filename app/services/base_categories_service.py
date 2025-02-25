@@ -77,8 +77,8 @@ class BaseCategoriesService:
             session,
             dict(user_id=user_id),
         )
-        categories = [self.out_schema.model_validate(c) for c in categories]
-        return categories
+        result = [self.out_schema.model_validate(c) for c in categories]
+        return result
 
     async def add_user_default_category(
         self,
