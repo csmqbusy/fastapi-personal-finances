@@ -1,4 +1,4 @@
-from typing import Type, Iterable
+from typing import Iterable
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +12,7 @@ from app.exceptions.categories_exceptions import (
 from app.schemas.transaction_category_schemas import (
     STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
+    STransactionCategoryOut,
 )
 
 
@@ -21,7 +22,7 @@ class BaseCategoriesService:
         category_repo,
         transaction_repo,
         default_category_name: str,
-        out_schema: Type[BaseModel],
+        out_schema: type[STransactionCategoryOut],
     ):
         self.category_repo = category_repo
         self.transaction_repo = transaction_repo
