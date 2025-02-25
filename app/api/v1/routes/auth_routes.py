@@ -60,7 +60,7 @@ async def sign_up_user(
 async def login(
     response: Response,
     user: UserModel = Depends(validate_credentials),
-):
+) -> dict:
     payload = {"sub": user.username}
     access_token = create_access_token(payload=payload)
     response.set_cookie(
@@ -81,7 +81,7 @@ async def login(
 )
 async def logout(
     response: Response,
-):
+) -> dict:
     response.delete_cookie(key="access_token")
     return {
         "logout": "Success!",
