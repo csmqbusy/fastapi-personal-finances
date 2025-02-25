@@ -179,13 +179,16 @@ class TransactionsService:
             query_params.category_id = category.id
 
         query_params.category_name = None
+
         if sort_params:
-            sort_params = self._parse_sort_params_for_query(sort_params)
+            parsed_sort_params = self._parse_sort_params_for_query(sort_params)
+        else:
+            parsed_sort_params = None
 
         return await self.tx_repo.get_transactions(
             session,
             query_params.model_dump(exclude_none=True),
-            sort_params=sort_params,
+            sort_params=parsed_sort_params,
             min_amount=amount_params.min_amount if amount_params else None,
             max_amount=amount_params.max_amount if amount_params else None,
             description_search_term=search_term,
