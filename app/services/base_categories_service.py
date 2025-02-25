@@ -1,6 +1,5 @@
 from typing import Iterable
 
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.categories_exceptions import (
@@ -73,12 +72,13 @@ class BaseCategoriesService:
         self,
         user_id: int,
         session: AsyncSession,
-    ):
-        user_categories = await self.category_repo.get_all(
+    ) -> list[STransactionCategoryOut]:
+        categories = await self.category_repo.get_all(
             session,
             dict(user_id=user_id),
         )
-        return user_categories
+        categories = [self.out_schema.model_validate(c) for c in categories]
+        return categories
 
     async def add_user_default_category(
         self,
