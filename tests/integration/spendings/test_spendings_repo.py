@@ -269,3 +269,90 @@ async def test_get_transactions__with_desc_search_term(
         description_search_term=search_term,
     )
     assert len(spendings) == expected_spendings_qty
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "category_name",
+        "create_user",
+        "amounts",
+        "min_amount",
+        "max_amount",
+        "expected_spendings_qty",
+    ),
+    [
+        (
+            "Pets",
+            True,
+            [10, 200, 800, 1200, 1600, 2000, 20000, 100000, 3000, 1500],
+            800,
+            2000,
+            5,
+        ),
+        (
+            "Games",
+            False,
+            [10, 200, 800, 1200, 1600, 2000, 20000, 100000, 3000, 1500],
+            100000,
+            100001,
+            1,
+        ),
+        (
+            "Food",
+            False,
+            [10, 200, 800, 1200, 1600, 2000, 20000, 100000, 3000, 1500],
+            0,
+            10,
+            1,
+        ),
+        (
+            "Health",
+            False,
+            [10, 200, 800, 1200, 1600, 2000, 20000, 100000, 3000, 1500],
+            100001,
+            1000000,
+            0,
+        ),
+    ]
+)
+async def test_get_transactions__with_amount_range(
+    db_session: AsyncSession,
+    category_name: str,
+    create_user: bool,
+    amounts: list[int],
+    min_amount: int,
+    max_amount: int,
+    expected_spendings_qty: int
+) -> None:
+    mock_user_username = "ADARABIYO"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    category = await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_name,
+        db_session,
+    )
+
+    for amnt in amounts:
+        transaction_to_create = STransactionCreateInDB(
+            amount=amnt,
+            description=None,
+            date=None,
+            user_id=user.id,
+            category_id=category.id,
+        )
+        await spendings_repo.add(
+            db_session,
+            transaction_to_create.model_dump(),
+        )
+
+    spendings = await spendings_repo.get_transactions(
+        session=db_session,
+        query_params=dict(user_id=user.id, category_id=category.id),
+        min_amount=min_amount,
+        max_amount=max_amount,
+    )
+    assert len(spendings) == expected_spendings_qty
