@@ -77,7 +77,7 @@ async def spending_add(
 async def spendings_categories_get(
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
-):
+) -> list[STransactionCategoryOut]:
     return await user_spend_cat_service.get_user_categories(user.id, db_session)
 
 
@@ -135,7 +135,7 @@ async def spending_delete(
     spending_id: int,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
-):
+) -> dict:
     try:
         await spendings_service.delete_transaction(
             spending_id,
@@ -163,7 +163,7 @@ async def spendings_get(
     pagination: SPagination = Depends(get_pagination_params),
     sort_params: STransactionsSortParams = Depends(get_transactions_sort_params),
     db_session: AsyncSession = Depends(get_db_session),
-):
+) -> list[STransactionResponse]:
     query_params.user_id = user.id
     try:
         spendings = await spendings_service.get_transactions(
@@ -237,7 +237,7 @@ async def spending_category_delete(
     new_category_name: str | None = None,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
-):
+) -> dict[str, str]:
     category_name = category_name.strip()
     if new_category_name:
         new_category_name = new_category_name.strip()
@@ -257,3 +257,7 @@ async def spending_category_delete(
     except CategoryNameNotFound:
         raise CategoryNameNotFoundError()
 
+    return {
+        "delete": "ok",
+        "category_name": category_name,
+    }
