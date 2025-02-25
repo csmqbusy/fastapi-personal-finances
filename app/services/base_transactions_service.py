@@ -196,9 +196,11 @@ class TransactionsService:
     @staticmethod
     def _parse_sort_params_for_query(
         sort_params: STransactionsSortParams,
-    ) -> list[SortParam]:
-        result = []
+    ) -> list[SortParam] | None:
+        if sort_params.sort_by is None:
+            return None
 
+        result = []
         for param in sort_params.sort_by:
             if param.startswith("-"):
                 result.append(
@@ -215,4 +217,4 @@ class TransactionsService:
                     ),
                 )
 
-        return result
+        return result if result else None
