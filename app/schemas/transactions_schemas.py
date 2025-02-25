@@ -17,15 +17,16 @@ class STransactionBase(BaseModel):
     date: datetime | None = None
 
 
-class STransactionWithCategory(STransactionBase):
+class STransactionCreate(STransactionBase):
     category_name: str | None = Field(None, max_length=50)
 
 
-class STransactionCreate(STransactionWithCategory):
-    pass
+class STransactionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-
-class STransactionResponse(STransactionWithCategory):
+    amount: int
+    category_name: str | None = None
+    description: str | None
     date: datetime
     id: int
 
