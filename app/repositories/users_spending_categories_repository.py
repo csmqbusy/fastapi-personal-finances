@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import UsersSpendingCategoriesModel
 from app.repositories.base_repository import BaseRepository
@@ -10,7 +11,12 @@ class UserSpendingCategoriesRepository(
     def __init__(self):
         super().__init__(UsersSpendingCategoriesModel)
 
-    async def get_category(self, session, user_id, category_name):
+    async def get_category(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        category_name: str,
+    ) -> UsersSpendingCategoriesModel | None:
         query = (
             select(self.model)
             .filter(
