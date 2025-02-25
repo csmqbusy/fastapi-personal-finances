@@ -1,3 +1,5 @@
+from typing import Type
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.categories_exceptions import (
@@ -24,10 +26,10 @@ class TransactionsService:
         tx_repo,
         tx_categories_repo,
         default_tx_category_name: str,
-        creation_schema: type[STransactionCreate],
-        creation_in_db_schema: type[STransactionCreateInDB],
-        update_partial_in_db_schema: type[STransactionUpdatePartialInDB],
-        out_schema: type[STransactionResponse],
+        creation_schema: Type[STransactionCreate],
+        creation_in_db_schema: Type[STransactionCreateInDB],
+        update_partial_in_db_schema: Type[STransactionUpdatePartialInDB],
+        out_schema: Type[STransactionResponse],
     ):
         self.tx_repo = tx_repo
         self.tx_categories_repo = tx_categories_repo
