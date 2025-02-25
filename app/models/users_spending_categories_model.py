@@ -1,18 +1,10 @@
-from sqlalchemy import ForeignKey, UniqueConstraint, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import UniqueConstraint
 
-from app.models import Base
-from app.models.mixins import IdIntPKMixin
+from app.models.base_catetgories_model import BaseCategoriesModel
 
 
-class UsersSpendingCategoriesModel(IdIntPKMixin, Base):
+class UsersSpendingCategoriesModel(BaseCategoriesModel):
     __tablename__ = "users_spending_categories"
-
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-    )
-
-    category_name: Mapped[str] = mapped_column(String(50))
 
     __table_args__ = (
         UniqueConstraint("user_id", "category_name", name="uq_user_category"),
