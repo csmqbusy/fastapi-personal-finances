@@ -7,6 +7,7 @@ from app.schemas.pagination_schemas import SPagination
 from app.schemas.transactions_schemas import (
     STransactionsQueryParams,
     STransactionsSortParams,
+    SAmountRange,
 )
 
 
@@ -58,3 +59,10 @@ def get_transactions_sort_params(
 ) -> STransactionsSortParams:
     if sort_params is not None:
         return STransactionsSortParams(sort_by=sort_params)
+
+
+def get_amount_range(
+    min_amount: int | None = Query(None, description="Value included"),
+    max_amount: int | None = Query(None, description="Value included"),
+) -> SAmountRange:
+    return SAmountRange(min_amount=min_amount, max_amount=max_amount)
