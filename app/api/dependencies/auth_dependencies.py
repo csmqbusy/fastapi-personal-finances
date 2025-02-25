@@ -40,7 +40,7 @@ async def get_access_token_payload(request: Request) -> str:
 
 async def validate_access_token(
     access_token: str = Depends(get_access_token_payload),
-):
+) -> dict:
     try:
         payload = decode_access_token(access_token)
     except InvalidTokenError:
@@ -51,7 +51,7 @@ async def validate_access_token(
 async def get_verified_user(
     payload: dict = Depends(validate_access_token),
     db_session: AsyncSession = Depends(get_db_session),
-):
+) -> UserModel:
     username = payload.get("sub")
     if username:
         user = await get_user_by_username(username, db_session)
@@ -62,7 +62,7 @@ async def get_verified_user(
 
 async def get_active_verified_user(
     user: UserModel = Depends(get_verified_user),
-):
+) -> UserModel:
     if user.active:
         return user
     raise UserInactiveError()
