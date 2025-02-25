@@ -642,7 +642,13 @@ async def test_get_transactions__correct(
                     "some_non_exist",
                 ],
             ),
-            [],
+            None,
+        ),
+        (
+            STransactionsSortParams(
+                sort_by=[],
+            ),
+            None,
         ),
     ]
 )
