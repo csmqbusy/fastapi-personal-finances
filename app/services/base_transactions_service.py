@@ -12,6 +12,7 @@ from app.schemas.transactions_schemas import (
     STransactionsQueryParams,
     STransactionsSortParams,
     SortParam,
+    SAmountRange,
 )
 
 
@@ -162,6 +163,7 @@ class TransactionsService:
         self,
         session: AsyncSession,
         query_params: STransactionsQueryParams,
+        amount_params: SAmountRange | None = None,
         search_term: str | None = None,
         datetime_range: SDatetimeRange | None = None,
         sort_params: STransactionsSortParams | None = None,
@@ -184,6 +186,8 @@ class TransactionsService:
             session,
             query_params.model_dump(exclude_none=True),
             sort_params=sort_params,
+            min_amount=amount_params.min_amount if amount_params else None,
+            max_amount=amount_params.max_amount if amount_params else None,
             description_search_term=search_term,
             datetime_from=datetime_range.start if datetime_range else None,
             datetime_to=datetime_range.end if datetime_range else None,
