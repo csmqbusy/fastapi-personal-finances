@@ -18,5 +18,5 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def close_db():
+async def close_db() -> None:
     await database_manager.dispose()
