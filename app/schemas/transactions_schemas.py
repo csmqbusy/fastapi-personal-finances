@@ -59,7 +59,10 @@ class STransactionsSortParams(BaseModel):
     sort_by: list[str] | None = None
 
     @field_validator("sort_by")
-    def validate_sort_by(cls, value: list[str]):
+    def validate_sort_by(
+        cls,
+        value: list[str],
+    ) -> list[str]:
         if not value:
             return value
 
