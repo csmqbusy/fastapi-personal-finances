@@ -77,3 +77,8 @@ class STransactionsSortParams(BaseModel):
 class SortParam(BaseModel):
     order_by: str
     order_direction: Literal["asc", "desc"]
+
+
+class SAmountRange(BaseModel):
+    min_amount: int | None = Field(None, ge=0)
+    max_amount: int | None = Field(None, ge=0)
