@@ -8,6 +8,7 @@ from app.exceptions.categories_exceptions import (
     CategoryNameNotFound,
     CannotDeleteDefaultCategory,
 )
+from app.repositories import BaseCategoriesRepository
 from app.schemas.transaction_category_schemas import (
     STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
@@ -18,7 +19,7 @@ from app.schemas.transaction_category_schemas import (
 class BaseCategoriesService:
     def __init__(
         self,
-        category_repo,
+        category_repo: BaseCategoriesRepository,
         transaction_repo,
         default_category_name: str,
         out_schema: Type[STransactionCategoryOut],
