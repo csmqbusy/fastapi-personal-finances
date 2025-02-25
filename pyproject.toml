@@ -3,6 +3,11 @@ exclude = [
     "app/alembic",
 ]
 
+[tool.mypy]
+exclude = [
+    "tests/",
+]
+
 [project]
 name = "personal-finance"
 version = "0.1.0"
