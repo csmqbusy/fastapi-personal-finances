@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Type
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +21,7 @@ class BaseCategoriesService:
         category_repo,
         transaction_repo,
         default_category_name: str,
-        out_schema: type[STransactionCategoryOut],
+        out_schema: Type[STransactionCategoryOut],
     ):
         self.category_repo = category_repo
         self.transaction_repo = transaction_repo
