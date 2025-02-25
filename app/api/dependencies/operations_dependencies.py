@@ -56,9 +56,10 @@ def get_transactions_query_params(
 
 def get_transactions_sort_params(
     sort_params: list[str] | None = Query(None, description="`-` is desc")
-) -> STransactionsSortParams:
+) -> STransactionsSortParams | None:
     if sort_params is not None:
         return STransactionsSortParams(sort_by=sort_params)
+    return None
 
 
 def get_amount_range(
