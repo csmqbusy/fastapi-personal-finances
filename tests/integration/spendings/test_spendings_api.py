@@ -10,8 +10,10 @@ from starlette.testclient import TestClient
 
 from app.core.config import settings
 from app.schemas.transaction_category_schemas import TransactionsOnDeleteActions
-from app.schemas.transactions_schemas import STransactionResponse, \
-    STransactionUpdatePartial
+from app.schemas.transactions_schemas import (
+    STransactionResponse,
+    STransactionUpdatePartial,
+)
 from app.services import user_spend_cat_service
 from app.services.user_service import get_user_by_username
 from tests.integration.helpers import sign_up_user, sign_in_user
@@ -524,7 +526,7 @@ async def test_spendings__get(
         client.post(
             url=f"{settings.api.prefix_v1}/spendings/",
             json={
-                "amount": amount_start + amount_step * i,
+                "amount": amount_start + (amount_step * i),
                 "category_name": category_name,
                 "description": description,
                 "date": datetime(
