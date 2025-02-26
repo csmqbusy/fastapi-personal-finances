@@ -76,7 +76,7 @@ class TransactionsService:
         user_id: int,
         transaction_update_obj: STransactionUpdatePartial,
         session: AsyncSession,
-    ):
+    ) -> STransactionResponse:
         transaction = await self.tx_repo.get_transaction_with_category(
             session,
             transaction_id,
