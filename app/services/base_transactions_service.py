@@ -6,6 +6,7 @@ from app.exceptions.categories_exceptions import (
     CategoryNotFound,
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
+from app.models.base_transactions_model import BaseTranscationsModel
 from app.repositories import (
     BaseCategoriesRepository,
     BaseTransactionsRepository,
@@ -176,7 +177,7 @@ class TransactionsService:
         search_term: str | None = None,
         datetime_range: SDatetimeRange | None = None,
         sort_params: STransactionsSortParams | None = None,
-    ):
+    ) -> list[BaseTranscationsModel]:
         if query_params.category_name and query_params.category_id is None:
             category = await self.tx_categories_repo.get_category(
                 session=session,
@@ -194,7 +195,7 @@ class TransactionsService:
         else:
             parsed_sort_params = None
 
-        return await self.tx_repo.get_transactions(
+        transactions = await self.tx_repo.get_transactions(
             session=session,
             user_id=user_id,
             query_params=query_params.model_dump(exclude_none=True),
@@ -205,6 +206,7 @@ class TransactionsService:
             datetime_from=datetime_range.start if datetime_range else None,
             datetime_to=datetime_range.end if datetime_range else None,
         )
+        return transactions
 
     @staticmethod
     def _parse_sort_params_for_query(
