@@ -1,15 +1,17 @@
 from datetime import datetime
+from typing import Type
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.models.base_transactions_model import BaseTranscationsModel
 from app.repositories.base_repository import BaseRepository
 from app.schemas.transactions_schemas import SortParam
 
 
-class BaseTransactionsRepository(BaseRepository):
-    def __init__(self, model):
+class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
+    def __init__(self, model: Type[BaseTranscationsModel]):
         super().__init__(model=model)
 
     async def get_transaction_with_category(
