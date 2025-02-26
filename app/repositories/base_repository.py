@@ -5,6 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Base
 
+
+class ObjectNotFound(Exception):
+    pass
+
+
 T = TypeVar('T', bound=Base)
 
 
@@ -65,8 +70,10 @@ class BaseRepository(Generic[T]):
         session: AsyncSession,
         object_id: int,
         params: dict,
-    ) -> T | None:
+    ) -> T:
         object_from_db = await session.get(self.model, object_id)
+        if not object_from_db:
+            raise ObjectNotFound(f"Object with id: {object_id} not found")
         for key, value in params.items():
             setattr(object_from_db, key, value)
         await session.commit()
