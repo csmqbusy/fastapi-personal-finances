@@ -67,7 +67,7 @@ class BaseCategoriesService:
         user_id: int,
         category_name: str,
         session: AsyncSession,
-    ):
+    ) -> STransactionCategoryOut:
         category = await self.get_category(user_id, category_name, session)
         if category:
             raise CategoryAlreadyExists
