@@ -146,7 +146,7 @@ class TransactionsService:
         transaction_id: int,
         user_id: int,
         session: AsyncSession,
-    ):
+    ) -> None:
         transaction = await self.tx_repo.get(session, transaction_id)
         if not transaction or transaction.user_id != user_id:
             raise TransactionNotFound
