@@ -48,7 +48,7 @@ class TransactionsService:
         transaction: STransactionCreate,
         user_id: int,
         session: AsyncSession,
-    ):
+    ) -> STransactionResponse:
         category_name = transaction.category_name
         if not category_name:
             category_name = self.default_tx_category_name
