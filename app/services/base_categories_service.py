@@ -106,7 +106,7 @@ class BaseCategoriesService:
         user_id: int,
         category_update_obj: STransactionCategoryUpdate,
         session: AsyncSession,
-    ):
+    ) -> STransactionCategoryOut:
         category = await self.get_category(user_id, category_name, session)
         if not category:
             raise CategoryNotFound
