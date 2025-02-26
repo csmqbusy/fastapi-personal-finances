@@ -38,7 +38,7 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         datetime_from: datetime | None = None,
         datetime_to: datetime | None = None,
         sort_params: list[SortParam] | None = None,
-    ):
+    ) -> list[BaseTranscationsModel]:
         query = (
             select(self.model)
             .where(self.model.user_id == user_id)
