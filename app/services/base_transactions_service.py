@@ -6,7 +6,10 @@ from app.exceptions.categories_exceptions import (
     CategoryNotFound,
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
-from app.repositories import BaseCategoriesRepository
+from app.repositories import (
+    BaseCategoriesRepository,
+    BaseTransactionsRepository,
+)
 from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.transactions_schemas import (
     STransactionsQueryParams,
@@ -24,7 +27,7 @@ from app.schemas.transactions_schemas import (
 class TransactionsService:
     def __init__(
         self,
-        tx_repo,
+        tx_repo: BaseTransactionsRepository,
         tx_categories_repo: BaseCategoriesRepository,
         default_tx_category_name: str,
         creation_schema: Type[STransactionCreate],
