@@ -3,7 +3,7 @@ from typing import Type
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.base_catetgories_model import BaseCategoriesModel
+from app.models.base_categories_model import BaseCategoriesModel
 from app.repositories.base_repository import BaseRepository
 
 

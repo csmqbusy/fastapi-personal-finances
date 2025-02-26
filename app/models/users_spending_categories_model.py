@@ -1,6 +1,6 @@
 from sqlalchemy import UniqueConstraint
 
-from app.models.base_catetgories_model import BaseCategoriesModel
+from app.models.base_categories_model import BaseCategoriesModel
 
 
 class UsersSpendingCategoriesModel(BaseCategoriesModel):

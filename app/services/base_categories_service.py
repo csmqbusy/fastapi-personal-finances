@@ -8,7 +8,7 @@ from app.exceptions.categories_exceptions import (
     CategoryNameNotFound,
     CannotDeleteDefaultCategory,
 )
-from app.models.base_catetgories_model import BaseCategoriesModel
+from app.models.base_categories_model import BaseCategoriesModel
 from app.repositories import (
     BaseCategoriesRepository,
     BaseTransactionsRepository,
