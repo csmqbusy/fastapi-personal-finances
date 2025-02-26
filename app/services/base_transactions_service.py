@@ -166,6 +166,7 @@ class TransactionsService:
     async def get_transactions(
         self,
         session: AsyncSession,
+        user_id: int,
         query_params: STransactionsQueryParams,
         amount_params: SAmountRange | None = None,
         search_term: str | None = None,
@@ -175,7 +176,7 @@ class TransactionsService:
         if query_params.category_name and query_params.category_id is None:
             category = await self.tx_categories_repo.get_category(
                 session=session,
-                user_id=query_params.user_id,
+                user_id=user_id,
                 category_name=query_params.category_name,
             )
             if not category:
@@ -190,8 +191,9 @@ class TransactionsService:
             parsed_sort_params = None
 
         return await self.tx_repo.get_transactions(
-            session,
-            query_params.model_dump(exclude_none=True),
+            session=session,
+            user_id=user_id,
+            query_params=query_params.model_dump(exclude_none=True),
             sort_params=parsed_sort_params,
             min_amount=amount_params.min_amount if amount_params else None,
             max_amount=amount_params.max_amount if amount_params else None,

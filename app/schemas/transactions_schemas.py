@@ -50,7 +50,6 @@ class STransactionUpdatePartialInDB(BaseModel):
 
 
 class STransactionsQueryParams(BaseModel):
-    user_id: int | None = None
     category_id: int | None = None
     category_name: str | None = None
 

@@ -28,6 +28,7 @@ class BaseTransactionsRepository(BaseRepository):
     async def get_transactions(
         self,
         session: AsyncSession,
+        user_id: int,
         query_params: dict,
         min_amount: int | None = None,
         max_amount: int | None = None,
@@ -36,7 +37,11 @@ class BaseTransactionsRepository(BaseRepository):
         datetime_to: datetime | None = None,
         sort_params: list[SortParam] | None = None,
     ):
-        query = select(self.model).filter_by(**query_params)
+        query = (
+            select(self.model)
+            .where(self.model.user_id == user_id)
+            .filter_by(**query_params)
+        )
 
         if description_search_term:
             query = query.filter(

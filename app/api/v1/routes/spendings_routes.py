@@ -164,10 +164,10 @@ async def spendings_get(
     sort_params: STransactionsSortParams = Depends(get_transactions_sort_params),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[STransactionResponse]:
-    query_params.user_id = user.id
     try:
         spendings = await spendings_service.get_transactions(
             session=db_session,
+            user_id=user.id,
             query_params=query_params,
             amount_params=amount_params,
             search_term=description_search_term,
