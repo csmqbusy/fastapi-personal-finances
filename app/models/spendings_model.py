@@ -1,30 +1,17 @@
-from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String, text
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models import Base
-from app.models.mixins import IdIntPKMixin
-
+from app.models.base_transactions_model import BaseTranscationsModel
 
 if TYPE_CHECKING:
     from app.models import UsersSpendingCategoriesModel
 
 
-class SpendingsModel(IdIntPKMixin, Base):
+class SpendingsModel(BaseTranscationsModel):
     __tablename__ = "spendings"
 
-    amount: Mapped[int] = mapped_column(nullable=False)
-    description: Mapped[str] = mapped_column(String(100), nullable=True)
-    date: Mapped[datetime] = mapped_column(
-        server_default=text("TIMEZONE ('utc', now())"),
-        nullable=False,
-    )
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
-    )
     category_id: Mapped[int] = mapped_column(
         ForeignKey("users_spending_categories.id"),
         nullable=False,
