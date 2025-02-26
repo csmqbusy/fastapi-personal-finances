@@ -8,6 +8,7 @@ from app.exceptions.categories_exceptions import (
     CategoryNameNotFound,
     CannotDeleteDefaultCategory,
 )
+from app.models.base_catetgories_model import BaseCategoriesModel
 from app.repositories import (
     BaseCategoriesRepository,
     BaseTransactionsRepository,
@@ -37,7 +38,7 @@ class BaseCategoriesService:
         user_id: int,
         category_name: str,
         session: AsyncSession,
-    ):
+    ) -> BaseCategoriesModel | None:
         category = await self.category_repo.get_category(
             session=session,
             user_id=user_id,
