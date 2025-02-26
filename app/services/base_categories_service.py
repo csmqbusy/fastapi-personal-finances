@@ -56,6 +56,10 @@ class BaseCategoriesService:
             self.default_category_name,
             session,
         )
+        if category is None:
+            raise CategoryNotFound(
+                "Default category not found, unexpected behavior",
+            )
         return category
 
     async def add_category_to_db(
