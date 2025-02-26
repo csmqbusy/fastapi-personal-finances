@@ -50,7 +50,7 @@ class BaseCategoriesService:
         self,
         user_id: int,
         session: AsyncSession,
-    ):
+    ) -> BaseCategoriesModel:
         category = await self.get_category(
             user_id,
             self.default_category_name,
