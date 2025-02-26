@@ -130,7 +130,7 @@ class BaseCategoriesService:
         transactions_actions: TransactionsOnDeleteActions,
         new_category_name: str | None,
         session: AsyncSession,
-    ):
+    ) -> None:
         if category_name.capitalize() == self.default_category_name:
             raise CannotDeleteDefaultCategory
 
