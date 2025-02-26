@@ -125,7 +125,7 @@ class TransactionsService:
         transaction_id: int,
         user_id: int,
         session: AsyncSession,
-    ):
+    ) -> STransactionResponse:
         transaction = await self.tx_repo.get_transaction_with_category(
             session, transaction_id
         )
