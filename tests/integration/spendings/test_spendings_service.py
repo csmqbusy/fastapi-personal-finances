@@ -472,8 +472,9 @@ async def test_get_transactions__category_id_priority(
         session=db_session,
     )
     assert len(spendings) == spendings_qty
-    assert [s.category_id for s in spendings] == [cat_1.id] * spendings_qty
-    assert [s.category_id for s in spendings] != [cat_2.id] * spendings_qty
+    spendings_category_name = [s.category_name for s in spendings]
+    assert spendings_category_name == [cat_1.category_name] * spendings_qty
+    assert spendings_category_name != [cat_2.category_name] * spendings_qty
 
 
 @pytest.mark.asyncio
