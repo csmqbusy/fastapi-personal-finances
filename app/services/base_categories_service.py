@@ -26,7 +26,7 @@ class BaseCategoriesService:
         transaction_repo: BaseTransactionsRepository,
         default_category_name: str,
         out_schema: Type[STransactionCategoryOut],
-    ):
+    ) -> None:
         self.category_repo = category_repo
         self.transaction_repo = transaction_repo
         self.default_category_name = default_category_name
