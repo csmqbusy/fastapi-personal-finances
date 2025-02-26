@@ -383,13 +383,6 @@ async def test__get_category_id(
             True,
             pytest.raises(CategoryNotFound),
         ),
-        (
-            False,
-            "Taxi",
-            True,
-            False,
-            pytest.raises(CategoryNotFound),
-        ),
     ]
 )
 async def test_get_transactions__errors(
@@ -414,10 +407,10 @@ async def test_get_transactions__errors(
 
     with expectation:
         query_params = STransactionsQueryParams(
-            user_id=user.id if send_user_id else None,
             category_name=category_name,
         )
         await spendings_service.get_transactions(
+            user_id=user.id,
             query_params=query_params,
             session=db_session,
         )
@@ -470,11 +463,11 @@ async def test_get_transactions__category_id_priority(
     )
 
     query_params = STransactionsQueryParams(
-        user_id=user.id,
         category_id=cat_1.id,
         category_name=cat_2.category_name,
     )
     spendings = await spendings_service.get_transactions(
+        user_id=user.id,
         query_params=query_params,
         session=db_session,
     )
@@ -578,8 +571,8 @@ async def test_get_transactions__correct(
         )
 
     spendings = await spendings_service.get_transactions(
+        user_id=user.id,
         query_params=STransactionsQueryParams(
-            user_id=user.id,
             category_id=category.id if not pass_category_name else None,
             category_name=category_name if pass_category_name else None,
         ),

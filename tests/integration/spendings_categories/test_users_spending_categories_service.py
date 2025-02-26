@@ -117,16 +117,17 @@ async def test_get_category(
         assert category.user_id == user.id
 
 
+@pytest.mark.asyncio
 async def test_create_and_get_default_category(db_session: AsyncSession):
     mock_user_username = "RAPHINHA"
     await add_mock_user(db_session, mock_user_username)
     user = await user_repo.get_by_username(db_session, mock_user_username)
 
-    category = await user_spend_cat_service.get_default_category(
-        user.id,
-        db_session,
-    )
-    assert category is None
+    with pytest.raises(CategoryNotFound):
+        await user_spend_cat_service.get_default_category(
+            user.id,
+            db_session,
+        )
 
     await user_spend_cat_service.add_user_default_category(user.id, db_session)
     category = await user_spend_cat_service.get_default_category(
