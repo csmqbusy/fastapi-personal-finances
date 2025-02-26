@@ -71,5 +71,7 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
                         getattr(self.model, param.order_by).desc()
                     )
 
+        query = query.options(joinedload(self.model.category))
+
         result = await session.execute(query)
         return list(result.scalars().all())
