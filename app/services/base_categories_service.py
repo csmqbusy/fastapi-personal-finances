@@ -181,7 +181,7 @@ class BaseCategoriesService:
         transactions: Iterable,
         new_category_id: int,
         session: AsyncSession,
-    ):
+    ) -> None:
         repo = self.transaction_repo
 
         for t in transactions:
