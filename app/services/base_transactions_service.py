@@ -35,7 +35,7 @@ class TransactionsService:
         creation_in_db_schema: Type[STransactionCreateInDB],
         update_partial_in_db_schema: Type[STransactionUpdatePartialInDB],
         out_schema: Type[STransactionResponse],
-    ):
+    ) -> None:
         self.tx_repo = tx_repo
         self.tx_categories_repo = tx_categories_repo
         self.default_tx_category_name = default_tx_category_name
