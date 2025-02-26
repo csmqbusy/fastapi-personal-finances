@@ -18,7 +18,7 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         self,
         session: AsyncSession,
         transaction_id: int,
-    ):
+    ) -> BaseTranscationsModel:
         query = (
             select(self.model)
             .filter_by(id=transaction_id)
