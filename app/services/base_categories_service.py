@@ -189,6 +189,7 @@ class BaseCategoriesService:
                 session,
                 t.id,
             )
-            transaction_in_db.category_id = new_category_id
+            if transaction_in_db:
+                transaction_in_db.category_id = new_category_id
 
         await session.commit()
