@@ -42,7 +42,8 @@ class JWTAuth(BaseModel):
 
 
 class AppConfig(BaseSettings):
-    default_spending_category_name: str = "Rest spendings"
+    default_spending_category_name: str = "Other spendings"
+    default_income_category_name: str = "Other income"
 
 
 class Settings(BaseSettings):
