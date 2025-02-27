@@ -6,12 +6,13 @@ from app.api.exceptions.operations_exceptions import CategoryNotFoundError
 from app.db import get_db_session
 from app.exceptions.categories_exceptions import CategoryNotFound
 from app.models import UserModel
+from app.schemas.transaction_category_schemas import STransactionCategoryOut
 from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
 )
 from app.services.income_service import income_service
-
+from app.services.users_income_categories_service import user_income_cat_service
 
 router = APIRouter(prefix="/income")
 
@@ -34,3 +35,15 @@ async def income_add(
         )
     except CategoryNotFound:
         raise CategoryNotFoundError()
+
+
+@router.get(
+    "/categories/",
+    status_code=status.HTTP_200_OK,
+    summary="Get user's income categories",
+)
+async def income_categories_get(
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> list[STransactionCategoryOut]:
+    return await user_income_cat_service.get_user_categories(user.id, db_session)
