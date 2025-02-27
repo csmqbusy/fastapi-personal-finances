@@ -13,11 +13,15 @@ from app.api.exceptions.operations_exceptions import (
     CategoryNotFoundError,
     TransactionNotFoundError,
     CategoryAlreadyExistsError,
+    CannotDeleteDefaultCategoryError,
+    CategoryNameNotFoundError,
 )
 from app.db import get_db_session
 from app.exceptions.categories_exceptions import (
     CategoryNotFound,
     CategoryAlreadyExists,
+    CannotDeleteDefaultCategory,
+    CategoryNameNotFound,
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
@@ -27,6 +31,7 @@ from app.schemas.transaction_category_schemas import (
     STransactionCategoryOut,
     STransactionCategoryCreate,
     STransactionCategoryUpdate,
+    TransactionsOnDeleteActions,
 )
 from app.schemas.transactions_schemas import (
     STransactionCreate,
@@ -219,3 +224,40 @@ async def income_category_update(
     except CategoryAlreadyExists:
         raise CategoryAlreadyExistsError()
     return category
+
+
+@router.delete(
+    "/categories/{category_name}/",
+    status_code=status.HTTP_200_OK,
+    summary="Delete income category",
+)
+async def income_category_delete(
+    category_name: str,
+    handle_income_on_deletion: TransactionsOnDeleteActions,
+    new_category_name: str | None = None,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> dict[str, str]:
+    category_name = category_name.strip()
+    if new_category_name:
+        new_category_name = new_category_name.strip()
+
+    try:
+        await user_income_cat_service.delete_category(
+            category_name=category_name,
+            user_id=user.id,
+            transactions_actions=handle_income_on_deletion,
+            new_category_name=new_category_name,
+            session=db_session,
+        )
+    except CannotDeleteDefaultCategory:
+        raise CannotDeleteDefaultCategoryError()
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
+    except CategoryNameNotFound:
+        raise CategoryNameNotFoundError()
+
+    return {
+        "delete": "ok",
+        "category_name": category_name,
+    }
