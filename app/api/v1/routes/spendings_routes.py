@@ -46,11 +46,12 @@ from app.services import spendings_service
 from app.services.common_service import apply_pagination
 from app.services.users_spending_categories_service import user_spend_cat_service
 
-router = APIRouter()
+
+router = APIRouter(prefix="/spendings")
 
 
 @router.post(
-    "/spendings/",
+    "/",
     status_code=status.HTTP_201_CREATED,
     summary="Create new spending",
 )
@@ -70,7 +71,7 @@ async def spending_add(
 
 
 @router.get(
-    "/spendings/categories/",
+    "/categories/",
     status_code=status.HTTP_200_OK,
     summary="Get user's spending categories",
 )
@@ -82,7 +83,7 @@ async def spendings_categories_get(
 
 
 @router.get(
-    "/spendings/{spending_id}/",
+    "/{spending_id}/",
     status_code=status.HTTP_200_OK,
     summary="Get spending details",
 )
@@ -102,7 +103,7 @@ async def spending_get(
 
 
 @router.patch(
-    "/spendings/{spending_id}/",
+    "/{spending_id}/",
     status_code=status.HTTP_200_OK,
     summary="Partial update spending details",
 )
@@ -127,7 +128,7 @@ async def spending_update(
 
 
 @router.delete(
-    "/spendings/{spending_id}/",
+    "/{spending_id}/",
     status_code=status.HTTP_200_OK,
     summary="Delete spending",
 )
@@ -151,7 +152,7 @@ async def spending_delete(
 
 
 @router.get(
-    "/spendings/",
+    "/",
     status_code=status.HTTP_200_OK,
 )
 async def spendings_get(
@@ -181,7 +182,7 @@ async def spendings_get(
 
 
 @router.post(
-    "/spendings/categories/",
+    "/categories/",
     status_code=status.HTTP_201_CREATED,
     summary="Create new spending category",
 )
@@ -202,7 +203,7 @@ async def spending_category_add(
 
 
 @router.patch(
-    "/spendings/categories/{category_name}/",
+    "/categories/{category_name}/",
     status_code=status.HTTP_200_OK,
     summary="Partial update spending category details",
 )
@@ -227,7 +228,7 @@ async def spending_category_update(
 
 
 @router.delete(
-    "/spendings/categories/{category_name}/",
+    "/categories/{category_name}/",
     status_code=status.HTTP_200_OK,
     summary="Delete spending category",
 )
