@@ -8,6 +8,7 @@ from app.exceptions.user_exceptions import (
 from app.models import UserModel
 from app.repositories import user_repo
 from app.schemas.user_schemas import SUserSignUp
+from app.services.users_income_categories_service import user_income_cat_service
 from app.services.users_spending_categories_service import user_spend_cat_service
 
 
@@ -22,6 +23,10 @@ async def create_user(
 
     user_from_db = await user_repo.add(session, user.model_dump())
     await user_spend_cat_service.add_user_default_category(
+        user_from_db.id,
+        session,
+    )
+    await user_income_cat_service.add_user_default_category(
         user_from_db.id,
         session,
     )
