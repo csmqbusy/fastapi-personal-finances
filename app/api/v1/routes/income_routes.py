@@ -97,3 +97,27 @@ async def income_update(
     except CategoryNotFound:
         raise CategoryNotFoundError()
     return updated_income
+
+
+@router.delete(
+    "/{income_id}/",
+    status_code=status.HTTP_200_OK,
+    summary="Delete income",
+)
+async def income_delete(
+    income_id: int,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> dict:
+    try:
+        await income_service.delete_transaction(
+            income_id,
+            user.id,
+            db_session,
+        )
+    except TransactionNotFound:
+        raise TransactionNotFoundError()
+    return {
+        "delete": "ok",
+        "id": income_id,
+    }
