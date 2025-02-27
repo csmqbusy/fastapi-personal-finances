@@ -12,14 +12,21 @@ from app.api.dependencies.operations_dependencies import (
 from app.api.exceptions.operations_exceptions import (
     CategoryNotFoundError,
     TransactionNotFoundError,
-    )
+    CategoryAlreadyExistsError,
+)
 from app.db import get_db_session
-from app.exceptions.categories_exceptions import CategoryNotFound
+from app.exceptions.categories_exceptions import (
+    CategoryNotFound,
+    CategoryAlreadyExists,
+)
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
 from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.pagination_schemas import SPagination
-from app.schemas.transaction_category_schemas import STransactionCategoryOut
+from app.schemas.transaction_category_schemas import (
+    STransactionCategoryOut,
+    STransactionCategoryCreate,
+)
 from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
@@ -139,6 +146,7 @@ async def income_delete(
 @router.get(
     "/",
     status_code=status.HTTP_200_OK,
+    summary="Get income",
 )
 async def income_get(
     user: UserModel = Depends(get_active_verified_user),
@@ -164,3 +172,24 @@ async def income_get(
         raise CategoryNotFoundError()
     income = apply_pagination(income, pagination)
     return income
+
+
+@router.post(
+    "/categories/",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create new income category",
+)
+async def income_category_add(
+    income_category: STransactionCategoryCreate,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> STransactionCategoryOut:
+    try:
+        category = await user_income_cat_service.add_category_to_db(
+            user.id,
+            income_category.category_name,
+            db_session,
+        )
+    except CategoryAlreadyExists:
+        raise CategoryAlreadyExistsError()
+    return category
