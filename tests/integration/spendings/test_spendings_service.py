@@ -14,7 +14,7 @@ from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartial,
-    STransactionsQueryParams,
+    SCategoryQueryParams,
     STransactionCreateInDB,
     STransactionsSortParams,
     SortParam,
@@ -406,7 +406,7 @@ async def test_get_transactions__errors(
         )
 
     with expectation:
-        query_params = STransactionsQueryParams(
+        query_params = SCategoryQueryParams(
             category_name=category_name,
         )
         await spendings_service.get_transactions(
@@ -462,7 +462,7 @@ async def test_get_transactions__category_id_priority(
         db_session=db_session,
     )
 
-    query_params = STransactionsQueryParams(
+    query_params = SCategoryQueryParams(
         category_id=cat_1.id,
         category_name=cat_2.category_name,
     )
@@ -573,7 +573,7 @@ async def test_get_transactions__correct(
 
     spendings = await spendings_service.get_transactions(
         user_id=user.id,
-        query_params=STransactionsQueryParams(
+        query_params=SCategoryQueryParams(
             category_id=category.id if not pass_category_name else None,
             category_name=category_name if pass_category_name else None,
         ),

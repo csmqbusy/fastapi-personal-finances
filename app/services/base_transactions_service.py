@@ -12,7 +12,7 @@ from app.repositories import (
 )
 from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.transactions_schemas import (
-    STransactionsQueryParams,
+    SCategoryQueryParams,
     STransactionsSortParams,
     SortParam,
     SAmountRange,
@@ -171,7 +171,7 @@ class TransactionsService:
         self,
         session: AsyncSession,
         user_id: int,
-        query_params: STransactionsQueryParams,
+        query_params: SCategoryQueryParams,
         amount_params: SAmountRange | None = None,
         search_term: str | None = None,
         datetime_range: SDatetimeRange | None = None,

@@ -5,7 +5,7 @@ from fastapi import Query
 from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.pagination_schemas import SPagination
 from app.schemas.transactions_schemas import (
-    STransactionsQueryParams,
+    SCategoryQueryParams,
     STransactionsSortParams,
     SAmountRange,
 )
@@ -47,8 +47,8 @@ def get_transactions_query_params(
             "Ignore the category_id parameter if you use category_name."
         ),
     ),
-) -> STransactionsQueryParams:
-    return STransactionsQueryParams(
+) -> SCategoryQueryParams:
+    return SCategoryQueryParams(
         category_id=category_id,
         category_name=category_name,
     )

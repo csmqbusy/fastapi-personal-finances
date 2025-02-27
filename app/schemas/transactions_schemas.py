@@ -49,7 +49,7 @@ class STransactionUpdatePartialInDB(BaseModel):
     date: datetime | None
 
 
-class STransactionsQueryParams(BaseModel):
+class SCategoryQueryParams(BaseModel):
     category_id: int | None = None
     category_name: str | None = None
 

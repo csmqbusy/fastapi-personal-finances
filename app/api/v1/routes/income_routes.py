@@ -37,7 +37,7 @@ from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartial,
-    STransactionsQueryParams,
+    SCategoryQueryParams,
     SAmountRange,
     STransactionsSortParams,
 )
@@ -156,7 +156,7 @@ async def income_delete(
 )
 async def income_get(
     user: UserModel = Depends(get_active_verified_user),
-    query_params: STransactionsQueryParams = Depends(get_transactions_query_params),
+    query_params: SCategoryQueryParams = Depends(get_transactions_query_params),
     amount_params: SAmountRange = Depends(get_amount_range),
     description_search_term: str | None = Query(None),
     datetime_range: SDatetimeRange = Depends(get_date_range),
