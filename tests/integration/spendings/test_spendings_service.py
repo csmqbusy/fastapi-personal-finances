@@ -406,12 +406,12 @@ async def test_get_transactions__errors(
         )
 
     with expectation:
-        query_params = SCategoryQueryParams(
+        category_params = SCategoryQueryParams(
             category_name=category_name,
         )
         await spendings_service.get_transactions(
             user_id=user.id,
-            category_params=query_params,
+            category_params=category_params,
             session=db_session,
         )
 
@@ -462,13 +462,13 @@ async def test_get_transactions__category_id_priority(
         db_session=db_session,
     )
 
-    query_params = SCategoryQueryParams(
+    category_params = SCategoryQueryParams(
         category_id=cat_1.id,
         category_name=cat_2.category_name,
     )
     spendings = await spendings_service.get_transactions(
         user_id=user.id,
-        category_params=query_params,
+        category_params=category_params,
         session=db_session,
     )
     assert len(spendings) == spendings_qty
