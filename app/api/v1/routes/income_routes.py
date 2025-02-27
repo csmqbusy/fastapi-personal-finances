@@ -26,6 +26,7 @@ from app.schemas.pagination_schemas import SPagination
 from app.schemas.transaction_category_schemas import (
     STransactionCategoryOut,
     STransactionCategoryCreate,
+    STransactionCategoryUpdate,
 )
 from app.schemas.transactions_schemas import (
     STransactionCreate,
@@ -190,6 +191,31 @@ async def income_category_add(
             income_category.category_name,
             db_session,
         )
+    except CategoryAlreadyExists:
+        raise CategoryAlreadyExistsError()
+    return category
+
+
+@router.patch(
+    "/categories/{category_name}/",
+    status_code=status.HTTP_200_OK,
+    summary="Partial update income category details",
+)
+async def income_category_update(
+    category_name: str,
+    income_category_update_obj: STransactionCategoryUpdate,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> STransactionCategoryOut:
+    try:
+        category = await user_income_cat_service.update_category(
+            category_name,
+            user.id,
+            income_category_update_obj,
+            db_session,
+        )
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
     except CategoryAlreadyExists:
         raise CategoryAlreadyExistsError()
     return category
