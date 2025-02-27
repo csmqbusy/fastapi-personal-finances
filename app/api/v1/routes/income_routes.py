@@ -2,8 +2,10 @@ from fastapi import APIRouter, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
-from app.api.exceptions.operations_exceptions import CategoryNotFoundError, \
-    TransactionNotFoundError
+from app.api.exceptions.operations_exceptions import (
+    CategoryNotFoundError,
+    TransactionNotFoundError,
+    )
 from app.db import get_db_session
 from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.transaction_exceptions import TransactionNotFound
@@ -12,6 +14,7 @@ from app.schemas.transaction_category_schemas import STransactionCategoryOut
 from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
+    STransactionUpdatePartial,
 )
 from app.services.income_service import income_service
 from app.services.users_income_categories_service import user_income_cat_service
@@ -69,3 +72,28 @@ async def income_get(
         )
     except TransactionNotFound:
         raise TransactionNotFoundError()
+
+
+@router.patch(
+    "/{income_id}/",
+    status_code=status.HTTP_200_OK,
+    summary="Partial update income details",
+)
+async def income_update(
+    income_id: int,
+    income_update_obj: STransactionUpdatePartial,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> STransactionResponse:
+    try:
+        updated_income = await income_service.update_transaction(
+            income_id,
+            user.id,
+            income_update_obj,
+            db_session,
+        )
+    except TransactionNotFound:
+        raise TransactionNotFoundError()
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
+    return updated_income
