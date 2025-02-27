@@ -411,7 +411,7 @@ async def test_get_transactions__errors(
         )
         await spendings_service.get_transactions(
             user_id=user.id,
-            query_params=query_params,
+            category_params=query_params,
             session=db_session,
         )
 
@@ -468,7 +468,7 @@ async def test_get_transactions__category_id_priority(
     )
     spendings = await spendings_service.get_transactions(
         user_id=user.id,
-        query_params=query_params,
+        category_params=query_params,
         session=db_session,
     )
     assert len(spendings) == spendings_qty
@@ -573,7 +573,7 @@ async def test_get_transactions__correct(
 
     spendings = await spendings_service.get_transactions(
         user_id=user.id,
-        query_params=SCategoryQueryParams(
+        category_params=SCategoryQueryParams(
             category_id=category.id if not pass_category_name else None,
             category_name=category_name if pass_category_name else None,
         ),

@@ -197,7 +197,7 @@ class TransactionsService:
         transactions = await self.tx_repo.get_transactions(
             session=session,
             user_id=user_id,
-            query_params=query_params.model_dump(exclude_none=True),
+            category_params=query_params.model_dump(exclude_none=True),
             sort_params=parsed_sort_params,
             min_amount=amount_params.min_amount if amount_params else None,
             max_amount=amount_params.max_amount if amount_params else None,
