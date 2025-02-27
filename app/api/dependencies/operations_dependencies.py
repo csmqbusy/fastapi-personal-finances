@@ -31,7 +31,7 @@ def get_date_range(
     )
 
 
-def get_transactions_query_params(
+def get_category_query_params(
     category_id: int | None = Query(
         None,
         description=(
