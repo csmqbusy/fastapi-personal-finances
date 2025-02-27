@@ -1,7 +1,14 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
+from app.api.dependencies.operations_dependencies import (
+    get_transactions_query_params,
+    get_amount_range,
+    get_date_range,
+    get_pagination_params,
+    get_transactions_sort_params,
+)
 from app.api.exceptions.operations_exceptions import (
     CategoryNotFoundError,
     TransactionNotFoundError,
@@ -10,12 +17,18 @@ from app.db import get_db_session
 from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
+from app.schemas.date_range_schemas import SDatetimeRange
+from app.schemas.pagination_schemas import SPagination
 from app.schemas.transaction_category_schemas import STransactionCategoryOut
 from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartial,
+    STransactionsQueryParams,
+    SAmountRange,
+    STransactionsSortParams,
 )
+from app.services.common_service import apply_pagination
 from app.services.income_service import income_service
 from app.services.users_income_categories_service import user_income_cat_service
 
@@ -121,3 +134,33 @@ async def income_delete(
         "delete": "ok",
         "id": income_id,
     }
+
+
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+)
+async def income_get(
+    user: UserModel = Depends(get_active_verified_user),
+    query_params: STransactionsQueryParams = Depends(get_transactions_query_params),
+    amount_params: SAmountRange = Depends(get_amount_range),
+    description_search_term: str | None = Query(None),
+    datetime_range: SDatetimeRange = Depends(get_date_range),
+    pagination: SPagination = Depends(get_pagination_params),
+    sort_params: STransactionsSortParams = Depends(get_transactions_sort_params),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> list[STransactionResponse]:
+    try:
+        income = await income_service.get_transactions(
+            session=db_session,
+            user_id=user.id,
+            query_params=query_params,
+            amount_params=amount_params,
+            search_term=description_search_term,
+            datetime_range=datetime_range,
+            sort_params=sort_params,
+        )
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
+    income = apply_pagination(income, pagination)
+    return income
