@@ -49,11 +49,6 @@ class STransactionUpdatePartialInDB(BaseModel):
     date: datetime | None
 
 
-class SCategoryQueryParams(BaseModel):
-    category_id: int | None = None
-    category_name: str | None = None
-
-
 class STransactionsSortParams(BaseModel):
     sort_by: list[str] | None = None
 

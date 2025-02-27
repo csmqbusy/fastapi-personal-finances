@@ -14,12 +14,12 @@ from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartial,
-    SCategoryQueryParams,
     STransactionCreateInDB,
     STransactionsSortParams,
     SortParam,
     SAmountRange,
 )
+from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.services import user_spend_cat_service, spendings_service
 from tests.integration.helpers import add_mock_user, create_spendings
 

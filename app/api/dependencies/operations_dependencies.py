@@ -5,10 +5,10 @@ from fastapi import Query
 from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.pagination_schemas import SPagination
 from app.schemas.transactions_schemas import (
-    SCategoryQueryParams,
     STransactionsSortParams,
     SAmountRange,
 )
+from app.schemas.transaction_category_schemas import SCategoryQueryParams
 
 
 def get_pagination_params(

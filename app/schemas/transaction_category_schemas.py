@@ -34,3 +34,8 @@ class TransactionsOnDeleteActions(StrEnum):
     TO_DEFAULT = "TO_DEFAULT"
     TO_EXISTS_CAT = "TO_EXISTS_CATEGORY"
     TO_NEW_CAT = "TO_NEW_CATEGORY"
+
+
+class SCategoryQueryParams(BaseModel):
+    category_id: int | None = None
+    category_name: str | None = None

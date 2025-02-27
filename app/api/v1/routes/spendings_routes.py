@@ -33,12 +33,12 @@ from app.schemas.transaction_category_schemas import (
     STransactionCategoryOut,
     STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
+    SCategoryQueryParams,
 )
 from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartial,
-    SCategoryQueryParams,
     STransactionsSortParams,
     SAmountRange,
 )
