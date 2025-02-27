@@ -171,23 +171,23 @@ class TransactionsService:
         self,
         session: AsyncSession,
         user_id: int,
-        query_params: SCategoryQueryParams,
+        category_params: SCategoryQueryParams,
         amount_params: SAmountRange | None = None,
         search_term: str | None = None,
         datetime_range: SDatetimeRange | None = None,
         sort_params: STransactionsSortParams | None = None,
     ) -> list[STransactionResponse]:
-        if query_params.category_name and query_params.category_id is None:
+        if category_params.category_name and category_params.category_id is None:
             category = await self.tx_categories_repo.get_category(
                 session=session,
                 user_id=user_id,
-                category_name=query_params.category_name,
+                category_name=category_params.category_name,
             )
             if not category:
                 raise CategoryNotFound
-            query_params.category_id = category.id
+            category_params.category_id = category.id
 
-        query_params.category_name = None
+        category_params.category_name = None
 
         if sort_params:
             parsed_sort_params = self._parse_sort_params_for_query(sort_params)
@@ -197,7 +197,7 @@ class TransactionsService:
         transactions = await self.tx_repo.get_transactions(
             session=session,
             user_id=user_id,
-            category_params=query_params.model_dump(exclude_none=True),
+            category_params=category_params.model_dump(exclude_none=True),
             sort_params=parsed_sort_params,
             min_amount=amount_params.min_amount if amount_params else None,
             max_amount=amount_params.max_amount if amount_params else None,
