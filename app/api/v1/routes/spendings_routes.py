@@ -40,7 +40,7 @@ from app.schemas.transactions_schemas import (
     STransactionResponse,
     STransactionUpdatePartial,
     STransactionsSortParams,
-    SAmountRange,
+    SAmountRange, STransactionsSummary,
 )
 from app.services import spendings_service
 from app.services.common_service import apply_pagination
@@ -80,6 +80,33 @@ async def spendings_categories_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[STransactionCategoryOut]:
     return await user_spend_cat_service.get_user_categories(user.id, db_session)
+
+
+@router.get(
+    "/summary/",
+    status_code=status.HTTP_200_OK,
+    summary="Get spendings summary",
+)
+async def spendings_summary_get(
+    user: UserModel = Depends(get_active_verified_user),
+    category_params: SCategoryQueryParams = Depends(get_category_query_params),
+    amount_params: SAmountRange = Depends(get_amount_range),
+    description_search_term: str | None = Query(None),
+    datetime_range: SDatetimeRange = Depends(get_date_range),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> list[STransactionsSummary]:
+    try:
+        spendings = await spendings_service.get_summary(
+            session=db_session,
+            user_id=user.id,
+            category_params=category_params,
+            amount_params=amount_params,
+            search_term=description_search_term,
+            datetime_range=datetime_range,
+        )
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
+    return spendings
 
 
 @router.get(
