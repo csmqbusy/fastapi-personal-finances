@@ -31,7 +31,7 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         self,
         session: AsyncSession,
         user_id: int,
-        category_params: dict,
+        categories_ids: list[int] | None = None,
         min_amount: int | None = None,
         max_amount: int | None = None,
         description_search_term: str | None = None,
@@ -42,8 +42,9 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         query = (
             select(self.model)
             .where(self.model.user_id == user_id)
-            .filter_by(**category_params)
         )
+        if categories_ids:
+            query = query.where(self.model.category_id.in_(categories_ids))
 
         if description_search_term:
             query = query.filter(
