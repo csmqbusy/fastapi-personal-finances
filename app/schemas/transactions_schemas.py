@@ -5,7 +5,7 @@ from pydantic import (
     BaseModel,
     Field,
     ConfigDict,
-    field_validator,
+    model_validator,
 )
 
 
@@ -49,27 +49,24 @@ class STransactionUpdatePartialInDB(BaseModel):
     date: datetime | None
 
 
-class STransactionsSortParams(BaseModel):
+class SSortParamsBase(BaseModel):
     sort_by: list[str] | None = None
 
-    @field_validator("sort_by")
-    def validate_sort_by(
-        cls,
-        value: list[str],
-    ) -> list[str]:
-        if not value:
-            return value
+    @model_validator(mode="after")
+    def validate_sort_by(self):
+        if self.sort_by:
+            sort_by_copy = self.sort_by.copy()
+            self.sort_by.clear()
+            for field in sort_by_copy:
+                if field.lstrip("-") in self.allowed_fields:
+                    if field.startswith("-"):
+                        field = f"-{field.lstrip("-")}"
+                    self.sort_by.append(field)
+        return self
 
-        allowed_fields = STransactionResponse.model_fields
 
-        value_copy = value.copy()
-        value.clear()
-        for field in value_copy:
-            if field.lstrip("-") in allowed_fields:
-                if field.startswith("-"):
-                    field = f"-{field.lstrip("-")}"
-                value.append(field)
-        return value
+class STransactionsSortParams(SSortParamsBase):
+    allowed_fields: dict = STransactionResponse.model_fields
 
 
 class SortParam(BaseModel):
