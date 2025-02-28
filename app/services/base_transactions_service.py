@@ -191,7 +191,7 @@ class TransactionsService:
         else:
             parsed_sort_params = None
 
-        transactions = await self.tx_repo.get_transactions(
+        transactions = await self.tx_repo.get_transactions_from_db(
             session=session,
             user_id=user_id,
             category_params=category_params.model_dump(exclude_none=True),
@@ -229,7 +229,7 @@ class TransactionsService:
             category_params=category_params,
         )
 
-        transactions = await self.tx_repo.get_transactions(
+        transactions = await self.tx_repo.get_transactions_from_db(
             session=session,
             user_id=user_id,
             category_params=category_params.model_dump(exclude_none=True),

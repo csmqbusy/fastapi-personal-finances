@@ -27,7 +27,7 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         result = await session.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_transactions(
+    async def get_transactions_from_db(
         self,
         session: AsyncSession,
         user_id: int,

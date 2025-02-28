@@ -104,14 +104,14 @@ async def test_get_transactions__with_sort(
             transaction_to_create.model_dump(),
         )
 
-    spendings = await spendings_repo.get_transactions(
+    spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
         category_params=dict(user_id=user.id, category_id=category.id),
     )
     assert [s.amount for s in spendings] == prices
 
-    spendings = await spendings_repo.get_transactions(
+    spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
         category_params=dict(user_id=user.id, category_id=category.id),
@@ -182,14 +182,14 @@ async def test_get_transactions__with_datetime_period(
             transaction_to_create.model_dump(),
         )
 
-    spendings = await spendings_repo.get_transactions(
+    spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
         category_params=dict(user_id=user.id, category_id=category.id),
     )
     assert [s.date for s in spendings] == datetimes
 
-    spendings = await spendings_repo.get_transactions(
+    spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
         category_params=dict(user_id=user.id, category_id=category.id),
@@ -261,14 +261,14 @@ async def test_get_transactions__with_desc_search_term(
             transaction_to_create.model_dump(),
         )
 
-    spendings = await spendings_repo.get_transactions(
+    spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
         category_params=dict(user_id=user.id, category_id=category.id),
     )
     assert [s.description for s in spendings] == descriptions
 
-    spendings = await spendings_repo.get_transactions(
+    spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
         category_params=dict(user_id=user.id),
@@ -355,7 +355,7 @@ async def test_get_transactions__with_amount_range(
             transaction_to_create.model_dump(),
         )
 
-    spendings = await spendings_repo.get_transactions(
+    spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
         category_params=dict(user_id=user.id, category_id=category.id),
@@ -446,7 +446,7 @@ async def test_get_transactions__with_all_filters(
             transaction_to_create.model_dump(),
         )
 
-    spendings = await spendings_repo.get_transactions(
+    spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         category_params=dict(category_id=category.id),
         min_amount=min_amount,
