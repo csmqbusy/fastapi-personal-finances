@@ -174,13 +174,13 @@ class TransactionsService:
         self,
         session: AsyncSession,
         user_id: int,
-        category_params: SCategoryQueryParams,
+        categories_params: list[SCategoryQueryParams],
         amount_params: SAmountRange | None = None,
         search_term: str | None = None,
         datetime_range: SDatetimeRange | None = None,
         sort_params: STransactionsSortParams | None = None,
     ) -> list[STransactionResponse]:
-        category_ids = await self._extract_category_ids(
+        categories_ids = await self._extract_category_ids(
             session=session,
             user_id=user_id,
             categories_params=categories_params,
@@ -194,7 +194,7 @@ class TransactionsService:
         transactions = await self.tx_repo.get_transactions_from_db(
             session=session,
             user_id=user_id,
-            category_params=category_params.model_dump(exclude_none=True),
+            categories_ids=categories_ids if categories_ids else None,
             sort_params=parsed_sort_params,
             min_amount=amount_params.min_amount if amount_params else None,
             max_amount=amount_params.max_amount if amount_params else None,
