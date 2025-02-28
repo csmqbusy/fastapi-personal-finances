@@ -56,3 +56,12 @@ class InvalidDataRangeError(HTTPException):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="The start date must be less than the end date.",
         )
+
+
+class CategoryInfoError(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Send information about categories in only one format: "
+                   "either category_ids or category_names.",
+        )
