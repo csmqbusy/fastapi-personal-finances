@@ -10,6 +10,7 @@ from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.repositories import user_repo, spendings_repo
 from app.schemas.date_range_schemas import SDatetimeRange
+from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
@@ -17,9 +18,8 @@ from app.schemas.transactions_schemas import (
     STransactionCreateInDB,
     STransactionsSortParams,
     SortParam,
-    SAmountRange,
+    SAmountRange, STransactionsSummary,
 )
-from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.services import user_spend_cat_service, spendings_service
 from tests.integration.helpers import add_mock_user, create_spendings
 
@@ -411,7 +411,7 @@ async def test_get_transactions__errors(
         )
         await spendings_service.get_transactions(
             user_id=user.id,
-            category_params=category_params,
+            categories_params=category_params,
             session=db_session,
         )
 
@@ -468,7 +468,7 @@ async def test_get_transactions__category_id_priority(
     )
     spendings = await spendings_service.get_transactions(
         user_id=user.id,
-        category_params=category_params,
+        categories_params=category_params,
         session=db_session,
     )
     assert len(spendings) == spendings_qty
@@ -573,7 +573,7 @@ async def test_get_transactions__correct(
 
     spendings = await spendings_service.get_transactions(
         user_id=user.id,
-        category_params=SCategoryQueryParams(
+        categories_params=SCategoryQueryParams(
             category_id=category.id if not pass_category_name else None,
             category_name=category_name if pass_category_name else None,
         ),
