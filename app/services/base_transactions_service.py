@@ -284,20 +284,21 @@ class TransactionsService:
         self,
         session: AsyncSession,
         user_id: int,
-        category_params: SCategoryQueryParams,
-    ) -> SCategoryQueryParams:
-        if category_params.category_name and category_params.category_id is None:
-            category = await self.tx_categories_repo.get_category(
-                session=session,
-                user_id=user_id,
-                category_name=category_params.category_name,
-            )
-            if not category:
-                raise CategoryNotFound
-            category_params.category_id = category.id
-
-        category_params.category_name = None
-        return category_params
+        categories_params: list[SCategoryQueryParams],
+    ) -> list[int]:
+        category_ids = set()
+        for cat_params in categories_params:
+            if cat_params.category_name and cat_params.category_id is None:
+                category = await self.tx_categories_repo.get_category(
+                    session=session,
+                    user_id=user_id,
+                    category_name=cat_params.category_name,
+                )
+                if not category:
+                    raise CategoryNotFound
+                cat_params.category_id = category.id
+            category_ids.add(cat_params.category_id)
+        return list(category_ids)
 
     @staticmethod
     def _parse_sort_params_for_query(
