@@ -180,10 +180,10 @@ class TransactionsService:
         datetime_range: SDatetimeRange | None = None,
         sort_params: STransactionsSortParams | None = None,
     ) -> list[STransactionResponse]:
-        category_params = await self._check_category_params(
+        category_ids = await self._extract_category_ids(
             session=session,
             user_id=user_id,
-            category_params=category_params,
+            categories_params=categories_params,
         )
 
         if sort_params:
@@ -223,10 +223,10 @@ class TransactionsService:
         search_term: str | None = None,
         datetime_range: SDatetimeRange | None = None,
     ) -> list[STransactionsSummary]:
-        category_params = await self._check_category_params(
+        category_params = await self._extract_category_ids(
             session=session,
             user_id=user_id,
-            category_params=category_params,
+            categories_params=category_params,
         )
 
         transactions = await self.tx_repo.get_transactions_from_db(
@@ -280,7 +280,7 @@ class TransactionsService:
         summary.sort(key=lambda t: t.amount, reverse=True)
         return summary
 
-    async def _check_category_params(
+    async def _extract_category_ids(
         self,
         session: AsyncSession,
         user_id: int,
