@@ -40,6 +40,7 @@ from app.schemas.transactions_schemas import (
     STransactionUpdatePartial,
     SAmountRange,
     STransactionsSortParams,
+    STransactionsSummary,
 )
 from app.services.common_service import apply_pagination
 from app.services.income_service import income_service
@@ -78,6 +79,33 @@ async def income_categories_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[STransactionCategoryOut]:
     return await user_income_cat_service.get_user_categories(user.id, db_session)
+
+
+@router.get(
+    "/summary/",
+    status_code=status.HTTP_200_OK,
+    summary="Get income summary",
+)
+async def income_summary_get(
+    user: UserModel = Depends(get_active_verified_user),
+    category_params: SCategoryQueryParams = Depends(get_category_query_params),
+    amount_params: SAmountRange = Depends(get_amount_range),
+    description_search_term: str | None = Query(None),
+    datetime_range: SDatetimeRange = Depends(get_date_range),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> list[STransactionsSummary]:
+    try:
+        income = await income_service.get_summary(
+            session=db_session,
+            user_id=user.id,
+            category_params=category_params,
+            amount_params=amount_params,
+            search_term=description_search_term,
+            datetime_range=datetime_range,
+        )
+    except CategoryNotFound:
+        raise CategoryNotFoundError()
+    return income
 
 
 @router.get(
