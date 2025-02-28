@@ -223,7 +223,7 @@ class TransactionsService:
         search_term: str | None = None,
         datetime_range: SDatetimeRange | None = None,
     ) -> list[STransactionsSummary]:
-        category_params =  self._check_category_params(
+        category_params = await self._check_category_params(
             session=session,
             user_id=user_id,
             category_params=category_params,
