@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import Query
 
+from app.api.exceptions.operations_exceptions import CategoryInfoError
 from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.pagination_schemas import SPagination
 from app.schemas.transactions_schemas import (
@@ -40,18 +41,32 @@ def get_categories_params(
             "category_name, category_id will be used."
         ),
     ),
-    category_name: str | None = Query(
+    category_names: list[str] | None = Query(
         None,
         description=(
             "Specify the category name if the id is unknown. "
             "Ignore the category_id parameter if you use category_name."
         ),
     ),
-) -> SCategoryQueryParams:
-    return SCategoryQueryParams(
-        category_id=category_id,
-        category_name=category_name,
-    )
+) -> list[SCategoryQueryParams]:
+    if category_ids and category_names:
+        raise CategoryInfoError()
+
+    if category_ids is None and category_names is None:
+        return []
+
+    if category_ids:
+        category_params = [
+            SCategoryQueryParams(category_id=cat_id)
+            for cat_id in category_ids
+        ]
+    else:
+        category_params = [
+            SCategoryQueryParams(category_name=cat_name)
+            for cat_name in category_names
+        ]
+
+    return category_params
 
 
 def get_transactions_sort_params(
