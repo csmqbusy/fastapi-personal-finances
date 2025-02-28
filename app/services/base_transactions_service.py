@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Type
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +22,7 @@ from app.schemas.transactions_schemas import (
     STransactionUpdatePartialInDB,
     STransactionCreateInDB,
     STransactionUpdatePartial,
+    STransactionsSummary,
     SSortParamsBase,
 )
 
@@ -212,6 +214,71 @@ class TransactionsService:
             result.append(transaction_out)
         return result
 
+    async def get_summary(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        category_params: SCategoryQueryParams,
+        amount_params: SAmountRange | None = None,
+        search_term: str | None = None,
+        datetime_range: SDatetimeRange | None = None,
+    ) -> list[STransactionsSummary]:
+        category_params =  self._check_category_params(
+            session=session,
+            user_id=user_id,
+            category_params=category_params,
+        )
+
+        transactions = await self.tx_repo.get_transactions(
+            session=session,
+            user_id=user_id,
+            category_params=category_params.model_dump(exclude_none=True),
+            min_amount=amount_params.min_amount if amount_params else None,
+            max_amount=amount_params.max_amount if amount_params else None,
+            description_search_term=search_term,
+            datetime_from=datetime_range.start if datetime_range else None,
+            datetime_to=datetime_range.end if datetime_range else None,
+        )
+        tx_out = []
+        for transaction in transactions:
+            transaction_out = self.out_schema(
+                amount=transaction.amount,
+                category_name=transaction.category.category_name,
+                description=transaction.description,
+                date=transaction.date,
+                id=transaction.id,
+            )
+            tx_out.append(transaction_out)
+
+        summary = self._summarize(tx_out)
+        summary = self._sort_summarize(summary)
+
+        return summary
+
+    @staticmethod
+    def _summarize(
+        transactions: list[STransactionResponse],
+    ) -> list[STransactionsSummary]:
+        summary = defaultdict(int)
+        for transaction in transactions:
+            summary[transaction.category_name] += transaction.amount
+
+        summary_out = []
+        for category_name, amount in summary.items():
+            summary_out.append(
+                STransactionsSummary(
+                    category_name=category_name,
+                    amount=amount,
+                )
+            )
+        return summary_out
+
+    @staticmethod
+    def _sort_summarize(
+        summary: list[STransactionsSummary],
+    ) -> list[STransactionsSummary]:
+        summary.sort(key=lambda t: t.amount, reverse=True)
+        return summary
 
     async def _check_category_params(
         self,
