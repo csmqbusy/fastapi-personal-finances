@@ -95,7 +95,7 @@ async def income_summary_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[STransactionsSummary]:
     try:
-        income = await income_service.get_summary(
+        income_summary = await income_service.get_summary(
             session=db_session,
             user_id=user.id,
             categories_params=categories_params,
@@ -105,7 +105,7 @@ async def income_summary_get(
         )
     except CategoryNotFound:
         raise CategoryNotFoundError()
-    return income
+    return income_summary
 
 
 @router.get(
