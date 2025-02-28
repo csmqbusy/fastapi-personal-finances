@@ -6,7 +6,7 @@ from app.api.dependencies.auth_dependencies import get_active_verified_user
 from app.api.dependencies.operations_dependencies import (
     get_pagination_params,
     get_date_range,
-    get_category_query_params,
+    get_categories_params,
     get_transactions_sort_params,
     get_amount_range,
 )
@@ -89,7 +89,7 @@ async def spendings_categories_get(
 )
 async def spendings_summary_get(
     user: UserModel = Depends(get_active_verified_user),
-    category_params: SCategoryQueryParams = Depends(get_category_query_params),
+    category_params: SCategoryQueryParams = Depends(get_categories_params),
     amount_params: SAmountRange = Depends(get_amount_range),
     description_search_term: str | None = Query(None),
     datetime_range: SDatetimeRange = Depends(get_date_range),
@@ -184,7 +184,7 @@ async def spending_delete(
 )
 async def spendings_get(
     user: UserModel = Depends(get_active_verified_user),
-    category_params: SCategoryQueryParams = Depends(get_category_query_params),
+    category_params: SCategoryQueryParams = Depends(get_categories_params),
     amount_params: SAmountRange = Depends(get_amount_range),
     description_search_term: str | None = Query(None),
     datetime_range: SDatetimeRange = Depends(get_date_range),
@@ -196,7 +196,7 @@ async def spendings_get(
         spendings = await spendings_service.get_transactions(
             session=db_session,
             user_id=user.id,
-            category_params=category_params,
+            categories_params=category_params,
             amount_params=amount_params,
             search_term=description_search_term,
             datetime_range=datetime_range,

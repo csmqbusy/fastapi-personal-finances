@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
 from app.api.dependencies.operations_dependencies import (
-    get_category_query_params,
+    get_categories_params,
     get_amount_range,
     get_date_range,
     get_pagination_params,
@@ -88,7 +88,7 @@ async def income_categories_get(
 )
 async def income_summary_get(
     user: UserModel = Depends(get_active_verified_user),
-    category_params: SCategoryQueryParams = Depends(get_category_query_params),
+    category_params: SCategoryQueryParams = Depends(get_categories_params),
     amount_params: SAmountRange = Depends(get_amount_range),
     description_search_term: str | None = Query(None),
     datetime_range: SDatetimeRange = Depends(get_date_range),
@@ -184,7 +184,7 @@ async def income_delete(
 )
 async def income_get(
     user: UserModel = Depends(get_active_verified_user),
-    category_params: SCategoryQueryParams = Depends(get_category_query_params),
+    categories_params: list[SCategoryQueryParams] = Depends(get_categories_params),
     amount_params: SAmountRange = Depends(get_amount_range),
     description_search_term: str | None = Query(None),
     datetime_range: SDatetimeRange = Depends(get_date_range),
@@ -196,7 +196,7 @@ async def income_get(
         income = await income_service.get_transactions(
             session=db_session,
             user_id=user.id,
-            category_params=category_params,
+            categories_params=categories_params,
             amount_params=amount_params,
             search_term=description_search_term,
             datetime_range=datetime_range,

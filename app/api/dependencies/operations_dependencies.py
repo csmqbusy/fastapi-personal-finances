@@ -31,8 +31,8 @@ def get_date_range(
     )
 
 
-def get_category_query_params(
-    category_id: int | None = Query(
+def get_categories_params(
+    category_ids: list[int] | None = Query(
         None,
         description=(
             "The priority way to identify a category. "
