@@ -96,7 +96,7 @@ async def spendings_summary_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[STransactionsSummary]:
     try:
-        spendings = await spendings_service.get_summary(
+        spendings_summary = await spendings_service.get_summary(
             session=db_session,
             user_id=user.id,
             categories_params=categories_params,
@@ -106,7 +106,7 @@ async def spendings_summary_get(
         )
     except CategoryNotFound:
         raise CategoryNotFoundError()
-    return spendings
+    return spendings_summary
 
 
 @router.get(
