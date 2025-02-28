@@ -11,6 +11,7 @@ from app.repositories import (
     BaseTransactionsRepository,
 )
 from app.schemas.date_range_schemas import SDatetimeRange
+from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
     STransactionsSortParams,
     SortParam,
@@ -20,8 +21,8 @@ from app.schemas.transactions_schemas import (
     STransactionUpdatePartialInDB,
     STransactionCreateInDB,
     STransactionUpdatePartial,
+    SSortParamsBase,
 )
-from app.schemas.transaction_category_schemas import SCategoryQueryParams
 
 
 class TransactionsService:
@@ -233,7 +234,7 @@ class TransactionsService:
 
     @staticmethod
     def _parse_sort_params_for_query(
-        sort_params: STransactionsSortParams,
+        sort_params: SSortParamsBase,
     ) -> list[SortParam] | None:
         if sort_params.sort_by is None:
             return None
