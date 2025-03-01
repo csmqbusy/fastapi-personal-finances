@@ -7,12 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models import Base
 from app.models.mixins import IdIntPKMixin
-
-
-class Status(Enum):
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    OVERDUE = "overdue"
+from app.schemas.saving_goals_schemas import GoalStatus
 
 
 class SavingGoalsModel(IdIntPKMixin, Base):
@@ -24,7 +19,7 @@ class SavingGoalsModel(IdIntPKMixin, Base):
     target_date: Mapped[date]
     start_date: Mapped[date] = mapped_column(server_default=text("CURRENT_DATE"))
     end_date: Mapped[date]
-    status: Mapped[Enum] = mapped_column(alch_Enum(Status))
+    status: Mapped[Enum] = mapped_column(alch_Enum(GoalStatus))
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
     )
