@@ -481,19 +481,18 @@ async def test_get_transactions__category_id_priority(
 @pytest.mark.parametrize(
     (
         "create_user",
-        "category_name",
+        "categories_names",
         "search_term",
         "amounts",
         "datetimes",
         "datetime_from",
         "datetime_to",
-        "pass_category_name",
         "expected_spendings_qty",
     ),
     [
         (
             True,
-            "Candies",
+            ["Candies", "Food", "Taxi"],
             "term",
             [100, 200, 300, 400, 500, 600, 700, 800, 900],
             [
@@ -509,12 +508,11 @@ async def test_get_transactions__category_id_priority(
             ],
             datetime(year=2022, month=1, day=1),
             datetime(year=2027, month=1, day=1, hour=23, minute=59, second=59),
-            False,
             3,
         ),
         (
             False,
-            "Alcohol",
+            ["Alcohol"],
             "vodka",
             [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000],
             [
@@ -530,7 +528,6 @@ async def test_get_transactions__category_id_priority(
             ],
             None,
             None,
-            True,
             4,
         ),
     ]
@@ -538,13 +535,12 @@ async def test_get_transactions__category_id_priority(
 async def test_get_transactions__correct(
     db_session: AsyncSession,
     create_user: bool,
-    category_name: str,
+    categories_names: list[str],
     search_term: str,
     amounts: list[int],
     datetimes: list[datetime],
     datetime_from: datetime | None,
     datetime_to: datetime | None,
-    pass_category_name: bool,
     expected_spendings_qty: int,
 ):
     mock_user_username = "GREALISH"
@@ -552,11 +548,15 @@ async def test_get_transactions__correct(
         await add_mock_user(db_session, mock_user_username)
     user = await user_repo.get_by_username(db_session, mock_user_username)
 
-    category = await user_spend_cat_service.add_category_to_db(
-        user.id,
-        category_name,
-        db_session,
-    )
+    categories_ids = []
+    for category_name in categories_names:
+        category = await user_spend_cat_service.add_category_to_db(
+            user.id,
+            category_name,
+            db_session,
+        )
+        categories_ids.append(category.id)
+
     for i, dt in enumerate(datetimes):
         description = f"{i} {search_term.title()} {i}" if i % 2 else "text"
         transaction_to_create = STransactionCreateInDB(
@@ -564,19 +564,18 @@ async def test_get_transactions__correct(
             description=description,
             date=dt,
             user_id=user.id,
-            category_id=category.id,
+            category_id=categories_ids[i % len(categories_ids)],
         )
         await spendings_repo.add(
             db_session,
             transaction_to_create.model_dump(),
         )
 
+    cat_params = [SCategoryQueryParams(category_id=i) for i in categories_ids]
+
     spendings = await spendings_service.get_transactions(
         user_id=user.id,
-        categories_params=[SCategoryQueryParams(
-            category_id=category.id if not pass_category_name else None,
-            category_name=category_name if pass_category_name else None,
-        )],
+        categories_params=cat_params,
         search_term=search_term,
         datetime_range=SDatetimeRange(start=datetime_from, end=datetime_to),
         sort_params=STransactionsSortParams(
