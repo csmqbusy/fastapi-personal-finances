@@ -33,7 +33,7 @@ def get_date_range(
 
 
 def get_categories_params(
-    category_ids: list[int] | None = Query(
+    category_id: list[int] | None = Query(
         None,
         description=(
             "The priority way to identify a category. "
@@ -41,7 +41,7 @@ def get_categories_params(
             "category_name, category_id will be used."
         ),
     ),
-    category_names: list[str] | None = Query(
+    category_name: list[str] | None = Query(
         None,
         description=(
             "Specify the category name if the id is unknown. "
@@ -49,21 +49,21 @@ def get_categories_params(
         ),
     ),
 ) -> list[SCategoryQueryParams]:
-    if category_ids and category_names:
+    if category_id and category_name:
         raise CategoryInfoError()
 
-    if category_ids is None and category_names is None:
+    if category_id is None and category_name is None:
         return []
 
-    if category_ids:
+    if category_id:
         category_params = [
             SCategoryQueryParams(category_id=cat_id)
-            for cat_id in category_ids
+            for cat_id in category_id
         ]
     else:
         category_params = [
             SCategoryQueryParams(category_name=cat_name)
-            for cat_name in category_names
+            for cat_name in category_name
         ]
 
     return category_params
