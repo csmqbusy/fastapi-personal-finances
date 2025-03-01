@@ -133,7 +133,7 @@ async def test_get_transactions__with_sort(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "category_name",
+        "categories_names",
         "create_user",
         "datetimes",
         "datetime_from",
@@ -142,7 +142,7 @@ async def test_get_transactions__with_sort(
     ),
     [
         (
-            "Food",
+            ["Food", "Books"],
             True,
             [
                 datetime(year=2020, month=1, day=11, hour=11, minute=59),
@@ -160,7 +160,7 @@ async def test_get_transactions__with_sort(
 )
 async def test_get_transactions__with_datetime_period(
     db_session: AsyncSession,
-    category_name: str,
+    categories_names: list[str],
     create_user: bool,
     datetimes: list[datetime],
     datetime_from: datetime,
@@ -172,19 +172,22 @@ async def test_get_transactions__with_datetime_period(
         await add_mock_user(db_session, mock_user_username)
     user = await user_repo.get_by_username(db_session, mock_user_username)
 
-    category = await user_spend_cat_service.add_category_to_db(
-        user.id,
-        category_name,
-        db_session,
-    )
+    categories_ids = []
+    for category_name in categories_names:
+        category = await user_spend_cat_service.add_category_to_db(
+            user.id,
+            category_name,
+            db_session,
+        )
+        categories_ids.append(category.id)
 
-    for dt in datetimes:
+    for i, dt in enumerate(datetimes):
         transaction_to_create = STransactionCreateInDB(
             amount=999,
             description="Some description",
             date=dt,
             user_id=user.id,
-            category_id=category.id,
+            category_id=categories_ids[i % len(categories_ids)],
         )
         await spendings_repo.add(
             db_session,
@@ -194,14 +197,14 @@ async def test_get_transactions__with_datetime_period(
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=[category.id],
+        categories_ids=categories_ids,
     )
     assert [s.date for s in spendings] == datetimes
 
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=[category.id],
+        categories_ids=categories_ids,
         datetime_from=datetime_from,
         datetime_to=datetime_to,
     )
