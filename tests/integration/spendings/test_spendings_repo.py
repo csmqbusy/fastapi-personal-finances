@@ -385,7 +385,7 @@ async def test_get_transactions__with_amount_range(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "category_name",
+        "categories_names",
         "create_user",
         "amounts",
         "descriptions",
@@ -397,18 +397,19 @@ async def test_get_transactions__with_amount_range(
         "datetime_to",
         "sort_params",
         "expected_spendings_qty",
-        "expected_result_entry_amount",
+        "expected_amounts",
     ),
     [
         (
-            "Food",
+            ["Food", "Helth", "books"],
             True,
-            [1000, 2000, 3000, 4000, 5000],
-            ["text", "TEXT ", "My Text", "text1", "t3xt"],
+            [1000, 2000, 3000, 4000, 5000, 7000],
+            ["text", "TEXT ", "My Text", "text1", "text2", "t3xt"],
             [
                 datetime(year=2020, month=1, day=1),
                 datetime(year=2021, month=1, day=1),
                 datetime(year=2022, month=1, day=1),
+                datetime(year=2023, month=1, day=1),
                 datetime(year=2023, month=1, day=1),
                 datetime(year=2024, month=1, day=1),
             ],
@@ -418,14 +419,14 @@ async def test_get_transactions__with_amount_range(
             datetime(year=2022, month=2, day=2),
             datetime(year=2023, month=1, day=1),
             [SortParam(order_by="amount", order_direction="desc")],
-            1,
-            4000,
+            2,
+            [4000, 5000],
         ),
     ]
 )
 async def test_get_transactions__with_all_filters(
     db_session: AsyncSession,
-    category_name: str,
+    categories_names: list[str],
     create_user: bool,
     amounts: list[int],
     descriptions: list[str],
@@ -437,18 +438,21 @@ async def test_get_transactions__with_all_filters(
     datetime_to: datetime,
     sort_params: list[SortParam],
     expected_spendings_qty: int,
-    expected_result_entry_amount: int,
+    expected_amounts: list[int],
 ) -> None:
     mock_user_username = "TONALI"
     if create_user:
         await add_mock_user(db_session, mock_user_username)
     user = await user_repo.get_by_username(db_session, mock_user_username)
 
-    category = await user_spend_cat_service.add_category_to_db(
-        user.id,
-        category_name,
-        db_session,
-    )
+    categories_ids = []
+    for category_name in categories_names:
+        category = await user_spend_cat_service.add_category_to_db(
+            user.id,
+            category_name,
+            db_session,
+        )
+        categories_ids.append(category.id)
 
     for i in range(len(amounts)):
         transaction_to_create = STransactionCreateInDB(
@@ -456,7 +460,7 @@ async def test_get_transactions__with_all_filters(
             description=descriptions[i],
             date=datetimes[i],
             user_id=user.id,
-            category_id=category.id,
+            category_id=categories_ids[i % len(categories_ids)],
         )
         await spendings_repo.add(
             db_session,
@@ -465,7 +469,7 @@ async def test_get_transactions__with_all_filters(
 
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
-        categories_ids=[category.id],
+        categories_ids=categories_ids,
         min_amount=min_amount,
         max_amount=max_amount,
         description_search_term=search_term,
@@ -475,4 +479,5 @@ async def test_get_transactions__with_all_filters(
         session=db_session,
     )
     assert len(spendings) == expected_spendings_qty
-    assert spendings[0].amount == expected_result_entry_amount
+    for spending in spendings:
+        assert spending.amount in expected_amounts
