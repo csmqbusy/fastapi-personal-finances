@@ -36,16 +36,16 @@ def get_categories_params(
     category_id: list[int] | None = Query(
         None,
         description=(
-            "The priority way to identify a category. "
-            "If there is conflicting information in category_id and "
-            "category_name, category_id will be used."
+            "Use only one way to send information about categories: "
+            "category_id or category_name"
         ),
     ),
     category_name: list[str] | None = Query(
         None,
         description=(
             "Specify the category name if the id is unknown. "
-            "Ignore the category_id parameter if you use category_name."
+            "Use only one way to send information about categories: "
+            "category_id or category_name"
         ),
     ),
 ) -> list[SCategoryQueryParams]:
