@@ -817,6 +817,55 @@ async def test_get_summary(
         assert summary_set == check_set
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "create_user", "cat_names",
+    ),
+    [
+        (
+            True,
+            ["Pets", "Taxi"],
+        ),
+        (
+            False,
+            ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"],
+        ),
+    ]
+)
+async def test__extract_category_ids(
+    db_session: AsyncSession,
+    create_user: bool,
+    cat_names: list[str],
+):
+    mock_user_username = "GAKPO7"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    cat_params = []
+    cat_ids = set()
+    for index, cat_name in enumerate(cat_names):
+        category = await user_spend_cat_service.add_category_to_db(
+            user.id,
+            cat_name,
+            db_session,
+        )
+        cat_ids.add(category.id)
+        if index % 2:
+            cat_params.append(SCategoryQueryParams(category_name=cat_name))
+        else:
+            cat_params.append(SCategoryQueryParams(category_id=category.id))
+
+    exctracted_cat_ids = await spendings_service._extract_category_ids(
+        db_session,
+        user.id,
+        cat_params,
+    )
+    assert set(exctracted_cat_ids) == cat_ids
+
+
+
 @pytest.mark.parametrize(
     "cat_names, spendings_qty, amounts, expected_amounts",
     [
