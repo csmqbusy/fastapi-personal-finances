@@ -107,14 +107,14 @@ async def test_get_transactions__with_sort(
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=dict(user_id=user.id, category_id=category.id),
+        categories_ids=[category.id],
     )
     assert [s.amount for s in spendings] == prices
 
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=dict(user_id=user.id, category_id=category.id),
+        categories_ids=[category.id],
         sort_params=[SortParam(order_by="amount", order_direction="asc")]
     )
     assert len(spendings) == len(prices)
@@ -185,14 +185,14 @@ async def test_get_transactions__with_datetime_period(
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=dict(user_id=user.id, category_id=category.id),
+        categories_ids=[category.id],
     )
     assert [s.date for s in spendings] == datetimes
 
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=dict(user_id=user.id, category_id=category.id),
+        categories_ids=[category.id],
         datetime_from=datetime_from,
         datetime_to=datetime_to,
     )
@@ -264,14 +264,13 @@ async def test_get_transactions__with_desc_search_term(
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=dict(user_id=user.id, category_id=category.id),
+        categories_ids=[category.id],
     )
     assert [s.description for s in spendings] == descriptions
 
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=dict(user_id=user.id),
         description_search_term=search_term,
     )
     assert len(spendings) == expected_spendings_qty
@@ -358,7 +357,7 @@ async def test_get_transactions__with_amount_range(
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=dict(user_id=user.id, category_id=category.id),
+        categories_ids=[category.id],
         min_amount=min_amount,
         max_amount=max_amount,
     )
@@ -448,7 +447,7 @@ async def test_get_transactions__with_all_filters(
 
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
-        categories_ids=dict(category_id=category.id),
+        categories_ids=[category.id],
         min_amount=min_amount,
         max_amount=max_amount,
         description_search_term=search_term,
