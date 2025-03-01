@@ -23,3 +23,7 @@ class SSavingGoalBase(BaseModel):
     target_date: date
     start_date: date | None = None
     end_date: date
+
+
+class SSavingGoalCreate(SSavingGoalBase):
+    pass
