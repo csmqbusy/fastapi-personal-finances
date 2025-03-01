@@ -1,5 +1,6 @@
 from contextlib import nullcontext
 from datetime import datetime
+import random
 from typing import ContextManager
 
 import pytest
@@ -814,3 +815,48 @@ async def test_get_summary(
             summary_set.add((i.category_name, i.amount))
 
         assert summary_set == check_set
+
+
+@pytest.mark.parametrize(
+    "cat_names, spendings_qty, amounts, expected_amounts",
+    [
+        (
+            ["Food"],
+            [5],
+            [100, 200, 300, 400, 500],
+            [1500],
+        ),
+        (
+            ["Food", "Relax", "Health"],
+            [1, 3, 5],
+            [100, 200, 300, 400, 500],
+            [100, 600, 1500],
+        ),
+    ]
+)
+def test__summarize(
+    cat_names: list[str],
+    spendings_qty: list[int],
+    amounts: list[int],
+    expected_amounts: list[int],
+):
+    transactions = []
+    for index, cat_name in enumerate(cat_names):
+        for i in range(spendings_qty[index]):
+            tx = STransactionResponse(
+                amount=amounts[i],
+                category_name=cat_name,
+                description="text",
+                date=datetime(year=2020, month=1, day=1, hour=12),
+                id=random.randint(1, 10000),
+            )
+            transactions.append(tx)
+
+    summary = spendings_service._summarize(transactions)
+    assert len(summary) == len(cat_names)
+    for s in summary:
+        for i in range(len(cat_names)):
+            if s.category_name == cat_names[i]:
+                assert s.amount == expected_amounts[i]
+
+
