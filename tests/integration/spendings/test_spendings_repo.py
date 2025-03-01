@@ -63,19 +63,25 @@ async def test_get_transaction_with_category(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "category_name, create_user, prices, sorted_prices",
+    "categories_names, create_user, prices, sorted_prices",
     [
         (
-            "Food",
+            ["Food"],
             True,
             [200, 500, 400, 100, 300],
             [100, 200, 300, 400, 500],
+        ),
+        (
+            ["Health", "Books", "Games"],
+            False,
+            [200, 500, 400, 100, 300, 900],
+            [100, 200, 300, 400, 500, 900],
         ),
     ]
 )
 async def test_get_transactions__with_sort(
     db_session: AsyncSession,
-    category_name: str,
+    categories_names: list[str],
     create_user: bool,
     prices: list[int],
     sorted_prices: list[int],
@@ -85,19 +91,22 @@ async def test_get_transactions__with_sort(
         await add_mock_user(db_session, mock_user_username)
     user = await user_repo.get_by_username(db_session, mock_user_username)
 
-    category = await user_spend_cat_service.add_category_to_db(
-        user.id,
-        category_name,
-        db_session,
-    )
+    categories_ids = []
+    for category_name in categories_names:
+        category = await user_spend_cat_service.add_category_to_db(
+            user.id,
+            category_name,
+            db_session,
+        )
+        categories_ids.append(category.id)
 
-    for p in prices:
+    for i, p in enumerate(prices):
         transaction_to_create = STransactionCreateInDB(
             amount=p,
             description="Some description",
             date=None,
             user_id=user.id,
-            category_id=category.id,
+            category_id=categories_ids[i % len(categories_ids)],
         )
         await spendings_repo.add(
             db_session,
@@ -107,14 +116,14 @@ async def test_get_transactions__with_sort(
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=[category.id],
+        categories_ids=categories_ids,
     )
     assert [s.amount for s in spendings] == prices
 
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
         session=db_session,
-        categories_ids=[category.id],
+        categories_ids=categories_ids,
         sort_params=[SortParam(order_by="amount", order_direction="asc")]
     )
     assert len(spendings) == len(prices)
