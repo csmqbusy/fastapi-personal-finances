@@ -27,3 +27,16 @@ class SSavingGoalBase(BaseModel):
 
 class SSavingGoalCreate(SSavingGoalBase):
     pass
+
+
+class SSavingGoalResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: str | None
+    amount: int
+    target_date: date
+    start_date: date | None = None
+    end_date: date
+    status: GoalStatus
