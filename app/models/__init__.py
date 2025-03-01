@@ -4,6 +4,7 @@ from .spendings_model import SpendingsModel
 from .income_model import IncomeModel
 from .users_spending_categories_model import UsersSpendingCategoriesModel
 from .users_income_categories_model import UsersIncomeCategoriesModel
+from .saving_goals_model import SavingGoalsModel
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "IncomeModel",
     "UsersSpendingCategoriesModel",
     "UsersIncomeCategoriesModel",
+    "SavingGoalsModel",
 ]
