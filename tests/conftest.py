@@ -1,8 +1,8 @@
 from typing import AsyncGenerator
 
 import pytest
+from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.testclient import TestClient
 
 from app.core.config import settings
 from app.db.dependencies import database_manager
@@ -24,9 +24,14 @@ async def prepare_database():
         await conn.run_sync(Base.metadata.drop_all)
 
 
+@pytest.mark.asyncio
 @pytest.fixture(scope="function")
-def client():
-    yield TestClient(main_app)
+async def client():
+    async with AsyncClient(
+        transport=ASGITransport(app=main_app),
+        base_url="http://test",
+    ) as ac:
+        yield ac
 
 
 @pytest.fixture

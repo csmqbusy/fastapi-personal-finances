@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import ContextManager
 
 import pytest
+from httpx import AsyncClient
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -73,7 +74,7 @@ from tests.integration.helpers import sign_up_user, sign_in_user
     ]
 )
 async def test_spendings__post(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     status_code: int,
@@ -82,8 +83,8 @@ async def test_spendings__post(
     create_category: bool,
     expectation: ContextManager,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
     user = await get_user_by_username(username, db_session)
 
     if create_category:
@@ -93,7 +94,7 @@ async def test_spendings__post(
             db_session,
         )
 
-    response = client.post(
+    response = await client.post(
         url=f"{settings.api.prefix_v1}/spendings/",
         json={
             "amount": amount,
@@ -132,14 +133,14 @@ async def test_spendings__post(
     ]
 )
 async def test_spendings_categories__get(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     categories: list[str],
     status_code: int,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
     user = await get_user_by_username(username, db_session)
 
     for category_name in categories:
@@ -149,7 +150,7 @@ async def test_spendings_categories__get(
             db_session,
         )
 
-    categories_response = client.get(
+    categories_response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/categories/",
     )
     assert categories_response.status_code == status_code
@@ -196,7 +197,7 @@ async def test_spendings_categories__get(
     ]
 )
 async def test_spendings_spending_id__get(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     amount: int,
@@ -204,10 +205,10 @@ async def test_spendings_spending_id__get(
     sign_in_another_user: bool,
     status_code: int,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
 
-    response = client.post(
+    response = await client.post(
         url=f"{settings.api.prefix_v1}/spendings/",
         json={
             "amount": 800,
@@ -217,10 +218,10 @@ async def test_spendings_spending_id__get(
 
     if sign_in_another_user:
         another_username = f"Another{username}"
-        sign_up_user(client, another_username)
-        sign_in_user(client, another_username)
+        await sign_up_user(client, another_username)
+        await sign_in_user(client, another_username)
 
-    categories_response = client.get(
+    categories_response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/{spending_id}/",
     )
     assert categories_response.status_code == status_code
@@ -289,7 +290,7 @@ async def test_spendings_spending_id__get(
     ]
 )
 async def test_spendings_spending_id__patch(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     new_amount: int,
@@ -301,8 +302,8 @@ async def test_spendings_spending_id__patch(
     sign_in_another_user: bool,
     status_code: int,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
     user = await get_user_by_username(username, db_session)
 
     if create_category:
@@ -312,7 +313,7 @@ async def test_spendings_spending_id__patch(
             db_session,
         )
 
-    response = client.post(
+    response = await client.post(
         url=f"{settings.api.prefix_v1}/spendings/",
         json={
             "amount": 800,
@@ -322,8 +323,8 @@ async def test_spendings_spending_id__patch(
 
     if sign_in_another_user:
         another_username = f"Another{username}"
-        sign_up_user(client, another_username)
-        sign_in_user(client, another_username)
+        await sign_up_user(client, another_username)
+        await sign_in_user(client, another_username)
 
     update_obj = STransactionUpdatePartial(
         amount=new_amount,
@@ -332,7 +333,7 @@ async def test_spendings_spending_id__patch(
         category_name=new_category_name,
     )
     request_json = update_obj.model_dump_json()
-    response = client.patch(
+    response = await client.patch(
         url=f"{settings.api.prefix_v1}/spendings/{spending_id}/",
         content=request_json,
     )
@@ -387,7 +388,7 @@ async def test_spendings_spending_id__patch(
     ]
 )
 async def test_spendings_spending_id__delete(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     new_category_name: str,
@@ -396,8 +397,8 @@ async def test_spendings_spending_id__delete(
     sign_in_another_user: bool,
     status_code: int,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
     user = await get_user_by_username(username, db_session)
 
     if create_category:
@@ -407,7 +408,7 @@ async def test_spendings_spending_id__delete(
             db_session,
         )
 
-    response = client.post(
+    response = await client.post(
         url=f"{settings.api.prefix_v1}/spendings/",
         json={
             "amount": 800,
@@ -418,10 +419,10 @@ async def test_spendings_spending_id__delete(
 
     if sign_in_another_user:
         another_username = f"Another{username}"
-        sign_up_user(client, another_username)
-        sign_in_user(client, another_username)
+        await sign_up_user(client, another_username)
+        await sign_in_user(client, another_username)
 
-    response = client.delete(
+    response = await client.delete(
         url=f"{settings.api.prefix_v1}/spendings/{spending_id}/",
     )
 
@@ -493,7 +494,7 @@ async def test_spendings_spending_id__delete(
     ]
 )
 async def test_spendings__get(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     category_name: str,
@@ -513,8 +514,8 @@ async def test_spendings__get(
     reversed_sort_param: str,
     status_code: int,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
     user = await get_user_by_username(username, db_session)
 
     await user_spend_cat_service.add_category_to_db(
@@ -523,7 +524,7 @@ async def test_spendings__get(
         db_session,
     )
     for i in range(spendings_qty):
-        client.post(
+        await client.post(
             url=f"{settings.api.prefix_v1}/spendings/",
             json={
                 "amount": amount_start + (amount_step * i),
@@ -535,7 +536,7 @@ async def test_spendings__get(
             }
         )
 
-    response = client.get(
+    response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/",
         params={
             "category_name": category_name if not wrong_category_name else "wc",
@@ -555,7 +556,7 @@ async def test_spendings__get(
     if status_code == status.HTTP_200_OK:
         assert len(response.json()) == page_size
 
-        reversed_response = client.get(
+        reversed_response = await client.get(
             url=f"{settings.api.prefix_v1}/spendings/",
             params={
                 "category_name": category_name if not wrong_category_name else "wc",
@@ -612,31 +613,31 @@ async def test_spendings__get(
     ]
 )
 async def test_spendings_categories__post(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     category_name: str,
     try_add_again: bool,
     status_code: int,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
 
-    response = client.post(
+    response = await client.post(
         url=f"{settings.api.prefix_v1}/spendings/categories/",
         json={
             "category_name": category_name,
         }
     )
     if try_add_again:
-        response = client.post(
+        response = await client.post(
             url=f"{settings.api.prefix_v1}/spendings/categories/",
             json={
                 "category_name": category_name,
             }
         )
 
-    categories_response = client.get(
+    categories_response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/categories/",
     )
 
@@ -683,7 +684,7 @@ async def test_spendings_categories__post(
     ]
 )
 async def test_spendings_categories__patch(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     category_name_1: str,
@@ -692,18 +693,18 @@ async def test_spendings_categories__patch(
     category_name_3: str | None,
     status_code: int,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
 
     if create_category_1:
-        client.post(
+        await client.post(
             url=f"{settings.api.prefix_v1}/spendings/categories/",
             json={
                 "category_name": category_name_1,
             }
         )
     if category_name_3:
-        client.post(
+        await client.post(
             url=f"{settings.api.prefix_v1}/spendings/categories/",
             json={
                 "category_name": category_name_3,
@@ -711,13 +712,13 @@ async def test_spendings_categories__patch(
         )
 
     if create_category_1:
-        categories_response = client.get(
+        categories_response = await client.get(
             url=f"{settings.api.prefix_v1}/spendings/categories/",
         )
         categories = [i["category_name"] for i in categories_response.json()]
         assert category_name_1 in categories
 
-    response = client.patch(
+    response = await client.patch(
         url=f"{settings.api.prefix_v1}/spendings/categories/{category_name_1}/",
         json={
             "category_name": category_name_3 or category_name_2,
@@ -726,7 +727,7 @@ async def test_spendings_categories__patch(
     assert response.status_code == status_code
 
     if response.status_code == status.HTTP_200_OK:
-        categories_response = client.get(
+        categories_response = await client.get(
             url=f"{settings.api.prefix_v1}/spendings/categories/",
         )
         categories = [i["category_name"] for i in categories_response.json()]
@@ -820,7 +821,7 @@ async def test_spendings_categories__patch(
     ]
 )
 async def test_spendings_categories__delete(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     category_name: str,
@@ -829,18 +830,18 @@ async def test_spendings_categories__delete(
     on_delete_action: TransactionsOnDeleteActions,
     status_code: int,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
 
     if create_category:
-        client.post(
+        await client.post(
             url=f"{settings.api.prefix_v1}/spendings/categories/",
             json={
                 "category_name": category_name,
             }
         )
 
-    response = client.delete(
+    response = await client.delete(
         url=f"{settings.api.prefix_v1}/spendings/categories/{category_name}/",
         params={
             "handle_spendings_on_deletion": on_delete_action,
@@ -850,7 +851,7 @@ async def test_spendings_categories__delete(
     assert response.status_code == status_code
 
     if response.status_code == status.HTTP_200_OK:
-        categories_response = client.get(
+        categories_response = await client.get(
             url=f"{settings.api.prefix_v1}/spendings/categories/",
         )
         categories = [i["category_name"] for i in categories_response.json()]
@@ -919,7 +920,7 @@ async def test_spendings_categories__delete(
     ]
 )
 async def test_spendings_summary_get__get(
-    client: TestClient,
+    client: AsyncClient,
     db_session: AsyncSession,
     username: str,
     categories_names: list[str],
@@ -934,8 +935,8 @@ async def test_spendings_summary_get__get(
     send_wrong_category: bool,
     status_code: int,
 ):
-    sign_up_user(client, username)
-    sign_in_user(client, username)
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
     user = await get_user_by_username(username, db_session)
 
     for category_name in categories_names:
@@ -945,7 +946,7 @@ async def test_spendings_summary_get__get(
             db_session,
         )
     for i in range(spendings_qty):
-        client.post(
+        await client.post(
             url=f"{settings.api.prefix_v1}/spendings/",
             json={
                 "amount": amount,
@@ -956,7 +957,7 @@ async def test_spendings_summary_get__get(
             }
         )
 
-    response = client.get(
+    response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/summary/",
         params={
             "category_name": categories_names if not send_wrong_category else "wc",

@@ -1,8 +1,8 @@
 from enum import Enum
 
 import pytest
+from httpx import AsyncClient
 from starlette import status
-from starlette.testclient import TestClient
 
 from app.core.config import settings
 
@@ -31,6 +31,7 @@ class GetInfoFailType(Enum):
     INVALID_TOKEN = 2
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "username, password, email, status_code, expected_response",
     [
@@ -64,8 +65,8 @@ class GetInfoFailType(Enum):
         ),
     ]
 )
-def test_sign_up_user(
-    client: TestClient,
+async def test_sign_up_user(
+    client: AsyncClient,
     username: str,
     password: str,
     email: str,
@@ -80,7 +81,7 @@ def test_sign_up_user(
     elif expected_response == RegistrationExpectedResponse.EMAIL_EXISTS:
         expected_json_answer = {"detail": "Email already exists."}
 
-    response = client.post(
+    response = await client.post(
         url=f"{settings.api.prefix_v1}/sign_up/",
         json={
             "username": username,
@@ -92,6 +93,7 @@ def test_sign_up_user(
     assert response.json() == expected_json_answer
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "username, password, email, status_code, fail_type, json_answer",
     [
@@ -121,8 +123,8 @@ def test_sign_up_user(
         ),
     ]
 )
-def test_login(
-    client: TestClient,
+async def test_login(
+    client: AsyncClient,
     username: str,
     password: str,
     email: str,
@@ -130,7 +132,7 @@ def test_login(
     fail_type: LoginFailType,
     json_answer: dict,
 ):
-    signup_response = client.post(
+    signup_response = await client.post(
         url=f"{settings.api.prefix_v1}/sign_up/",
         json={
             "username": username,
@@ -142,7 +144,7 @@ def test_login(
 
     if fail_type == LoginFailType.NO_FAIL:
         assert client.cookies.get("access_token") is None
-        login_response = client.post(
+        login_response = await client.post(
             url=f"{settings.api.prefix_v1}/sign_in/",
             data={
                 "username": username,
@@ -160,7 +162,7 @@ def test_login(
             password = password + "_fail"
 
         assert client.cookies.get("access_token") is None
-        login_response = client.post(
+        login_response = await client.post(
             url=f"{settings.api.prefix_v1}/sign_in/",
             data={
                 "username": username,
@@ -172,6 +174,7 @@ def test_login(
         assert client.cookies.get("access_token") is None
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "username, password, email, status_code, json_answer",
     [
@@ -184,15 +187,15 @@ def test_login(
         ),
     ]
 )
-def test_logout(
-    client: TestClient,
+async def test_logout(
+    client: AsyncClient,
     username: str,
     password: str,
     email: str,
     status_code: int,
     json_answer: dict,
 ):
-    signup_response = client.post(
+    signup_response = await client.post(
         url=f"{settings.api.prefix_v1}/sign_up/",
         json={
             "username": username,
@@ -202,7 +205,7 @@ def test_logout(
     )
     assert signup_response.status_code == status.HTTP_201_CREATED
 
-    login_response = client.post(
+    login_response = await client.post(
         url=f"{settings.api.prefix_v1}/sign_in/",
         data={
             "username": username,
@@ -211,7 +214,7 @@ def test_logout(
     )
     assert login_response.status_code == status.HTTP_200_OK
 
-    logout_response = client.post(
+    logout_response = await client.post(
         url=f"{settings.api.prefix_v1}/logout/",
     )
     assert logout_response.status_code == status_code
@@ -219,6 +222,7 @@ def test_logout(
     assert client.cookies.get("access_token") is None
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "username, password, email, status_code, fail_type",
     [
@@ -245,15 +249,15 @@ def test_logout(
         ),
     ]
 )
-def test_auth_user_get_info(
-    client: TestClient,
+async def test_auth_user_get_info(
+    client: AsyncClient,
     username: str,
     password: str,
     email: str,
     status_code: int,
     fail_type: GetInfoFailType,
 ):
-    signup_response = client.post(
+    signup_response = await client.post(
         url=f"{settings.api.prefix_v1}/sign_up/",
         json={
             "username": username,
@@ -263,7 +267,7 @@ def test_auth_user_get_info(
     )
     assert signup_response.status_code == status.HTTP_201_CREATED
 
-    login_response = client.post(
+    login_response = await client.post(
         url=f"{settings.api.prefix_v1}/sign_in/",
         data={
             "username": username,
@@ -275,7 +279,7 @@ def test_auth_user_get_info(
     expected_json_answer = None
     if fail_type == GetInfoFailType.NO_FAIL:
         expected_json_answer = {"username": username, "email": email}
-        get_info_response = client.get(
+        get_info_response = await client.get(
             url=f"{settings.api.prefix_v1}/me/",
         )
         assert get_info_response.status_code == status_code
@@ -289,7 +293,7 @@ def test_auth_user_get_info(
             expected_json_answer = {"detail": "Invalid token."}
             client.cookies.update({"access_token": "abcde"})
 
-        get_info_response = client.get(
+        get_info_response = await client.get(
             url=f"{settings.api.prefix_v1}/me/",
         )
         assert get_info_response.status_code == status_code

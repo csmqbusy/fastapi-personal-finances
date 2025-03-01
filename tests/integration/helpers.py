@@ -1,7 +1,7 @@
 from random import randint
 
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.testclient import TestClient
 
 from app.core.config import settings
 from app.repositories import user_repo, spendings_repo
@@ -10,8 +10,8 @@ from app.schemas.user_schemas import SUserSignUp
 from app.services import user_spend_cat_service
 
 
-def sign_up_user(client: TestClient, username: str):
-    client.post(
+async def sign_up_user(client: AsyncClient, username: str):
+    await client.post(
         url=f"{settings.api.prefix_v1}/sign_up/",
         json={
             "username": username,
@@ -21,8 +21,8 @@ def sign_up_user(client: TestClient, username: str):
     )
 
 
-def sign_in_user(client: TestClient, username: str):
-    client.post(
+async def sign_in_user(client: AsyncClient, username: str):
+    await client.post(
         url=f"{settings.api.prefix_v1}/sign_in/",
         data={
             "username": username,
