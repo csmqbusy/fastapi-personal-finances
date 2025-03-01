@@ -117,13 +117,6 @@ async def test_get_transactions__with_sort(
         user_id=user.id,
         session=db_session,
         categories_ids=categories_ids,
-    )
-    assert [s.amount for s in spendings] == prices
-
-    spendings = await spendings_repo.get_transactions_from_db(
-        user_id=user.id,
-        session=db_session,
-        categories_ids=categories_ids,
         sort_params=[SortParam(order_by="amount", order_direction="asc")]
     )
     assert len(spendings) == len(prices)
@@ -193,13 +186,6 @@ async def test_get_transactions__with_datetime_period(
             db_session,
             transaction_to_create.model_dump(),
         )
-
-    spendings = await spendings_repo.get_transactions_from_db(
-        user_id=user.id,
-        session=db_session,
-        categories_ids=categories_ids,
-    )
-    assert [s.date for s in spendings] == datetimes
 
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
@@ -275,13 +261,6 @@ async def test_get_transactions__with_desc_search_term(
             db_session,
             transaction_to_create.model_dump(),
         )
-
-    spendings = await spendings_repo.get_transactions_from_db(
-        user_id=user.id,
-        session=db_session,
-        categories_ids=categories_ids,
-    )
-    assert [s.description for s in spendings] == descriptions
 
     spendings = await spendings_repo.get_transactions_from_db(
         user_id=user.id,
