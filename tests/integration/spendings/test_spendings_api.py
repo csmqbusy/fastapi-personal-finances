@@ -855,3 +855,120 @@ async def test_spendings_categories__delete(
         )
         categories = [i["category_name"] for i in categories_response.json()]
         assert category_name not in categories
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "categories_names",
+        "spendings_qty",
+        "amount",
+        "year_start",
+        "min_amount",
+        "max_amount",
+        "datetime_from",
+        "datetime_to",
+        "expected_summary_amount",
+        "send_wrong_category",
+        "status_code",
+    ),
+    [
+        (
+            "Lacazette10",
+            ["Food", "Balls"],
+            10,
+            200,
+            2010,
+            200,
+            200,
+            datetime(year=2010, month=1, day=1),
+            datetime(year=2030, month=1, day=1),
+            [1000, 1000],
+            False,
+            status.HTTP_200_OK,
+        ),
+        (
+            "Lacazette20",
+            ["Food", "Balls", "Taxi", "Health", "Games"],
+            50,
+            200,
+            2010,
+            200,
+            200,
+            datetime(year=2017, month=1, day=1),
+            datetime(year=2035, month=1, day=1),
+            [800, 600, 800, 800, 800],
+            False,
+            status.HTTP_200_OK,
+        ),
+        (
+            "Lacazette30",
+            ["Food", "Balls"],
+            10,
+            200,
+            2010,
+            200,
+            200,
+            datetime(year=2010, month=1, day=1),
+            datetime(year=2030, month=1, day=1),
+            [1000, 1000],
+            True,
+            status.HTTP_404_NOT_FOUND,
+        ),
+    ]
+)
+async def test_spendings_summary_get__get(
+    client: TestClient,
+    db_session: AsyncSession,
+    username: str,
+    categories_names: list[str],
+    spendings_qty: int,
+    amount: int,
+    year_start: int,
+    min_amount: int,
+    max_amount: int,
+    datetime_from: datetime,
+    datetime_to: datetime,
+    expected_summary_amount: list[int],
+    send_wrong_category: bool,
+    status_code: int,
+):
+    sign_up_user(client, username)
+    sign_in_user(client, username)
+    user = await get_user_by_username(username, db_session)
+
+    for category_name in categories_names:
+        await user_spend_cat_service.add_category_to_db(
+            user.id,
+            category_name,
+            db_session,
+        )
+    for i in range(spendings_qty):
+        client.post(
+            url=f"{settings.api.prefix_v1}/spendings/",
+            json={
+                "amount": amount,
+                "category_name": categories_names[i % len(categories_names)],
+                "date": datetime(
+                    year=year_start + i, month=1, day=1
+                    ).isoformat(),
+            }
+        )
+
+    response = client.get(
+        url=f"{settings.api.prefix_v1}/spendings/summary/",
+        params={
+            "category_name": categories_names if not send_wrong_category else "wc",
+            "datetime_from": datetime_from,
+            "datetime_to": datetime_to,
+            "min_amount": min_amount,
+            "max_amount": max_amount,
+        },
+    )
+
+    assert response.status_code == status_code
+    if not send_wrong_category:
+        response_amounts = sorted(i["amount"] for i in response.json())
+        expected_summary_amount.sort()
+        assert response_amounts == expected_summary_amount
