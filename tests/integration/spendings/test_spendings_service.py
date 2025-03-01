@@ -860,3 +860,41 @@ def test__summarize(
                 assert s.amount == expected_amounts[i]
 
 
+@pytest.mark.parametrize(
+    "cat_names, spendings_qty, amounts, expected_order",
+    [
+        (
+            ["Food", "Relax", "Health"],
+            [1, 3, 5],
+            [100, 200, 300, 400, 500],
+            ["Health", "Relax", "Food"],
+        ),
+        (
+            ["Food", "Relax", "Health", "Casino", "Fun"],
+            [4, 1, 2, 3, 5],
+            [100, 200, 300, 400, 500],
+            ["Fun", "Food", "Casino", "Health", "Relax"],
+        ),
+    ]
+)
+def test__sort_summarize(
+    cat_names: list[str],
+    spendings_qty: list[int],
+    amounts: list[int],
+    expected_order: list[str],
+):
+    transactions = []
+    for index, cat_name in enumerate(cat_names):
+        for i in range(spendings_qty[index]):
+            tx = STransactionResponse(
+                amount=amounts[i],
+                category_name=cat_name,
+                description="text",
+                date=datetime(year=2020, month=1, day=1, hour=12),
+                id=random.randint(1, 10000),
+            )
+            transactions.append(tx)
+
+    summary = spendings_service._summarize(transactions)
+    sorted_summary = spendings_service._sort_summarize(summary)
+    assert [i.category_name for i in sorted_summary] == expected_order
