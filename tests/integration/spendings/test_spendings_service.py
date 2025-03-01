@@ -18,7 +18,7 @@ from app.schemas.transactions_schemas import (
     STransactionCreateInDB,
     STransactionsSortParams,
     SortParam,
-    SAmountRange, STransactionsSummary,
+    SAmountRange,
 )
 from app.services import user_spend_cat_service, spendings_service
 from tests.integration.helpers import add_mock_user, create_spendings
@@ -653,3 +653,165 @@ def test__parse_sort_params_for_query(
 
     result = spendings_service._parse_sort_params_for_query(sort_params)
     assert result == expected_result
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "create_user",
+        "cat_names",
+        "search_term",
+        "amounts",
+        "datetimes",
+        "datetime_from",
+        "datetime_to",
+        "send_categories_params",
+        "send_wrong_category",
+        "expectation",
+        "categories_expected_summary_amount",
+    ),
+    [
+        (
+            True,
+            ["Pets", "Taxi", settings.app.default_spending_category_name],
+            "term",
+            [100, 200, 300, 400, 500, 600, 700, 800, 900],
+            [
+                datetime(year=2020, month=1, day=1, hour=12),
+                datetime(year=2021, month=1, day=1, hour=12),
+                datetime(year=2022, month=1, day=1, hour=12),
+                datetime(year=2023, month=1, day=1, hour=12),
+                datetime(year=2024, month=1, day=1, hour=12),
+                datetime(year=2025, month=1, day=1, hour=12),
+                datetime(year=2026, month=1, day=1, hour=12),
+                datetime(year=2027, month=1, day=1, hour=12),
+                datetime(year=2028, month=1, day=1, hour=12),
+            ],
+            None,
+            None,
+            False,
+            False,
+            nullcontext(),
+            [1200, 1500, 1800],
+        ),
+        (
+            False,
+            ["Food", "Health"],
+            "term",
+            [100, 200, 300, 400, 500, 600, 700, 800, 900],
+            [
+                datetime(year=2020, month=1, day=1, hour=12),
+                datetime(year=2021, month=1, day=1, hour=12),
+                datetime(year=2022, month=1, day=1, hour=12),
+                datetime(year=2023, month=1, day=1, hour=12),
+                datetime(year=2024, month=1, day=1, hour=12),
+                datetime(year=2025, month=1, day=1, hour=12),
+                datetime(year=2026, month=1, day=1, hour=12),
+                datetime(year=2027, month=1, day=1, hour=12),
+                datetime(year=2028, month=1, day=1, hour=12),
+            ],
+            None,
+            None,
+            True,
+            False,
+            nullcontext(),
+            [2500, 2000],
+        ),
+        (
+            False,
+            ["Balls", "Games"],
+            "term",
+            [100, 200, 300, 400, 500, 600, 700, 800, 900],
+            [
+                datetime(year=2020, month=1, day=1, hour=12),
+                datetime(year=2021, month=1, day=1, hour=12),
+                datetime(year=2022, month=1, day=1, hour=12),
+                datetime(year=2023, month=1, day=1, hour=12),
+                datetime(year=2024, month=1, day=1, hour=12),
+                datetime(year=2025, month=1, day=1, hour=12),
+                datetime(year=2026, month=1, day=1, hour=12),
+                datetime(year=2027, month=1, day=1, hour=12),
+                datetime(year=2028, month=1, day=1, hour=12),
+            ],
+            datetime(year=2022, month=1, day=1),
+            datetime(year=2027, month=1, day=1, hour=23, minute=59, second=59),
+            True,
+            True,
+            pytest.raises(CategoryNotFound),
+            [1500, 1800],
+        ),
+    ]
+)
+async def test_get_summary(
+    db_session: AsyncSession,
+    create_user: bool,
+    cat_names: list[str],
+    search_term: str,
+    amounts: list[int],
+    datetimes: list[datetime],
+    datetime_from: datetime | None,
+    datetime_to: datetime | None,
+    send_categories_params: bool,
+    send_wrong_category: bool,
+    expectation: ContextManager,
+    categories_expected_summary_amount: list[int],
+):
+    mock_user_username = "ALONSO"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    cat_ids = []
+    for cat_name in cat_names:
+        category = await user_spend_cat_service.add_category_to_db(
+            user.id,
+            cat_name,
+            db_session,
+        )
+        cat_ids.append(category.id)
+
+    for i, dt in enumerate(datetimes):
+        transaction_to_create = STransactionCreateInDB(
+            amount=amounts[i],
+            description=search_term,
+            date=dt,
+            user_id=user.id,
+            category_id=cat_ids[i % len(cat_names)],
+        )
+        await spendings_repo.add(
+            db_session,
+            transaction_to_create.model_dump(),
+        )
+
+    categories_params = []
+    if send_categories_params:
+        for cat_name in cat_names:
+            categories_params.append(
+                SCategoryQueryParams(category_name=cat_name)
+            )
+
+    if send_wrong_category:
+        categories_params.append(SCategoryQueryParams(category_name="##wrong"))
+
+    with expectation:
+        summary = await spendings_service.get_summary(
+            user_id=user.id,
+            categories_params=categories_params,
+            search_term=search_term,
+            datetime_range=SDatetimeRange(start=datetime_from, end=datetime_to),
+            amount_params=SAmountRange(
+                min_amount=min(amounts),
+                max_amount=max(amounts),
+            ),
+            session=db_session,
+        )
+        if send_categories_params:
+            assert len(summary) == len(cat_names)
+
+        check_set = set(zip(cat_names, categories_expected_summary_amount))
+
+        summary_set = set()
+        for i in summary:
+            summary_set.add((i.category_name, i.amount))
+
+        assert summary_set == check_set
