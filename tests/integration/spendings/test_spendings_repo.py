@@ -268,6 +268,8 @@ async def test_get_transactions__with_desc_search_term(
         description_search_term=search_term,
     )
     assert len(spendings) == expected_spendings_qty
+    for sp in spendings:
+        assert search_term.lower() in sp.description.lower()
 
 
 @pytest.mark.asyncio
