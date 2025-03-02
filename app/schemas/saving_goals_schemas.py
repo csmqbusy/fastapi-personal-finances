@@ -19,7 +19,8 @@ class SSavingGoalBase(BaseModel):
 
     name: str = Field(..., max_length=50)
     description: str | None = Field(None, max_length=100)
-    amount: int = Field(..., gt=0)
+    target_amount: int = Field(..., gt=0)
+    current_amount: int = Field(..., ge=0)
     target_date: date
     start_date: date | None = None
     end_date: date
@@ -35,7 +36,8 @@ class SSavingGoalResponse(BaseModel):
     id: int
     name: str
     description: str | None
-    amount: int
+    target_amount: int
+    current_amount: int
     target_date: date
     start_date: date | None = None
     end_date: date
