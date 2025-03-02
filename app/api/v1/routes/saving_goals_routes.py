@@ -47,3 +47,27 @@ async def saving_goal_get(
         )
     except GoalNotFound:
         raise GoalNotFoundError()
+
+
+@router.delete(
+    "/{goal_id}/",
+    status_code=status.HTTP_200_OK,
+    summary="Delete saving goal",
+)
+async def saving_goal_delete(
+    goal_id: int,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> dict:
+    try:
+        await saving_goals_service.delete_goal(
+            goal_id,
+            user.id,
+            db_session,
+        )
+    except GoalNotFound:
+        raise GoalNotFoundError()
+    return {
+        "delete": "ok",
+        "id": goal_id,
+    }
