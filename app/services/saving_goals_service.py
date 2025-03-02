@@ -62,11 +62,10 @@ class SavingGoalsService:
         goal_id: int,
         user_id: int,
         session: AsyncSession,
-    ):
-        goal = await self.repo.get(session, goal_id)
-        if not goal or goal.user_id != user_id:
-            raise GoalNotFound
-        await self.repo.delete(session, goal_id)
+    ) -> None:
+        goal = await self.get_goal(goal_id, user_id, session)
+        await self.repo.delete(session, goal.id)
+
 
 saving_goals_service = SavingGoalsService(
     repository=saving_goals_repo,
