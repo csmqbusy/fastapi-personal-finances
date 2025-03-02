@@ -1,10 +1,12 @@
 from datetime import date
 from enum import Enum
+from typing import Annotated, Self
 
 from pydantic import (
     BaseModel,
     Field,
     ConfigDict,
+    WithJsonSchema,
 )
 
 
@@ -18,12 +20,17 @@ class SSavingGoalBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str = Field(..., max_length=50)
-    description: str | None = Field(None, max_length=100)
-    target_amount: int = Field(..., gt=0)
+    description: Annotated[
+        str | None,
+        WithJsonSchema({'examples': [None]}),
+    ] = Field(None, max_length=100)
     current_amount: int = Field(..., ge=0)
-    target_date: date
+    target_amount: Annotated[
+        int,
+        WithJsonSchema({'examples': [1000]}),
+    ] = Field(..., gt=0)
     start_date: date | None = None
-    end_date: date
+    target_date: date
 
 
 class SSavingGoalCreate(SSavingGoalBase):
