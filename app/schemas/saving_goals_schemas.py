@@ -7,6 +7,7 @@ from pydantic import (
     Field,
     ConfigDict,
     WithJsonSchema,
+    model_validator,
 )
 
 
@@ -31,6 +32,12 @@ class SSavingGoalBase(BaseModel):
     ] = Field(..., gt=0)
     start_date: date | None = None
     target_date: date
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> Self:
+        if self.start_date > self.target_date:
+            raise ValueError("start_date cannot be later than target_date")
+        return self
 
 
 class SSavingGoalCreate(SSavingGoalBase):
