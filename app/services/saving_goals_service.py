@@ -2,6 +2,9 @@ from typing import Type
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.exceptions.saving_goals_exceptions import (
+    GoalNotFound,
+)
 from app.repositories.saving_goals_repository import (
     saving_goals_repo,
     SavingGoalsRepository,
@@ -43,6 +46,18 @@ class SavingGoalsService:
         goal_from_db = await self.repo.add(session, goal_to_create.model_dump())
         return self.out_schema.model_validate(goal_from_db)
 
+    async def get_goal(
+        self,
+        goal_id: int,
+        user_id: int,
+        session: AsyncSession,
+    ):
+        goal = await self.repo.get(
+            session, goal_id
+        )
+        if not goal or goal.user_id != user_id:
+            raise GoalNotFound
+        return self.out_schema.model_validate(goal)
 
 
 saving_goals_service = SavingGoalsService(
