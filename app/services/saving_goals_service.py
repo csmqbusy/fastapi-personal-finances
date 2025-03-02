@@ -57,6 +57,16 @@ class SavingGoalsService:
             raise GoalNotFound
         return self.out_schema.model_validate(goal)
 
+    async def delete_goal(
+        self,
+        goal_id: int,
+        user_id: int,
+        session: AsyncSession,
+    ):
+        goal = await self.repo.get(session, goal_id)
+        if not goal or goal.user_id != user_id:
+            raise GoalNotFound
+        await self.repo.delete(session, goal_id)
 
 saving_goals_service = SavingGoalsService(
     repository=saving_goals_repo,
