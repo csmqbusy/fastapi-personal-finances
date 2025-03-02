@@ -15,7 +15,8 @@ class SavingGoalsModel(IdIntPKMixin, Base):
 
     name: Mapped[str] = mapped_column(String(50))
     description: Mapped[str] = mapped_column(String(100))
-    amount: Mapped[int]
+    target_amount: Mapped[int]
+    current_amount: Mapped[int]
     target_date: Mapped[date]
     start_date: Mapped[date] = mapped_column(server_default=text("CURRENT_DATE"))
     end_date: Mapped[date]
