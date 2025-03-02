@@ -65,3 +65,11 @@ class CategoryInfoError(HTTPException):
             detail="Send information about categories in only one format: "
                    "either category_ids or category_names.",
         )
+
+
+class GoalNotFoundError(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Saving goal not found.",
+        )
