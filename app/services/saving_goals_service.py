@@ -52,9 +52,7 @@ class SavingGoalsService:
         user_id: int,
         session: AsyncSession,
     ):
-        goal = await self.repo.get(
-            session, goal_id
-        )
+        goal = await self.repo.get(session, goal_id)
         if not goal or goal.user_id != user_id:
             raise GoalNotFound
         return self.out_schema.model_validate(goal)
