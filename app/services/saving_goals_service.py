@@ -13,6 +13,7 @@ from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
     SSavingGoalCreateInDB,
     SSavingGoalResponse,
+    SSavingGoalUpdatePartial,
 )
 
 
@@ -66,6 +67,21 @@ class SavingGoalsService:
         goal = await self.get_goal(goal_id, user_id, session)
         await self.repo.delete(session, goal.id)
 
+    async def update_goal(
+        self,
+        goal_id: int,
+        user_id: int,
+        goal_update_obj: SSavingGoalUpdatePartial,
+        session: AsyncSession,
+    ) -> SSavingGoalResponse:
+        goal = await self.get_goal(goal_id, user_id, session)
+
+        updated_goal = await self.repo.update(
+            session,
+            goal.id,
+            goal_update_obj.model_dump(exclude_none=True),
+        )
+        return self.out_schema.model_validate(updated_goal)
 
 saving_goals_service = SavingGoalsService(
     repository=saving_goals_repo,
