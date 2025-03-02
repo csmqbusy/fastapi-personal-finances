@@ -32,7 +32,7 @@ class SavingGoalsService:
         session: AsyncSession,
         goal: SSavingGoalCreate,
         user_id: int,
-    ):
+    ) -> SSavingGoalResponse:
         goal_to_create = self.creation_in_db_schema(
             name=goal.name,
             description=goal.description,
@@ -51,7 +51,7 @@ class SavingGoalsService:
         goal_id: int,
         user_id: int,
         session: AsyncSession,
-    ):
+    ) -> SSavingGoalResponse:
         goal = await self.repo.get(session, goal_id)
         if not goal or goal.user_id != user_id:
             raise GoalNotFound
