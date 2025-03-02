@@ -41,9 +41,9 @@ class SSavingGoalResponse(BaseModel):
     id: int
     name: str
     description: str | None
-    target_amount: int
     current_amount: int
-    target_date: date
+    target_amount: int
     start_date: date | None = None
-    end_date: date
+    target_date: date
+    end_date: date | None = None
     status: GoalStatus
