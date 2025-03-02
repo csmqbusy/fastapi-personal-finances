@@ -30,6 +30,11 @@ class SSavingGoalCreate(SSavingGoalBase):
     pass
 
 
+class SSavingGoalCreateInDB(SSavingGoalBase):
+    user_id: int
+    status: GoalStatus = GoalStatus.IN_PROGRESS
+
+
 class SSavingGoalResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
