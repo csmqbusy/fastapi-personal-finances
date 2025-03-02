@@ -19,7 +19,7 @@ router = APIRouter(prefix="/goals")
     status_code=status.HTTP_201_CREATED,
     summary="Set saving goal",
 )
-async def set_saving_goal(
+async def saving_goal_set(
     goal: SSavingGoalCreate,
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
