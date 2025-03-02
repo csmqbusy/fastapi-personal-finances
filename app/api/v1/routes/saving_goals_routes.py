@@ -9,6 +9,7 @@ from app.models import UserModel
 from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
     SSavingGoalResponse,
+    SSavingGoalUpdatePartial,
 )
 from app.services.saving_goals_service import saving_goals_service
 
@@ -71,3 +72,26 @@ async def saving_goal_delete(
         "delete": "ok",
         "id": goal_id,
     }
+
+
+@router.patch(
+    "/{goal_id}/",
+    status_code=status.HTTP_200_OK,
+    summary="Partial update saving goal details",
+)
+async def saving_goal_update(
+    goal_id: int,
+    goal_update_obj: SSavingGoalUpdatePartial,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> SSavingGoalResponse:
+    try:
+        updated_spending = await saving_goals_service.update_goal(
+            goal_id,
+            user.id,
+            goal_update_obj,
+            db_session,
+        )
+    except GoalNotFound:
+        raise GoalNotFoundError()
+    return updated_spending
