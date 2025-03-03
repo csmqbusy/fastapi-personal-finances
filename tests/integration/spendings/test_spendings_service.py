@@ -645,12 +645,12 @@ async def test_get_transactions__correct(
         ),
     ]
 )
-def test__parse_sort_params_for_query(
+def test_parse_sort_params_for_query(
     sort_params: STransactionsSortParams,
     expected_result: list[SortParam],
 ):
 
-    result = spendings_service._parse_sort_params_for_query(sort_params)
+    result = spendings_service.parse_sort_params_for_query(sort_params)
     assert result == expected_result
 
 

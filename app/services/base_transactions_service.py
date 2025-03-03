@@ -189,7 +189,7 @@ class TransactionsService:
         )
 
         if sort_params:
-            parsed_sort_params = self._parse_sort_params_for_query(sort_params)
+            parsed_sort_params = self.parse_sort_params_for_query(sort_params)
         else:
             parsed_sort_params = None
 
@@ -303,7 +303,7 @@ class TransactionsService:
         return list(category_ids)
 
     @staticmethod
-    def _parse_sort_params_for_query(
+    def parse_sort_params_for_query(
         sort_params: SSortParamsBase,
     ) -> list[SortParam] | None:
         if sort_params.sort_by is None:
