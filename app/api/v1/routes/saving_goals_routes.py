@@ -10,6 +10,7 @@ from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
     SSavingGoalResponse,
     SSavingGoalUpdatePartial,
+    SSavingGoalProgress,
 )
 from app.services.saving_goals_service import saving_goals_service
 
@@ -28,6 +29,26 @@ async def saving_goal_set(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> SSavingGoalResponse:
     return await saving_goals_service.set_goal(db_session, goal, user.id)
+
+
+@router.get(
+    "/progress/{goal_id}/",
+    status_code=status.HTTP_200_OK,
+    summary="Get saving goal progress details",
+)
+async def saving_goal_progress_get(
+    goal_id: int,
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> SSavingGoalProgress:
+    try:
+        return await saving_goals_service.get_goal_progress(
+            goal_id,
+            user.id,
+            db_session,
+        )
+    except GoalNotFound:
+        raise GoalNotFoundError()
 
 
 @router.get(
