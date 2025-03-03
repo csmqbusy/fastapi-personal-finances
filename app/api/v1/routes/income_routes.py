@@ -184,7 +184,7 @@ async def income_delete(
     status_code=status.HTTP_200_OK,
     summary="Get income",
 )
-async def income_get(
+async def income_get_all(
     user: UserModel = Depends(get_active_verified_user),
     categories_params: list[SCategoryQueryParams] = Depends(get_categories_params),
     amount_params: SAmountRange = Depends(get_amount_range),
