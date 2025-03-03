@@ -1,10 +1,16 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
-from app.api.exceptions.operations_exceptions import GoalNotFoundError
+from app.api.exceptions.operations_exceptions import (
+    GoalNotFoundError,
+    GoalCurrentAmountError,
+)
 from app.db import get_db_session
-from app.exceptions.saving_goals_exceptions import GoalNotFound
+from app.exceptions.saving_goals_exceptions import (
+    GoalNotFound,
+    GoalCurrentAmountInvalid,
+)
 from app.models import UserModel
 from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
@@ -93,6 +99,33 @@ async def saving_goal_delete(
         "delete": "ok",
         "id": goal_id,
     }
+
+
+@router.patch(
+    "/update_amount/{goal_id}/",
+    status_code=status.HTTP_200_OK,
+    summary="Partial update saving goal details",
+)
+async def saving_goal_update_amount(
+    goal_id: int,
+    payment: int = Query(
+        description="It can be any integer, but the total value of "
+                    "`current_amount` cannot be less than 0"
+    ),
+    user: UserModel = Depends(get_active_verified_user),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> SSavingGoalResponse:
+    try:
+        return await saving_goals_service.update_current_amount(
+            goal_id,
+            user.id,
+            payment,
+            db_session,
+        )
+    except GoalNotFound:
+        raise GoalNotFoundError()
+    except GoalCurrentAmountInvalid:
+        raise GoalCurrentAmountError()
 
 
 @router.patch(
