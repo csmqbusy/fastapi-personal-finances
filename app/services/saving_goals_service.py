@@ -15,6 +15,7 @@ from app.schemas.saving_goals_schemas import (
     SSavingGoalCreateInDB,
     SSavingGoalResponse,
     SSavingGoalUpdatePartial,
+    SSavingGoalProgress,
 )
 
 
@@ -84,6 +85,34 @@ class SavingGoalsService:
         )
         return self.out_schema.model_validate(updated_goal)
 
+    async def get_goal_progress(
+        self,
+        goal_id: int,
+        user_id: int,
+        session: AsyncSession,
+    ) -> SSavingGoalProgress:
+        goal = await self.get_goal(goal_id, user_id, session)
+
+        rest_amount = goal.target_amount - goal.current_amount
+        percentage_progress = self.get_percentage(
+            goal.current_amount,
+            goal.target_amount,
+        )
+        days_left = self.get_days_before_date(goal.target_date)
+        expected_daily_payment = self.get_expected_daily_payment(
+            rest_amount,
+            days_left,
+        )
+
+        goal_progress = SSavingGoalProgress(
+            current_amount=goal.current_amount,
+            target_amount=goal.target_amount,
+            rest_amount=rest_amount,
+            percentage_progress=percentage_progress,
+            days_left=days_left,
+            expected_daily_payment=expected_daily_payment,
+        )
+        return goal_progress
 
     @staticmethod
     def get_percentage(first_num: int, second_num: int) -> int:
