@@ -42,6 +42,7 @@ class SSavingGoalCreate(SSavingGoalBase):
 class SSavingGoalCreateInDB(SSavingGoalBase):
     user_id: int
     status: GoalStatus = GoalStatus.IN_PROGRESS
+    end_date: date | None = None
 
 
 class SSavingGoalResponse(BaseModel):
