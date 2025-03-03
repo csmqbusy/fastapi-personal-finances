@@ -38,10 +38,10 @@ from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartial,
-    SAmountRange,
     STransactionsSortParams,
     STransactionsSummary,
 )
+from app.schemas.common_schemas import SAmountRange
 from app.services.common_service import apply_pagination
 from app.services.income_service import income_service
 from app.services.users_income_categories_service import user_income_cat_service

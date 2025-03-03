@@ -19,8 +19,8 @@ from app.schemas.transactions_schemas import (
     STransactionCreateInDB,
     STransactionsSortParams,
     SortParam,
-    SAmountRange,
 )
+from app.schemas.common_schemas import SAmountRange
 from app.services import user_spend_cat_service, spendings_service
 from tests.integration.helpers import add_mock_user, create_spendings
 

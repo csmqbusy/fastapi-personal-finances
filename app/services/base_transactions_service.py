@@ -16,7 +16,6 @@ from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
     STransactionsSortParams,
     SortParam,
-    SAmountRange,
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartialInDB,
@@ -25,6 +24,7 @@ from app.schemas.transactions_schemas import (
     STransactionsSummary,
     SSortParamsBase,
 )
+from app.schemas.common_schemas import SAmountRange
 
 
 class TransactionsService:

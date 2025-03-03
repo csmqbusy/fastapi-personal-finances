@@ -40,8 +40,9 @@ from app.schemas.transactions_schemas import (
     STransactionResponse,
     STransactionUpdatePartial,
     STransactionsSortParams,
-    SAmountRange, STransactionsSummary,
+    STransactionsSummary,
 )
+from app.schemas.common_schemas import SAmountRange
 from app.services import spendings_service
 from app.services.common_service import apply_pagination
 from app.services.users_spending_categories_service import user_spend_cat_service

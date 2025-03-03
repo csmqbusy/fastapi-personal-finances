@@ -7,8 +7,8 @@ from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.pagination_schemas import SPagination
 from app.schemas.transactions_schemas import (
     STransactionsSortParams,
-    SAmountRange,
 )
+from app.schemas.common_schemas import SAmountRange
 from app.schemas.transaction_category_schemas import SCategoryQueryParams
 
 
