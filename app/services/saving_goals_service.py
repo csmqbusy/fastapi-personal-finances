@@ -19,6 +19,9 @@ from app.schemas.saving_goals_schemas import (
     SSavingGoalProgress,
     GoalStatus,
 )
+from app.schemas.common_schemas import SAmountRange, SDateRange
+from app.schemas.transactions_schemas import STransactionsSortParams
+from app.services.common_service import parse_sort_params_for_query
 
 
 class SavingGoalsService:
@@ -149,6 +152,52 @@ class SavingGoalsService:
             {"current_amount": new_amount},
         )
         return self.out_schema.model_validate(updated_goal)
+
+    async def get_goals_all(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        current_amount_range: SAmountRange | None = None,
+        target_amount_range: SAmountRange | None = None,
+        name_search_term: str | None = None,
+        description_search_term: str | None = None,
+        start_date_range: SDateRange | None = None,
+        target_date_range: SDateRange | None = None,
+        end_date_range: SDateRange | None = None,
+        status: GoalStatus | None = None,
+        sort_params: STransactionsSortParams | None = None,
+    ) -> list[SSavingGoalResponse]:
+
+        if sort_params:
+            parsed_sort_params = parse_sort_params_for_query(
+                sort_params
+            )
+        else:
+            parsed_sort_params = None
+
+        goals = await self.repo.get_goals_from_db(
+            session=session,
+            user_id=user_id,
+            min_current_amount=current_amount_range.min_amount or None,
+            max_current_amount=current_amount_range.max_amount or None,
+            min_target_amount=target_amount_range.min_amount or None,
+            max_target_amount=target_amount_range.max_amount or None,
+            name_search_term=name_search_term,
+            description_search_term=description_search_term,
+            start_date_from=start_date_range.start or None,
+            start_date_to=start_date_range.end or None,
+            target_date_from=target_date_range.start or None,
+            target_date_to=target_date_range.end or None,
+            end_date_from=end_date_range.start or None,
+            end_date_to=end_date_range.end or None,
+            status=status,
+            sort_params=parsed_sort_params,
+        )
+        result = []
+        for goal in goals:
+            goal_out = self.out_schema.model_validate(goal)
+            result.append(goal_out)
+        return result
 
     async def _complete_saving_goal(
         self,
