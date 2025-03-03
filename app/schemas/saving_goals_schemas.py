@@ -61,7 +61,7 @@ class SSavingGoalUpdatePartial(BaseModel):
 
     name: str | None = None
     description: str | None = Field(None, max_length=100)
-    current_amount: int | None = None
+    current_amount: int | None = Field(None, ge=0)
     target_amount: int | None = Field(None, gt=0)
     start_date: date | None = None
     target_date: date | None = None
@@ -71,6 +71,11 @@ class SSavingGoalUpdatePartial(BaseModel):
         if self.start_date and self.target_date:
             if self.start_date > self.target_date:
                 raise ValueError("start_date cannot be later than target_date")
+        if self.current_amount and self.target_amount:
+            if self.current_amount > self.target_amount:
+                raise ValueError(
+                    "current_amount cannot be greater than target_amount"
+                )
         return self
 
 
