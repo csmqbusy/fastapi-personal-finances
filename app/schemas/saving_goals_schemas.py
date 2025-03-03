@@ -72,3 +72,12 @@ class SSavingGoalUpdatePartial(BaseModel):
             if self.start_date > self.target_date:
                 raise ValueError("start_date cannot be later than target_date")
         return self
+
+
+class SSavingGoalProgress(BaseModel):
+    current_amount: int
+    target_amount: int
+    rest_amount: int
+    percentage_progress: int
+    days_left: int
+    expected_daily_payment: int
