@@ -3,11 +3,14 @@ from datetime import datetime
 from fastapi import Query
 
 from app.api.exceptions.operations_exceptions import CategoryInfoError
-from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.transactions_schemas import (
     STransactionsSortParams,
 )
-from app.schemas.common_schemas import SAmountRange, SPagination
+from app.schemas.common_schemas import (
+    SAmountRange,
+    SPagination,
+    SDatetimeRange,
+)
 from app.schemas.transaction_category_schemas import SCategoryQueryParams
 
 

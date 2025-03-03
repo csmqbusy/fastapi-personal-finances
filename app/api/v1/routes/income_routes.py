@@ -25,7 +25,6 @@ from app.exceptions.categories_exceptions import (
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
-from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.transaction_category_schemas import (
     STransactionCategoryOut,
     STransactionCategoryCreate,
@@ -40,7 +39,11 @@ from app.schemas.transactions_schemas import (
     STransactionsSortParams,
     STransactionsSummary,
 )
-from app.schemas.common_schemas import SAmountRange, SPagination
+from app.schemas.common_schemas import (
+    SAmountRange,
+    SPagination,
+    SDatetimeRange,
+)
 from app.services.common_service import apply_pagination
 from app.services.income_service import income_service
 from app.services.users_income_categories_service import user_income_cat_service

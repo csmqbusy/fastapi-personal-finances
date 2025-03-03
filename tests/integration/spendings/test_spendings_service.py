@@ -10,7 +10,6 @@ from app.core.config import settings
 from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.repositories import user_repo, spendings_repo
-from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
     STransactionCreate,
@@ -20,7 +19,7 @@ from app.schemas.transactions_schemas import (
     STransactionsSortParams,
     SortParam,
 )
-from app.schemas.common_schemas import SAmountRange
+from app.schemas.common_schemas import SAmountRange, SDatetimeRange
 from app.services import user_spend_cat_service, spendings_service
 from tests.integration.helpers import add_mock_user, create_spendings
 

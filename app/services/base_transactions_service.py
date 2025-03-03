@@ -11,7 +11,6 @@ from app.repositories import (
     BaseCategoriesRepository,
     BaseTransactionsRepository,
 )
-from app.schemas.date_range_schemas import SDatetimeRange
 from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
     STransactionsSortParams,
@@ -24,7 +23,7 @@ from app.schemas.transactions_schemas import (
     STransactionsSummary,
     SSortParamsBase,
 )
-from app.schemas.common_schemas import SAmountRange
+from app.schemas.common_schemas import SAmountRange, SDatetimeRange
 
 
 class TransactionsService:
