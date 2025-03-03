@@ -13,3 +13,13 @@ def get_start_date_range(
         start=start_date_from,
         end=start_date_to,
     )
+
+
+def get_target_date_range(
+    target_date_from: date = Query(None, description="Date included"),
+    target_date_to: date = Query(None, description="Date included")
+) -> SDateRange:
+    return SDateRange(
+        start=target_date_from,
+        end=target_date_to,
+    )
