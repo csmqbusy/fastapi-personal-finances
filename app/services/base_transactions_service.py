@@ -262,7 +262,8 @@ class TransactionsService:
     ) -> list[STransactionsSummary]:
         summary: defaultdict[str, int] = defaultdict(int)
         for transaction in transactions:
-            summary[transaction.category_name] += transaction.amount
+            if transaction.category_name:
+                summary[transaction.category_name] += transaction.amount
 
         summary_out = []
         for category_name, amount in summary.items():
