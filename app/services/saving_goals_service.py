@@ -175,21 +175,56 @@ class SavingGoalsService:
         else:
             parsed_sort_params = None
 
+        if current_amount_range:
+            min_current_amount = current_amount_range.min_amount
+            max_current_amount = current_amount_range.max_amount
+        else:
+            min_current_amount = None
+            max_current_amount = None
+
+        if target_amount_range:
+            min_target_amount = target_amount_range.min_amount
+            max_target_amount = target_amount_range.max_amount
+        else:
+            min_target_amount = None
+            max_target_amount = None
+
+        if start_date_range:
+            start_date_from = start_date_range.start
+            start_date_to = start_date_range.end
+        else:
+            start_date_from = None
+            start_date_to = None
+
+        if target_date_range:
+            target_date_from = target_date_range.start
+            target_date_to = target_date_range.end
+        else:
+            target_date_from = None
+            target_date_to = None
+
+        if end_date_range:
+            end_date_from = end_date_range.start
+            end_date_to = end_date_range.end
+        else:
+            end_date_from = None
+            end_date_to = None
+
         goals = await self.repo.get_goals_from_db(
             session=session,
             user_id=user_id,
-            min_current_amount=current_amount_range.min_amount or None,
-            max_current_amount=current_amount_range.max_amount or None,
-            min_target_amount=target_amount_range.min_amount or None,
-            max_target_amount=target_amount_range.max_amount or None,
+            min_current_amount=min_current_amount,
+            max_current_amount=max_current_amount,
+            min_target_amount=min_target_amount,
+            max_target_amount=max_target_amount,
             name_search_term=name_search_term,
             description_search_term=description_search_term,
-            start_date_from=start_date_range.start or None,
-            start_date_to=start_date_range.end or None,
-            target_date_from=target_date_range.start or None,
-            target_date_to=target_date_range.end or None,
-            end_date_from=end_date_range.start or None,
-            end_date_to=end_date_range.end or None,
+            start_date_from=start_date_from,
+            start_date_to=start_date_to,
+            target_date_from=target_date_from,
+            target_date_to=target_date_to,
+            end_date_from=end_date_from,
+            end_date_to=end_date_to,
             status=status,
             sort_params=parsed_sort_params,
         )
