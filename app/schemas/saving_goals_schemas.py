@@ -9,6 +9,8 @@ from pydantic import (
     model_validator,
 )
 
+from app.schemas.common_schemas import SSortParamsBase
+
 
 class GoalStatus(Enum):
     IN_PROGRESS = "in_progress"
@@ -86,3 +88,7 @@ class SSavingGoalProgress(BaseModel):
     percentage_progress: int
     days_left: int
     expected_daily_payment: int
+
+
+class SGoalsSortParams(SSortParamsBase):
+    allowed_fields: dict = SSavingGoalResponse.model_fields
