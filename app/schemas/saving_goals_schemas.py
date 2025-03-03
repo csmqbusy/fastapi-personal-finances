@@ -30,7 +30,7 @@ class SSavingGoalBase(BaseModel):
 
     @model_validator(mode="after")
     def validate_dates(self) -> Self:
-        if self.start_date > self.target_date:
+        if self.start_date and self.start_date > self.target_date:
             raise ValueError("start_date cannot be later than target_date")
         return self
 
