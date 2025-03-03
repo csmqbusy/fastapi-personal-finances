@@ -16,6 +16,7 @@ from app.schemas.saving_goals_schemas import (
     SSavingGoalResponse,
     SSavingGoalUpdatePartial,
     SSavingGoalProgress,
+    GoalStatus,
 )
 
 
@@ -113,6 +114,21 @@ class SavingGoalsService:
             expected_daily_payment=expected_daily_payment,
         )
         return goal_progress
+
+
+    async def _complete_saving_goal(
+        self,
+        goal_id: int,
+        session: AsyncSession,
+    ):
+        await self.repo.update(
+            session,
+            goal_id,
+            {
+                "status": GoalStatus.COMPLETED,
+                "end_date": date.today(),
+            },
+        )
 
     @staticmethod
     def get_percentage(first_num: int, second_num: int) -> int:
