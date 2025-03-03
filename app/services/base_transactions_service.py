@@ -260,7 +260,7 @@ class TransactionsService:
     def _summarize(
         transactions: list[STransactionResponse],
     ) -> list[STransactionsSummary]:
-        summary = defaultdict(int)
+        summary: defaultdict[str, int] = defaultdict(int)
         for transaction in transactions:
             summary[transaction.category_name] += transaction.amount
 
