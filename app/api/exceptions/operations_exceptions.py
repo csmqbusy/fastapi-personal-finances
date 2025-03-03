@@ -73,3 +73,11 @@ class GoalNotFoundError(HTTPException):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Saving goal not found.",
         )
+
+
+class GoalCurrentAmountError(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Saving goal current amount cannot be less than 0.",
+        )
