@@ -14,7 +14,6 @@ from app.repositories import (
 from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
     STransactionsSortParams,
-    SortParam,
     STransactionCreate,
     STransactionResponse,
     STransactionUpdatePartialInDB,
@@ -25,8 +24,8 @@ from app.schemas.transactions_schemas import (
 from app.schemas.common_schemas import (
     SAmountRange,
     SDatetimeRange,
-    SSortParamsBase,
 )
+from app.services.common_service import parse_sort_params_for_query
 
 
 class TransactionsService:
@@ -189,7 +188,7 @@ class TransactionsService:
         )
 
         if sort_params:
-            parsed_sort_params = self.parse_sort_params_for_query(sort_params)
+            parsed_sort_params = parse_sort_params_for_query(sort_params)
         else:
             parsed_sort_params = None
 
@@ -301,29 +300,3 @@ class TransactionsService:
                 cat_params.category_id = category.id
             category_ids.add(cat_params.category_id)
         return list(category_ids)
-
-    @staticmethod
-    def parse_sort_params_for_query(
-        sort_params: SSortParamsBase,
-    ) -> list[SortParam] | None:
-        if sort_params.sort_by is None:
-            return None
-
-        result = []
-        for param in sort_params.sort_by:
-            if param.startswith("-"):
-                result.append(
-                    SortParam(
-                        order_by=param.lstrip("-"),
-                        order_direction="desc",
-                    ),
-                )
-            else:
-                result.append(
-                    SortParam(
-                        order_by=param,
-                        order_direction="asc",
-                    ),
-                )
-
-        return result if result else None
