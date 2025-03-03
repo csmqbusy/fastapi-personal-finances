@@ -3,6 +3,7 @@ from datetime import date
 from fastapi import Query
 
 from app.schemas.common_schemas import SDateRange
+from app.schemas.saving_goals_schemas import SGoalsSortParams
 
 
 def get_start_date_range(
@@ -33,4 +34,12 @@ def get_end_date_range(
         start=end_date_from,
         end=end_date_to,
     )
+
+
+def get_goals_sort_params(
+    sort_params: list[str] | None = Query(None, description="`-` is desc")
+) -> SGoalsSortParams | None:
+    if sort_params is not None:
+        return SGoalsSortParams(sort_by=sort_params)
+    return None
 
