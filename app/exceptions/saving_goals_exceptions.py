@@ -4,3 +4,7 @@ class GoalsException(Exception):
 
 class GoalNotFound(GoalsException):
     pass
+
+
+class GoalCurrentAmountInvalid(GoalsException):
+    pass
