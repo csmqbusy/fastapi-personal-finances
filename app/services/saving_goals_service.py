@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.saving_goals_exceptions import (
     GoalNotFound,
+    GoalCurrentAmountInvalid,
 )
 from app.repositories.saving_goals_repository import (
     saving_goals_repo,
@@ -126,6 +127,28 @@ class SavingGoalsService:
         )
         return goal_progress
 
+    async def update_current_amount(
+        self,
+        goal_id: int,
+        user_id: int,
+        payment: int,
+        session: AsyncSession,
+    ) -> SSavingGoalResponse:
+        goal = await self.get_goal(goal_id, user_id, session)
+
+        new_amount = goal.current_amount + payment
+        if new_amount < 0:
+            raise GoalCurrentAmountInvalid
+        if new_amount > goal.target_amount:
+            new_amount = goal.target_amount
+            await self._complete_saving_goal(goal_id, session)
+
+        updated_goal = await self.repo.update(
+            session,
+            goal.id,
+            {"current_amount": new_amount},
+        )
+        return self.out_schema.model_validate(updated_goal)
 
     async def _complete_saving_goal(
         self,
