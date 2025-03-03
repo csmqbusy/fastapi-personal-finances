@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Type
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -95,6 +96,12 @@ class SavingGoalsService:
         today = date.today()
         delta = d - today
         return delta.days
+
+    @staticmethod
+    def get_expected_daily_payment(rest_amount: int, days_left: int) -> int:
+        return round(rest_amount / days_left)
+
+
 saving_goals_service = SavingGoalsService(
     repository=saving_goals_repo,
     creation_in_db_schema=SSavingGoalCreateInDB,
