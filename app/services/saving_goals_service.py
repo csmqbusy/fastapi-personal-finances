@@ -83,6 +83,12 @@ class SavingGoalsService:
         )
         return self.out_schema.model_validate(updated_goal)
 
+
+    @staticmethod
+    def get_percentage(first_num: int, second_num: int) -> int:
+        if second_num == 0:
+            return 0
+        return round(first_num / second_num * 100)
 saving_goals_service = SavingGoalsService(
     repository=saving_goals_repo,
     creation_in_db_schema=SSavingGoalCreateInDB,
