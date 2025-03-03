@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from app.schemas.pagination_schemas import SPagination
+from app.schemas.common_schemas import SPagination
 
 
 def apply_pagination(

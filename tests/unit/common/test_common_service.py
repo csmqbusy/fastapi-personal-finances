@@ -2,7 +2,7 @@ from typing import Sequence
 
 import pytest
 
-from app.schemas.pagination_schemas import SPagination
+from app.schemas.common_schemas import SPagination
 from app.services.common_service import apply_pagination
 
 
