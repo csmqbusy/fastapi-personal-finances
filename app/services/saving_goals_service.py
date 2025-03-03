@@ -89,6 +89,12 @@ class SavingGoalsService:
         if second_num == 0:
             return 0
         return round(first_num / second_num * 100)
+
+    @staticmethod
+    def get_days_before_date(d: date) -> int:
+        today = date.today()
+        delta = d - today
+        return delta.days
 saving_goals_service = SavingGoalsService(
     repository=saving_goals_repo,
     creation_in_db_schema=SSavingGoalCreateInDB,
