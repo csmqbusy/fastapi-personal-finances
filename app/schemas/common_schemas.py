@@ -26,3 +26,19 @@ class SDatetimeRange(BaseModel):
             if self.start > self.end:
                 raise InvalidDateRange
         return self
+
+
+class SSortParamsBase(BaseModel):
+    sort_by: list[str] | None = None
+
+    @model_validator(mode="after")
+    def validate_sort_by(self):
+        if self.sort_by:
+            sort_by_copy = self.sort_by.copy()
+            self.sort_by.clear()
+            for field in sort_by_copy:
+                if field.lstrip("-") in self.allowed_fields:
+                    if field.startswith("-"):
+                        field = f"-{field.lstrip("-")}"
+                    self.sort_by.append(field)
+        return self

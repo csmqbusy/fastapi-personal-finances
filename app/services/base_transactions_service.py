@@ -21,9 +21,12 @@ from app.schemas.transactions_schemas import (
     STransactionCreateInDB,
     STransactionUpdatePartial,
     STransactionsSummary,
+)
+from app.schemas.common_schemas import (
+    SAmountRange,
+    SDatetimeRange,
     SSortParamsBase,
 )
-from app.schemas.common_schemas import SAmountRange, SDatetimeRange
 
 
 class TransactionsService:

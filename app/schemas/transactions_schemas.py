@@ -5,8 +5,9 @@ from pydantic import (
     BaseModel,
     Field,
     ConfigDict,
-    model_validator,
 )
+
+from app.schemas.common_schemas import SSortParamsBase
 
 
 class STransactionBase(BaseModel):
@@ -47,22 +48,6 @@ class STransactionUpdatePartialInDB(BaseModel):
     amount: int | None = None
     description: str | None = Field(None, max_length=100)
     date: datetime | None
-
-
-class SSortParamsBase(BaseModel):
-    sort_by: list[str] | None = None
-
-    @model_validator(mode="after")
-    def validate_sort_by(self):
-        if self.sort_by:
-            sort_by_copy = self.sort_by.copy()
-            self.sort_by.clear()
-            for field in sort_by_copy:
-                if field.lstrip("-") in self.allowed_fields:
-                    if field.startswith("-"):
-                        field = f"-{field.lstrip("-")}"
-                    self.sort_by.append(field)
-        return self
 
 
 class STransactionsSortParams(SSortParamsBase):
