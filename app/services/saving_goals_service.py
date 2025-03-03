@@ -79,6 +79,17 @@ class SavingGoalsService:
     ) -> SSavingGoalResponse:
         goal = await self.get_goal(goal_id, user_id, session)
 
+        new_current_amount = goal_update_obj.current_amount
+        new_target_amount = goal_update_obj.target_amount
+
+        if new_current_amount and new_target_amount:
+            if new_current_amount == new_target_amount:
+                await self._complete_saving_goal(goal_id, session)
+        elif new_current_amount and not new_target_amount:
+            if new_current_amount >= goal.target_amount:
+                goal_update_obj.current_amount = goal.target_amount
+                await self._complete_saving_goal(goal_id, session)
+
         updated_goal = await self.repo.update(
             session,
             goal.id,
