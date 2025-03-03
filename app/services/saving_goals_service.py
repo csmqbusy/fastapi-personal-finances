@@ -18,9 +18,9 @@ from app.schemas.saving_goals_schemas import (
     SSavingGoalUpdatePartial,
     SSavingGoalProgress,
     GoalStatus,
+    SGoalsSortParams,
 )
 from app.schemas.common_schemas import SAmountRange, SDateRange
-from app.schemas.transactions_schemas import STransactionsSortParams
 from app.services.common_service import parse_sort_params_for_query
 
 
@@ -165,7 +165,7 @@ class SavingGoalsService:
         target_date_range: SDateRange | None = None,
         end_date_range: SDateRange | None = None,
         status: GoalStatus | None = None,
-        sort_params: STransactionsSortParams | None = None,
+        sort_params: SGoalsSortParams | None = None,
     ) -> list[SSavingGoalResponse]:
 
         if sort_params:
