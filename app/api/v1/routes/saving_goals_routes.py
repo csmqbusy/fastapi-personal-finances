@@ -2,6 +2,17 @@ from fastapi import APIRouter, status, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
+from app.api.dependencies.operations_dependencies import (
+    get_pagination_params,
+    get_transactions_sort_params,
+)
+from app.api.dependencies.saving_goals_dependencies import (
+    get_start_date_range,
+    get_target_date_range,
+    get_end_date_range,
+    get_current_amount_range,
+    get_target_amount_range,
+)
 from app.api.exceptions.operations_exceptions import (
     GoalNotFoundError,
     GoalCurrentAmountError,
@@ -12,12 +23,16 @@ from app.exceptions.saving_goals_exceptions import (
     GoalCurrentAmountInvalid,
 )
 from app.models import UserModel
+from app.schemas.common_schemas import SAmountRange, SPagination, SDateRange
 from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
     SSavingGoalResponse,
     SSavingGoalUpdatePartial,
     SSavingGoalProgress,
+    GoalStatus,
+    SGoalsSortParams,
 )
+from app.services.common_service import apply_pagination
 from app.services.saving_goals_service import saving_goals_service
 
 
@@ -75,6 +90,45 @@ async def saving_goal_get(
         )
     except GoalNotFound:
         raise GoalNotFoundError()
+
+
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    summary="Get all saving goals",
+)
+async def saving_goals_get_all(
+    user: UserModel = Depends(get_active_verified_user),
+    current_amount_params: SAmountRange = Depends(get_current_amount_range),
+    target_amount_params: SAmountRange = Depends(get_target_amount_range),
+    name_search_term: str | None = Query(None),
+    description_search_term: str | None = Query(None),
+    start_date_range: SDateRange = Depends(get_start_date_range),
+    target_date_range: SDateRange = Depends(get_target_date_range),
+    end_date_range: SDateRange = Depends(get_end_date_range),
+    goal_status: GoalStatus | None = Query(None),
+    pagination: SPagination = Depends(get_pagination_params),
+    sort_params: SGoalsSortParams = Depends(get_transactions_sort_params),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> list[SSavingGoalResponse]:
+    try:
+        goals = await saving_goals_service.get_goals_all(
+            session=db_session,
+            user_id=user.id,
+            current_amount_range=current_amount_params,
+            target_amount_range=target_amount_params,
+            name_search_term=name_search_term,
+            description_search_term=description_search_term,
+            start_date_range=start_date_range,
+            target_date_range=target_date_range,
+            end_date_range=end_date_range,
+            status=goal_status,
+            sort_params=sort_params,
+        )
+    except GoalNotFound:
+        raise GoalNotFoundError()
+    goals = apply_pagination(goals, pagination)
+    return goals
 
 
 @router.delete(
