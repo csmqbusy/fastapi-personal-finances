@@ -1,7 +1,6 @@
 from typing import Sequence
 
-from app.schemas.common_schemas import SPagination, SSortParamsBase
-from app.schemas.transactions_schemas import SortParam
+from app.schemas.common_schemas import SPagination, SSortParamsBase, SortParam
 
 
 def apply_pagination(

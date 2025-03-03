@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 
 from app.models.base_transactions_model import BaseTranscationsModel
 from app.repositories.base_repository import BaseRepository
-from app.schemas.transactions_schemas import SortParam
+from app.schemas.common_schemas import SortParam
 
 
 class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):

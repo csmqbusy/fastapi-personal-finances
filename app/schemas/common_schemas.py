@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Self
+from typing import Self, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -42,3 +42,8 @@ class SSortParamsBase(BaseModel):
                         field = f"-{field.lstrip("-")}"
                     self.sort_by.append(field)
         return self
+
+
+class SortParam(BaseModel):
+    order_by: str
+    order_direction: Literal["asc", "desc"]

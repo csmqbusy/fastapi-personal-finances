@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Literal
 
 from pydantic import (
     BaseModel,
@@ -57,8 +56,3 @@ class STransactionsSortParams(SSortParamsBase):
 class STransactionsSummary(BaseModel):
     category_name: str = Field(..., max_length=50)
     amount: int = Field(..., gt=0)
-
-
-class SortParam(BaseModel):
-    order_by: str
-    order_direction: Literal["asc", "desc"]
