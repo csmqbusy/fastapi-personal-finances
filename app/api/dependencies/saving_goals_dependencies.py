@@ -52,3 +52,13 @@ def get_current_amount_range(
         min_amount=min_current_amount,
         max_amount=max_current_amount,
     )
+
+
+def get_target_amount_range(
+    min_target_amount: int | None = Query(None, description="Value included"),
+    max_target_amount: int | None = Query(None, description="Value included"),
+) -> SAmountRange:
+    return SAmountRange(
+        min_amount=min_target_amount,
+        max_amount=max_target_amount,
+    )
