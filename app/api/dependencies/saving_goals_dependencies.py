@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import Query
 
-from app.schemas.common_schemas import SDateRange
+from app.schemas.common_schemas import SDateRange, SAmountRange
 from app.schemas.saving_goals_schemas import SGoalsSortParams
 
 
@@ -43,3 +43,12 @@ def get_goals_sort_params(
         return SGoalsSortParams(sort_by=sort_params)
     return None
 
+
+def get_current_amount_range(
+    min_current_amount: int | None = Query(None, description="Value included"),
+    max_current_amount: int | None = Query(None, description="Value included"),
+) -> SAmountRange:
+    return SAmountRange(
+        min_amount=min_current_amount,
+        max_amount=max_current_amount,
+    )
