@@ -8,7 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.saving_goals_exceptions import GoalNotFound
 from app.repositories import user_repo
-from app.schemas.saving_goals_schemas import SSavingGoalCreate
+from app.schemas.saving_goals_schemas import (
+    SSavingGoalCreate,
+    SSavingGoalUpdatePartial,
+)
 from app.services import saving_goals_service
 from tests.integration.helpers import add_mock_user
 
@@ -327,3 +330,132 @@ async def test_delete_goal(
                 user_id=wrong_user_id or user.id,
                 session=db_session,
             )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "create_user",
+        "new_name",
+        "new_description",
+        "new_current_amount",
+        "new_target_amount",
+        "new_start_date",
+        "new_expected_start_date",
+        "new_target_date",
+        "expectation",
+    ),
+    [
+        (
+            True,
+            "Macbook Pro",
+            "Good laptop",
+            0,
+            200000,
+            date.fromisoformat("2025-01-01"),
+            date.fromisoformat("2025-01-01"),
+            date.fromisoformat("2025-06-20"),
+            nullcontext(),
+        ),
+        (
+            False,
+            None,
+            "Very good laptop",
+            15000,
+            190000,
+            None,
+            None,
+            None,
+            nullcontext(),
+        ),
+        (
+            False,
+            "Macbook Pro",
+            "Good laptop",
+            0,
+            200000,
+            date.fromisoformat("2026-01-01"),
+            date.fromisoformat("2026-01-01"),
+            date.fromisoformat("2025-06-20"),
+            pytest.raises(ValidationError),
+        ),
+        (
+            False,
+            "Macbook Pro",
+            "Good laptop",
+            200001,
+            200000,
+            date.fromisoformat("2025-01-01"),
+            date.fromisoformat("2025-01-01"),
+            date.fromisoformat("2025-06-20"),
+            pytest.raises(ValidationError),
+        ),
+    ]
+)
+async def test_update_goal(
+    db_session: AsyncSession,
+    create_user: bool,
+    new_name: str | None,
+    new_description: str | None,
+    new_current_amount: int | None,
+    new_target_amount: int | None,
+    new_start_date: date | None,
+    new_expected_start_date: date | None,
+    new_target_date: date | None,
+    expectation: ContextManager,
+):
+    mock_user_username = "40Messi"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    goal = SSavingGoalCreate(
+        name="name",
+        current_amount=1234567,
+        target_amount=1234567890,
+        target_date=date.today(),
+    )
+    created_goal = await saving_goals_service.set_goal(
+        session=db_session,
+        goal=goal,
+        user_id=user.id,
+    )
+    assert created_goal is not None
+    assert created_goal.name != new_name
+    assert created_goal.description != new_description
+    assert created_goal.current_amount != new_current_amount
+    assert created_goal.target_amount != new_target_amount
+    assert created_goal.start_date != new_expected_start_date
+    assert created_goal.target_date != new_target_date
+
+    with expectation:
+        goal_update_obj = SSavingGoalUpdatePartial(
+            name=new_name,
+            description=new_description,
+            current_amount=new_current_amount,
+            target_amount=new_target_amount,
+            start_date=new_start_date,
+            target_date=new_target_date,
+        )
+        updated_goal = await saving_goals_service.update_goal(
+            goal_id=created_goal.id,
+            user_id=user.id,
+            goal_update_obj=goal_update_obj,
+            session=db_session,
+        )
+        assert updated_goal is not None
+        if new_name:
+            assert updated_goal.name == goal_update_obj.name
+        if new_description:
+            assert updated_goal.description == goal_update_obj.description
+        if new_current_amount:
+            assert updated_goal.current_amount == goal_update_obj.current_amount
+        if new_target_amount:
+            assert updated_goal.target_amount == goal_update_obj.target_amount
+        if new_start_date and new_expected_start_date:
+            assert updated_goal.start_date == new_expected_start_date
+        if new_target_date:
+            assert updated_goal.target_date == goal_update_obj.target_date
+
+
+
