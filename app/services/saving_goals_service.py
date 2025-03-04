@@ -253,10 +253,10 @@ class SavingGoalsService:
         )
 
     @staticmethod
-    def get_percentage(first_num: int, second_num: int) -> int:
+    def get_percentage(first_num: int, second_num: int) -> float:
         if second_num == 0:
             return 0
-        return round(first_num / second_num * 100)
+        return round(first_num / second_num * 100, 2)
 
     @staticmethod
     def get_days_before_date(d: date) -> int:
