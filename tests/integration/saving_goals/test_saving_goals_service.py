@@ -1039,3 +1039,61 @@ async def test_get_goals_all__with_date_ranges(
         if target_date_range:
             assert target_date_range.start <= goal.target_date
             assert target_date_range.end >= goal.target_date
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "goals_qty",
+        "end_date_range",
+        "expected_goals_qty",
+    ),
+    [
+        (
+            "100Messi1",
+            5,
+            SDateRange(start=date.today(), end=date.today()),
+            5,
+        ),
+        (
+            "100Messi2",
+            5,
+            SDateRange(start=date(2020, 1, 1), end=date(2023, 1, 1)),
+            0,
+        ),
+    ]
+)
+async def test_get_goals_all__with_end_date_range(
+    db_session: AsyncSession,
+    username: str,
+    goals_qty: int,
+    end_date_range: SDateRange,
+    expected_goals_qty: int,
+):
+    await add_mock_user(db_session, username)
+    user = await user_repo.get_by_username(db_session, username)
+
+    for i in range(goals_qty):
+        goal = SSavingGoalCreate(
+            name="mock",
+            current_amount=1000,
+            target_amount=1000,
+            target_date=date(2030, 1, 1),
+        )
+        await saving_goals_service.set_goal(
+            session=db_session,
+            goal=goal,
+            user_id=user.id,
+        )
+
+    goals = await saving_goals_service.get_goals_all(
+        session=db_session,
+        user_id=user.id,
+        end_date_range=end_date_range,
+    )
+
+    assert len(goals) == expected_goals_qty
+    for goal in goals:
+        assert end_date_range.start <= goal.start_date
+        assert end_date_range.end <= goal.start_date
