@@ -82,7 +82,9 @@ class SSavingGoalUpdatePartial(BaseModel):
 
     @field_validator("name")
     def validate_name(cls, v):
-        return v.strip()
+        if v:
+            v = v.strip()
+        return v
 
     @field_validator("description")
     def validate_description(cls, v):
