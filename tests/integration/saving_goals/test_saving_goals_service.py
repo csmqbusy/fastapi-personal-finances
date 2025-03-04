@@ -32,6 +32,8 @@ from tests.integration.helpers import add_mock_user
         "start_date",
         "expected_start_date",
         "target_date",
+        "expected_status",
+        "expected_end_date",
         "expectation",
     ),
     [
@@ -44,6 +46,8 @@ from tests.integration.helpers import add_mock_user
             date.fromisoformat("2025-01-01"),
             date.fromisoformat("2025-01-01"),
             date.fromisoformat("2025-06-20"),
+            GoalStatus.IN_PROGRESS,
+            None,
             nullcontext(),
         ),
         (
@@ -55,6 +59,21 @@ from tests.integration.helpers import add_mock_user
             None,
             date.today(),
             date.fromisoformat("2025-06-20"),
+            GoalStatus.IN_PROGRESS,
+            None,
+            nullcontext(),
+        ),
+        (
+            False,
+            "Macbook Pro",
+            "Good laptop",
+            200000,
+            200000,
+            date.fromisoformat("2025-01-01"),
+            date.fromisoformat("2025-01-01"),
+            date.fromisoformat("2025-06-20"),
+            GoalStatus.COMPLETED,
+            date.today(),
             nullcontext(),
         ),
         (
@@ -66,6 +85,8 @@ from tests.integration.helpers import add_mock_user
             date.fromisoformat("2026-01-01"),
             date.fromisoformat("2026-01-01"),
             date.fromisoformat("2025-06-20"),
+            GoalStatus.IN_PROGRESS,
+            None,
             pytest.raises(ValidationError),
         ),
         (
@@ -77,6 +98,8 @@ from tests.integration.helpers import add_mock_user
             None,
             date.today(),
             date.fromisoformat("2025-06-20"),
+            GoalStatus.IN_PROGRESS,
+            None,
             pytest.raises(ValidationError),
         ),
     ]
@@ -91,6 +114,8 @@ async def test_set_goal(
     start_date: date,
     expected_start_date: date,
     target_date: date,
+    expected_status: GoalStatus,
+    expected_end_date: date | None,
     expectation: ContextManager,
 ):
     mock_user_username = "10Messi"
