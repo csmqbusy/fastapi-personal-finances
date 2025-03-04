@@ -11,7 +11,7 @@ from app.exceptions.saving_goals_exceptions import (
     GoalCurrentAmountInvalid,
 )
 from app.repositories import user_repo
-from app.schemas.common_schemas import SAmountRange
+from app.schemas.common_schemas import SAmountRange, SDateRange
 from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
     SSavingGoalUpdatePartial,
@@ -878,3 +878,139 @@ async def test_get_goals_all__with_search_terms(
             assert name_search_term.lower() in goal.name.lower()
         if description_search_term:
             assert description_search_term.lower() in goal.description.lower()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "start_dates",
+        "target_dates",
+        "start_date_range",
+        "target_date_range",
+        "expected_goals_qty",
+    ),
+    [
+        (
+            "90Messi1",
+            [
+                date(2025, 1, 1),
+                date(2025, 2, 1),
+                date(2025, 3, 1),
+                date(2025, 4, 1),
+                date(2025, 5, 1),
+            ],
+            [
+                date(2025, 12, 27),
+                date(2025, 12, 28),
+                date(2025, 12, 29),
+                date(2025, 12, 30),
+                date(2025, 12, 31),
+            ],
+            SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+            SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+            5,
+        ),
+        (
+            "90Messi2",
+            [
+                date(2025, 1, 1),
+                date(2025, 2, 1),
+                date(2025, 3, 1),
+                date(2025, 4, 1),
+                date(2025, 5, 1),
+            ],
+            [
+                date(2025, 12, 27),
+                date(2025, 12, 28),
+                date(2025, 12, 29),
+                date(2025, 12, 30),
+                date(2025, 12, 31),
+            ],
+            SDateRange(start=date(2025, 1, 1), end=date(2025, 3, 31)),
+            SDateRange(start=date(2025, 12, 28), end=date(2025, 12, 31)),
+            2,
+        ),
+        (
+            "90Messi3",
+            [
+                date(2025, 1, 1),
+                date(2025, 2, 1),
+                date(2025, 3, 1),
+                date(2025, 4, 1),
+                date(2025, 5, 1),
+            ],
+            [
+                date(2025, 12, 27),
+                date(2025, 12, 28),
+                date(2025, 12, 29),
+                date(2025, 12, 30),
+                date(2025, 12, 31),
+            ],
+            SDateRange(start=date(2025, 5, 1), end=date(2025, 12, 31)),
+            None,
+            1,
+        ),
+        (
+            "90Messi4",
+            [
+                date(2025, 1, 1),
+                date(2025, 2, 1),
+                date(2025, 3, 1),
+                date(2025, 4, 1),
+                date(2025, 5, 1),
+            ],
+            [
+                date(2025, 12, 27),
+                date(2025, 12, 28),
+                date(2025, 12, 29),
+                date(2025, 12, 30),
+                date(2025, 12, 31),
+            ],
+            None,
+            SDateRange(start=date(2025, 12, 29), end=date(2025, 12, 31)),
+            3,
+        ),
+    ]
+)
+async def test_get_goals_all__with_date_ranges(
+    db_session: AsyncSession,
+    username: str,
+    start_dates: list[date],
+    target_dates: list[date],
+    start_date_range: SDateRange | None,
+    target_date_range: SDateRange | None,
+    expected_goals_qty: int,
+):
+    await add_mock_user(db_session, username)
+    user = await user_repo.get_by_username(db_session, username)
+
+    for i in range(len(start_dates)):
+        goal = SSavingGoalCreate(
+            name="mock",
+            current_amount=0,
+            target_amount=2000,
+            start_date=start_dates[i],
+            target_date=target_dates[i],
+        )
+        await saving_goals_service.set_goal(
+            session=db_session,
+            goal=goal,
+            user_id=user.id,
+        )
+
+    goals = await saving_goals_service.get_goals_all(
+        session=db_session,
+        user_id=user.id,
+        start_date_range=start_date_range,
+        target_date_range=target_date_range,
+    )
+
+    assert len(goals) == expected_goals_qty
+    for goal in goals:
+        if start_date_range:
+            assert start_date_range.start <= goal.start_date
+            assert start_date_range.end >= goal.start_date
+        if target_date_range:
+            assert target_date_range.start <= goal.target_date
+            assert target_date_range.end >= goal.target_date
