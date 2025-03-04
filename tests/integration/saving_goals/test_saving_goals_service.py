@@ -1,5 +1,5 @@
 from contextlib import nullcontext
-from datetime import date
+from datetime import date, timedelta
 from typing import ContextManager
 
 import pytest
@@ -11,6 +11,7 @@ from app.exceptions.saving_goals_exceptions import (
     GoalCurrentAmountInvalid,
 )
 from app.repositories import user_repo
+from app.schemas.common_schemas import SAmountRange
 from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
     SSavingGoalUpdatePartial,
@@ -691,3 +692,103 @@ async def test_update_current_amount(
         )
         assert updated_goal is not None
         assert updated_goal.current_amount == expected_current_amount
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "current_amounts",
+        "target_amounts",
+        "current_amount_range",
+        "target_amount_range",
+        "expected_goals_qty",
+    ),
+    [
+        (
+            "70Messi1",
+            [0, 500, 1000, 1500, 2000, 2500],
+            [5000, 10000, 15000, 20000, 25000, 30000],
+            SAmountRange(min_amount=0, max_amount=1500),
+            SAmountRange(min_amount=5000, max_amount=15000),
+            3,
+        ),
+        (
+            "70Messi2",
+            [0, 500, 1000, 1500, 2000, 2500],
+            [5000, 10000, 15000, 20000, 25000, 30000],
+            SAmountRange(min_amount=None, max_amount=None),
+            SAmountRange(min_amount=None, max_amount=None),
+            6,
+        ),
+        (
+            "70Messi3",
+            [0, 500, 1000, 1500, 2000, 2500],
+            [5000, 10000, 15000, 20000, 25000, 30000],
+            SAmountRange(min_amount=None, max_amount=2000),
+            SAmountRange(min_amount=None, max_amount=20000),
+            4,
+        ),
+        (
+            "70Messi4",
+            [0, 500, 1000, 1500, 2000, 2500],
+            [5000, 10000, 15000, 20000, 25000, 30000],
+            SAmountRange(min_amount=500, max_amount=None),
+            SAmountRange(min_amount=30000, max_amount=None),
+            1,
+        ),
+    ]
+)
+async def test_get_goals_all__with_amounts_range(
+    db_session: AsyncSession,
+    username: str,
+    current_amounts: list[int],
+    target_amounts: list[int],
+    current_amount_range: SAmountRange,
+    target_amount_range: SAmountRange,
+    expected_goals_qty: int,
+):
+    await add_mock_user(db_session, username)
+    user = await user_repo.get_by_username(db_session, username)
+
+    for i in range(len(current_amounts)):
+        goal = SSavingGoalCreate(
+            name="mock",
+            current_amount=current_amounts[i],
+            target_amount=target_amounts[i],
+            target_date=date.today() + timedelta(days=i),
+        )
+        await saving_goals_service.set_goal(
+            session=db_session,
+            goal=goal,
+            user_id=user.id,
+        )
+
+    goals = await saving_goals_service.get_goals_all(
+        session=db_session,
+        user_id=user.id,
+        current_amount_range=current_amount_range,
+        target_amount_range=target_amount_range,
+
+    )
+    if current_amount_range.min_amount:
+        current_min_amount = current_amount_range.min_amount
+    else:
+        current_min_amount = 0
+    if current_amount_range.max_amount:
+        current_max_amount = current_amount_range.max_amount
+    else:
+        current_max_amount = float("inf")
+    if target_amount_range.min_amount:
+        target_min_amount = target_amount_range.min_amount
+    else:
+        target_min_amount = 0
+    if target_amount_range.max_amount:
+        target_max_amount = target_amount_range.max_amount
+    else:
+        target_max_amount = float("inf")
+
+    assert len(goals) == expected_goals_qty
+    for goal in goals:
+        assert current_min_amount <= goal.current_amount <= current_max_amount
+        assert target_min_amount <= goal.target_amount <= target_max_amount
