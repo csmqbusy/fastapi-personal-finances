@@ -16,6 +16,7 @@ from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
     SSavingGoalUpdatePartial,
     GoalStatus,
+    SGoalsSortParams,
 )
 from app.services import saving_goals_service
 from tests.integration.helpers import add_mock_user
@@ -1158,3 +1159,149 @@ async def test_get_goals_all__with_status(
     assert len(goals) == expected_goals_qty
     for goal in goals:
         assert goal.status == status
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "current_amounts",
+        "target_amounts",
+        "current_amount_range",
+        "target_amount_range",
+        "names",
+        "descriptions",
+        "name_search_term",
+        "description_search_term",
+        "start_dates",
+        "target_dates",
+        "start_date_range",
+        "target_date_range",
+        "end_date_range",
+        "status",
+        "sort_params",
+        "sorted_target_amounts",
+        "expected_goals_qty",
+    ),
+    [
+        (
+            "120Messi1",
+            [0, 1000, 2000, 3000, 4000],
+            [5000, 15000, 10000, 20000, 30000],
+            SAmountRange(min_amount=0, max_amount=3000),
+            SAmountRange(min_amount=5000, max_amount=20000),
+            ["TEXT", "TEXT", "text", " text ", "t3xT   "],
+            [" some description", "description text", "my desc ", "desc", " "],
+            "text",
+            "desc",
+            [
+                date(2025, 1, 1),
+                date(2025, 2, 1),
+                date(2025, 3, 1),
+                date(2025, 4, 1),
+                date(2025, 5, 1),
+            ],
+            [
+                date(2025, 12, 27),
+                date(2025, 12, 28),
+                date(2025, 12, 29),
+                date(2025, 12, 30),
+                date(2025, 12, 31),
+            ],
+            SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+            SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+            None,
+            GoalStatus.IN_PROGRESS,
+            SGoalsSortParams(sort_by=["-target_amount", "-current_amount"]),
+            [20000, 15000, 10000, 5000],
+            4,
+        ),
+        (
+            "120Messi2",
+            [0, 1000, 3000, 3000, 4000],
+            [5000, 10000, 3000, 20000, 30000],
+            SAmountRange(min_amount=0, max_amount=3000),
+            SAmountRange(min_amount=3000, max_amount=20000),
+            ["TEXT", "TEXT", "text", " text ", "t3xT   "],
+            [" some description", "description text", "my desc ", "desc", " "],
+            "text",
+            "desc",
+            [
+                date(2025, 1, 1),
+                date(2025, 2, 1),
+                date(2025, 3, 1),
+                date(2025, 4, 1),
+                date(2025, 5, 1),
+            ],
+            [
+                date(2025, 12, 27),
+                date(2025, 12, 28),
+                date(2025, 12, 29),
+                date(2025, 12, 30),
+                date(2025, 12, 31),
+            ],
+            SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+            SDateRange(start=date(2025, 12, 29), end=date(2025, 12, 31)),
+            SDateRange(start=date.today(), end=date.today()),
+            GoalStatus.COMPLETED,
+            SGoalsSortParams(sort_by=["-target_amount", "-current_amount"]),
+            [3000],
+            1,
+        ),
+    ]
+)
+async def test_get_goals_all__with_all_filters(
+    db_session: AsyncSession,
+    username: str,
+    current_amounts: list[int],
+    target_amounts: list[int],
+    current_amount_range: SAmountRange,
+    target_amount_range: SAmountRange,
+    names: list[str],
+    descriptions: list[str],
+    name_search_term: str,
+    description_search_term: str,
+    start_dates: list[date],
+    target_dates: list[date],
+    start_date_range: SDateRange,
+    target_date_range: SDateRange,
+    end_date_range: SDateRange | None,
+    status: GoalStatus,
+    sort_params: SGoalsSortParams,
+    sorted_target_amounts: list[int],
+    expected_goals_qty: int,
+):
+    await add_mock_user(db_session, username)
+    user = await user_repo.get_by_username(db_session, username)
+
+    for i in range(len(current_amounts)):
+        goal = SSavingGoalCreate(
+            name=names[i],
+            description=descriptions[i],
+            current_amount=current_amounts[i],
+            target_amount=target_amounts[i],
+            start_date=start_dates[i],
+            target_date=target_dates[i],
+        )
+        await saving_goals_service.set_goal(
+            session=db_session,
+            goal=goal,
+            user_id=user.id,
+        )
+
+    goals = await saving_goals_service.get_goals_all(
+        session=db_session,
+        user_id=user.id,
+        current_amount_range=current_amount_range,
+        target_amount_range=target_amount_range,
+        name_search_term=name_search_term,
+        description_search_term=description_search_term,
+        start_date_range=start_date_range,
+        target_date_range=target_date_range,
+        end_date_range=end_date_range,
+        status=status,
+        sort_params=sort_params,
+    )
+
+    assert len(goals) == expected_goals_qty
+    assert [g.target_amount for g in goals] == sorted_target_amounts
