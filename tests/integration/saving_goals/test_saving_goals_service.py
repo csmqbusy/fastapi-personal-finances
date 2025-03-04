@@ -1350,3 +1350,32 @@ async def test__complete_saving_goal(
     )
     assert updated_goal is not None
     assert updated_goal.status == GoalStatus.COMPLETED
+
+
+@pytest.mark.parametrize(
+    (
+        "first_num",
+        "second_num",
+        "expected_result",
+    ),
+    [
+        (1, 100, 1.0),
+        (0, 100, 0.0),
+        (330, 2000, 16.5),
+        (331, 2000, 16.55),
+        (17500, 233000, 7.51),
+        (17500, 233000, 7.51),
+        (3171631, 31489307, 10.07),
+        (200, 200, 100.0),
+    ]
+)
+def test_get_percentage(
+    first_num,
+    second_num,
+    expected_result,
+):
+    percent = saving_goals_service.get_percentage(
+        first_num=first_num,
+        second_num=second_num,
+    )
+    assert percent == expected_result
