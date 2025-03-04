@@ -7,6 +7,7 @@ from pydantic import (
     Field,
     ConfigDict,
     model_validator,
+    field_validator,
 )
 
 from app.schemas.common_schemas import SSortParamsBase
@@ -27,6 +28,16 @@ class SSavingGoalBase(BaseModel):
     target_amount: int = Field(..., gt=0)
     start_date: date | None = None
     target_date: date
+
+    @field_validator("name")
+    def validate_name(cls, v):
+        return v.strip()
+
+    @field_validator("description")
+    def validate_description(cls, v):
+        if v:
+            v = v.strip()
+        return v
 
     @model_validator(mode="after")
     def validate_dates(self) -> Self:
@@ -68,6 +79,16 @@ class SSavingGoalUpdatePartial(BaseModel):
     target_amount: int | None = Field(None, gt=0)
     start_date: date | None = None
     target_date: date | None = None
+
+    @field_validator("name")
+    def validate_name(cls, v):
+        return v.strip()
+
+    @field_validator("description")
+    def validate_description(cls, v):
+        if v:
+            v = v.strip()
+        return v
 
     @model_validator(mode="after")
     def validate_dates(self) -> Self:
