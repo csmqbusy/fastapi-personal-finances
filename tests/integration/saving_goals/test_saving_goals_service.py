@@ -792,3 +792,89 @@ async def test_get_goals_all__with_amounts_range(
     for goal in goals:
         assert current_min_amount <= goal.current_amount <= current_max_amount
         assert target_min_amount <= goal.target_amount <= target_max_amount
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "names",
+        "descriptions",
+        "name_search_term",
+        "description_search_term",
+        "expected_goals_qty",
+    ),
+    [
+        (
+            "80Messi1",
+            ["TEXT", "text", " text ", "t3xT   "],
+            [" some description", "description text", "my desc text", "desc"],
+            "text",
+            "description",
+            2,
+        ),
+        (
+            "80Messi2",
+            ["TEXT", "text", " text ", "t3xT   "],
+            [" some description", "description text", "my desc text", "desc"],
+            "text",
+            "desc",
+            3,
+        ),
+        (
+            "80Messi3",
+            ["TEXT", "text", " text ", "t3xT   "],
+            [" some description", "description text", "my desc text", "desc"],
+            "T3XT",
+            None,
+            1,
+        ),
+        (
+            "80Messi4",
+            ["TEXT", "text", " text ", "t3xT   "],
+            [" some description", "description text", "my desc text", "desc"],
+            None,
+            "desc ",
+            1,
+        ),
+    ]
+)
+async def test_get_goals_all__with_search_terms(
+    db_session: AsyncSession,
+    username: str,
+    names: list[str],
+    descriptions: list[str],
+    name_search_term: str | None,
+    description_search_term: str | None,
+    expected_goals_qty: int,
+):
+    await add_mock_user(db_session, username)
+    user = await user_repo.get_by_username(db_session, username)
+
+    for i in range(len(names)):
+        goal = SSavingGoalCreate(
+            name=names[i],
+            description=descriptions[i],
+            current_amount=0,
+            target_amount=2000,
+            target_date=date.today() + timedelta(days=i),
+        )
+        await saving_goals_service.set_goal(
+            session=db_session,
+            goal=goal,
+            user_id=user.id,
+        )
+
+    goals = await saving_goals_service.get_goals_all(
+        session=db_session,
+        user_id=user.id,
+        name_search_term=name_search_term,
+        description_search_term=description_search_term,
+    )
+
+    assert len(goals) == expected_goals_qty
+    for goal in goals:
+        if name_search_term:
+            assert name_search_term.lower() in goal.name.lower()
+        if description_search_term:
+            assert description_search_term.lower() in goal.description.lower()
