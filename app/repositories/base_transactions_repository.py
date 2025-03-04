@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Type
 
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -43,23 +43,25 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
             select(self.model)
             .where(self.model.user_id == user_id)
         )
+
+        filters = []
         if categories_ids:
-            query = query.where(self.model.category_id.in_(categories_ids))
-
+            filters.append(self.model.category_id.in_(categories_ids))
         if description_search_term:
-            query = query.filter(
-                self.model.description.ilike(f"%{description_search_term}%")
+            filters.append(self.model.description.ilike(
+                f"%{description_search_term}%"),
             )
-
         if min_amount:
-            query = query.where(self.model.amount >= min_amount)
+            filters.append(self.model.amount >= min_amount)
         if max_amount:
-            query = query.where(self.model.amount <= max_amount)
-
+            filters.append(self.model.amount <= max_amount)
         if datetime_from:
-            query = query.where(self.model.date >= datetime_from)
+            filters.append(self.model.date >= datetime_from)
         if datetime_to:
-            query = query.where(self.model.date <= datetime_to)
+            filters.append(self.model.date <= datetime_to)
+
+        if filters:
+            query = query.where(and_(*filters))
 
         if sort_params:
             for param in sort_params:
