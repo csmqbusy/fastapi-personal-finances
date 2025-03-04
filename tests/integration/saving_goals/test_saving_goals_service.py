@@ -6,11 +6,15 @@ import pytest
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.saving_goals_exceptions import GoalNotFound
+from app.exceptions.saving_goals_exceptions import (
+    GoalNotFound,
+    GoalCurrentAmountInvalid,
+)
 from app.repositories import user_repo
 from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
     SSavingGoalUpdatePartial,
+    GoalStatus,
 )
 from app.services import saving_goals_service
 from tests.integration.helpers import add_mock_user
@@ -219,7 +223,6 @@ async def test_get_goal(
         assert goal_from_db.target_amount == goal.target_amount
         assert goal_from_db.start_date == expected_start_date
         assert goal_from_db.target_date == goal.target_date
-
 
 
 @pytest.mark.asyncio
@@ -563,3 +566,128 @@ async def test_get_goal_progress(
         assert goal_progress.days_left is not None
         assert goal_progress.expected_daily_payment is not None
 
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "create_user",
+        "name",
+        "current_amount",
+        "target_amount",
+        "payment",
+        "target_date",
+        "wrong_user_id",
+        "wrong_goal_id",
+        "expected_status",
+        "expected_current_amount",
+        "expectation",
+    ),
+    [
+        (
+            True,
+            "Macbook Pro",
+            0,
+            200000,
+            20000,
+            date.fromisoformat("2025-03-01"),
+            None,
+            None,
+            GoalStatus.IN_PROGRESS,
+            20000,
+            nullcontext(),
+        ),
+        (
+            False,
+            "Macbook Pro",
+            0,
+            200000,
+            200000,
+            date.fromisoformat("2025-03-01"),
+            None,
+            None,
+            GoalStatus.COMPLETED,
+            200000,
+            nullcontext(),
+        ),
+        (
+            False,
+            "Macbook Pro",
+            10000,
+            200000,
+            -10001,
+            date.fromisoformat("2025-03-01"),
+            None,
+            None,
+            GoalStatus.IN_PROGRESS,
+            10000,
+            pytest.raises(GoalCurrentAmountInvalid),
+        ),
+        (
+            False,
+            "Macbook Pro",
+            10000,
+            200000,
+            1000,
+            date.fromisoformat("2025-03-01"),
+            9999,
+            None,
+            GoalStatus.IN_PROGRESS,
+            10000,
+            pytest.raises(GoalNotFound),
+        ),
+        (
+            False,
+            "Macbook Pro",
+            10000,
+            200000,
+            1000,
+            date.fromisoformat("2025-03-01"),
+            None,
+            9999,
+            GoalStatus.IN_PROGRESS,
+            10000,
+            pytest.raises(GoalNotFound),
+        ),
+    ]
+)
+async def test_update_current_amount(
+    db_session: AsyncSession,
+    create_user: bool,
+    name: str,
+    current_amount: int,
+    target_amount: int,
+    payment: int,
+    target_date: date,
+    wrong_user_id: int | None,
+    wrong_goal_id: int | None,
+    expected_status: GoalStatus,
+    expected_current_amount: int,
+    expectation: ContextManager,
+):
+    mock_user_username = "60Messi"
+    if create_user:
+        await add_mock_user(db_session, mock_user_username)
+    user = await user_repo.get_by_username(db_session, mock_user_username)
+
+    goal = SSavingGoalCreate(
+        name=name,
+        current_amount=current_amount,
+        target_amount=target_amount,
+        target_date=target_date,
+    )
+    created_goal = await saving_goals_service.set_goal(
+        session=db_session,
+        goal=goal,
+        user_id=user.id,
+    )
+    assert created_goal is not None
+
+    with expectation:
+        updated_goal = await saving_goals_service.update_current_amount(
+            goal_id=wrong_goal_id or created_goal.id,
+            user_id=wrong_user_id or user.id,
+            payment=payment,
+            session=db_session,
+        )
+        assert updated_goal is not None
+        assert updated_goal.current_amount == expected_current_amount
