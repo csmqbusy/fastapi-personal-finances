@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import SavingGoalsModel
@@ -22,7 +22,7 @@ class SavingGoalsRepository(BaseRepository[SavingGoalsModel]):
         min_target_amount: int | None = None,
         max_target_amount: int | None = None,
         name_search_term: str | None = None,
-        description_search_term: str | None = None,
+        desc_search_term: str | None = None,
         start_date_from: date | None = None,
         start_date_to: date | None = None,
         target_date_from: date | None = None,
@@ -37,42 +37,36 @@ class SavingGoalsRepository(BaseRepository[SavingGoalsModel]):
             .where(self.model.user_id == user_id)
         )
 
-        if name_search_term:
-            query = query.filter(
-                self.model.name.ilike(f"%{name_search_term}%")
-            )
-        if description_search_term:
-            query = query.filter(
-                self.model.description.ilike(f"%{description_search_term}%")
-            )
-
+        filters = []
         if min_current_amount:
-            query = query.where(self.model.current_amount >= min_current_amount)
+            filters.append(self.model.current_amount >= min_current_amount)
         if max_current_amount:
-            query = query.where(self.model.current_amount <= max_current_amount)
-
+            filters.append(self.model.current_amount <= max_current_amount)
         if min_target_amount:
-            query = query.where(self.model.target_amount >= min_target_amount)
+            filters.append(self.model.target_amount >= min_target_amount)
         if max_target_amount:
-            query = query.where(self.model.target_amount <= max_target_amount)
-
+            filters.append(self.model.target_amount <= max_target_amount)
+        if name_search_term:
+            filters.append(self.model.name.ilike(f"%{name_search_term}%"))
+        if desc_search_term:
+            filters.append(self.model.description.ilike(f"%{desc_search_term}%"))
         if start_date_from:
-            query = query.where(self.model.start_date >= start_date_from)
+            filters.append(self.model.start_date >= start_date_from)
         if start_date_to:
-            query = query.where(self.model.start_date <= start_date_to)
-
+            filters.append(self.model.start_date <= start_date_to)
         if target_date_from:
-            query = query.where(self.model.target_date >= target_date_from)
+            filters.append(self.model.target_date >= target_date_from)
         if target_date_to:
-            query = query.where(self.model.target_date <= target_date_to)
-
+            filters.append(self.model.target_date <= target_date_to)
         if end_date_from:
-            query = query.where(self.model.end_date >= end_date_from)
+            filters.append(self.model.end_date >= end_date_from)
         if end_date_to:
-            query = query.where(self.model.end_date <= end_date_to)
-
+            filters.append(self.model.end_date <= end_date_to)
         if status:
-            query = query.where(self.model.status == status)
+            filters.append(self.model.status == status)
+
+        if filters:
+            query = query.where(and_(*filters))
 
         if sort_params:
             for param in sort_params:

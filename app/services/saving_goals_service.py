@@ -218,7 +218,7 @@ class SavingGoalsService:
             min_target_amount=min_target_amount,
             max_target_amount=max_target_amount,
             name_search_term=name_search_term,
-            description_search_term=description_search_term,
+            desc_search_term=description_search_term,
             start_date_from=start_date_from,
             start_date_to=start_date_to,
             target_date_from=target_date_from,
