@@ -1305,3 +1305,48 @@ async def test_get_goals_all__with_all_filters(
 
     assert len(goals) == expected_goals_qty
     assert [g.target_amount for g in goals] == sorted_target_amounts
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+    ),
+    [
+        (
+            "130Messi1",
+        ),
+    ]
+)
+async def test__complete_saving_goal(
+    db_session: AsyncSession,
+    username: str,
+):
+    await add_mock_user(db_session, username)
+    user = await user_repo.get_by_username(db_session, username)
+
+    goal = SSavingGoalCreate(
+        name="mock",
+        current_amount=0,
+        target_amount=1000,
+        target_date=date.today(),
+    )
+    created_goal = await saving_goals_service.set_goal(
+        session=db_session,
+        goal=goal,
+        user_id=user.id,
+    )
+    assert created_goal is not None
+    assert created_goal.status == GoalStatus.IN_PROGRESS
+
+    await saving_goals_service._complete_saving_goal(
+        goal_id=created_goal.id,
+        session=db_session,
+    )
+    updated_goal = await saving_goals_service.get_goal(
+        goal_id=created_goal.id,
+        user_id=user.id,
+        session=db_session,
+    )
+    assert updated_goal is not None
+    assert updated_goal.status == GoalStatus.COMPLETED
