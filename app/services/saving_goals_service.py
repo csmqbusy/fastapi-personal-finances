@@ -51,6 +51,10 @@ class SavingGoalsService:
             end_date=None,
             user_id=user_id,
         )
+        if goal.current_amount == goal.target_amount:
+            goal_to_create.status = GoalStatus.COMPLETED
+            goal_to_create.end_date = date.today()
+
         goal_from_db = await self.repo.add(session, goal_to_create.model_dump())
         return self.out_schema.model_validate(goal_from_db)
 
