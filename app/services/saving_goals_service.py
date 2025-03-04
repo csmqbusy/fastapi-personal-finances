@@ -254,6 +254,10 @@ class SavingGoalsService:
 
     @staticmethod
     def get_percentage(first_num: int, second_num: int) -> float:
+        """
+        first_num: The number whose percentage is to be calculated.
+        second_num: The number relative to which the percentage is calculated.
+        """
         if second_num == 0:
             return 0
         return round(first_num / second_num * 100, 2)
