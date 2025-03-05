@@ -7,7 +7,6 @@ from httpx import AsyncClient
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
-from starlette.testclient import TestClient
 
 from app.core.config import settings
 from app.schemas.transaction_category_schemas import TransactionsOnDeleteActions
