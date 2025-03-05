@@ -236,7 +236,6 @@ async def test_goals_goal_id__get(
         assert type(response_schema) is SSavingGoalResponse
 
 
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
@@ -304,3 +303,96 @@ async def test_goals_goal_id__delete(
             url=f"{settings.api.prefix_v1}/goals/{goal_id}/",
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "status_code",
+        "current_amount",
+        "target_amount",
+        "payment",
+        "pass_invalid_goal_id",
+        "sign_in_another_user",
+    ),
+    [
+        (
+            "50Henry1",
+            status.HTTP_200_OK,
+            0,
+            1000,
+            200,
+            False,
+            False,
+        ),
+        (
+            "50Henry2",
+            status.HTTP_400_BAD_REQUEST,
+            100,
+            1000,
+            -101,
+            False,
+            False,
+        ),
+        (
+            "50Henry3",
+            status.HTTP_404_NOT_FOUND,
+            0,
+            1000,
+            200,
+            True,
+            False,
+        ),
+        (
+            "50Henry4",
+            status.HTTP_404_NOT_FOUND,
+            0,
+            1000,
+            200,
+            False,
+            True,
+        ),
+    ]
+)
+async def test_update_amount__patch(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    username: str,
+    status_code: int,
+    current_amount: int,
+    target_amount: int,
+    payment: int,
+    pass_invalid_goal_id: bool,
+    sign_in_another_user: bool,
+):
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
+
+    response = await client.post(
+        url=f"{settings.api.prefix_v1}/goals/",
+        json={
+            "name": "name",
+            "current_amount": current_amount,
+            "target_amount": target_amount,
+            "target_date": date.today().isoformat(),
+        }
+    )
+    goal_id = 99999 if pass_invalid_goal_id else response.json()["id"]
+
+    if sign_in_another_user:
+        another_username = f"Another{username}"
+        await sign_up_user(client, another_username)
+        await sign_in_user(client, another_username)
+
+    response = await client.patch(
+        url=f"{settings.api.prefix_v1}/goals/update_amount/{goal_id}/",
+        params={
+            "payment": payment,
+        }
+    )
+    assert response.status_code == status_code
+    if status_code == status.HTTP_200_OK:
+        assert response.json()["id"] == goal_id
+        assert response.json()["current_amount"] == current_amount + payment
+
