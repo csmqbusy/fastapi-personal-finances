@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -293,7 +293,6 @@ async def test_get_goals_from_db__with_search_terms(
     assert len(goals) == expected_goals_qty
 
 
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
@@ -512,5 +511,78 @@ async def test_get_goals_from_db__with_dates_ranges(
         start_date_to=start_date_to,
         target_date_from=target_date_from,
         target_date_to=target_date_to,
+    )
+    assert len(goals) == expected_goals_qty
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "goals_qty",
+        "end_date_from",
+        "end_date_to",
+        "expected_goals_qty",
+    ),
+    [
+        (
+            "50Ronaldo1",
+            5,
+            date.today(),
+            date.today(),
+            5,
+        ),
+        (
+            "50Ronaldo2",
+            5,
+            date.today(),
+            None,
+            5,
+        ),
+        (
+            "50Ronaldo3",
+            5,
+            None,
+            date.today(),
+            5,
+        ),
+        (
+            "50Ronaldo4",
+            5,
+            date.today() + timedelta(days=1),
+            date.today() + timedelta(days=1),
+            0,
+        ),
+    ]
+)
+async def test_get_goals_from_db__with_end_date_range(
+    db_session: AsyncSession,
+    username: str,
+    goals_qty: int,
+    end_date_from: date | None,
+    end_date_to: date | None,
+    expected_goals_qty: int,
+):
+    await add_mock_user(db_session, username)
+    user = await user_repo.get_by_username(db_session, username)
+
+    for i in range(goals_qty):
+        goal = SSavingGoalCreate(
+            name="name",
+            current_amount=5000,
+            target_amount=5000,
+            target_date=date(2030, 5, 5),
+        )
+        await saving_goals_service.set_goal(
+            session=db_session,
+            goal=goal,
+            user_id=user.id,
+        )
+
+    goals = await saving_goals_repo.get_goals_from_db(
+        session=db_session,
+        user_id=user.id,
+        end_date_from=end_date_from,
+        end_date_to=end_date_to,
     )
     assert len(goals) == expected_goals_qty
