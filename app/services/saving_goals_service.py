@@ -235,6 +235,10 @@ class SavingGoalsService:
         )
         result = []
         for goal in goals:
+            if self._is_goal_overdue(goal):
+                await self.make_saving_goal_overdue(goal.id, session)
+                await session.refresh(goal)
+
             goal_out = self.out_schema.model_validate(goal)
             result.append(goal_out)
         return result
