@@ -187,3 +187,107 @@ async def test_get_goals_from_db__with_amounts(
         max_target_amount=max_target_amount,
     )
     assert len(goals) == expected_goals_qty
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "names",
+        "descriptions",
+        "name_search_term",
+        "description_search_term",
+        "expected_goals_qty",
+    ),
+    [
+        (
+            "30Ronaldo1",
+            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
+            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
+            "NAME",
+            "DESC",
+            4,
+        ),
+        (
+            "30Ronaldo2",
+            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
+            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
+            None,
+            None,
+            8,
+        ),
+        (
+            "30Ronaldo3",
+            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
+            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
+            "NA",
+            None,
+            6,
+        ),
+        (
+            "30Ronaldo4",
+            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
+            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
+            "@",
+            None,
+            1,
+        ),
+        (
+            "30Ronaldo5",
+            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
+            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
+            None,
+            "3",
+            1,
+        ),
+        (
+            "30Ronaldo6",
+            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
+            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
+            None,
+            "description",
+            1,
+        ),
+        (
+            "30Ronaldo7",
+            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
+            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
+            None,
+            "desc",
+            5,
+        ),
+    ]
+)
+async def test_get_goals_from_db__with_search_terms(
+    db_session: AsyncSession,
+    username: str,
+    names: list[str],
+    descriptions: list[str],
+    name_search_term: str | None,
+    description_search_term: str | None,
+    expected_goals_qty: int,
+):
+    await add_mock_user(db_session, username)
+    user = await user_repo.get_by_username(db_session, username)
+
+    for i in range(len(names)):
+        goal = SSavingGoalCreate(
+            name=names[i],
+            description=descriptions[i],
+            current_amount=0,
+            target_amount=5000,
+            target_date=date.today(),
+        )
+        await saving_goals_service.set_goal(
+            session=db_session,
+            goal=goal,
+            user_id=user.id,
+        )
+
+    goals = await saving_goals_repo.get_goals_from_db(
+        session=db_session,
+        user_id=user.id,
+        name_search_term=name_search_term,
+        desc_search_term=description_search_term,
+    )
+    assert len(goals) == expected_goals_qty
