@@ -259,6 +259,19 @@ class SavingGoalsService:
     ) -> bool:
         return date.today() > goal.target_date
 
+    async def make_saving_goal_overdue(
+        self,
+        goal_id: int,
+        session: AsyncSession,
+    ):
+        await self.repo.update(
+            session,
+            goal_id,
+            {
+                "status": GoalStatus.OVERDUE,
+            },
+        )
+
     @staticmethod
     def get_percentage(first_num: int, second_num: int) -> float:
         """
