@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -8,7 +8,7 @@ from starlette import status
 from app.core.config import settings
 from app.schemas.saving_goals_schemas import (
     SSavingGoalResponse,
-    SSavingGoalProgress,
+    SSavingGoalProgress, GoalStatus,
 )
 from tests.integration.helpers import sign_up_user, sign_in_user
 
@@ -397,7 +397,6 @@ async def test_goals_update_amount__patch(
         assert response.json()["current_amount"] == current_amount + payment
 
 
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
@@ -534,3 +533,283 @@ async def test_goals_goal_id__patch(
             assert response.json()["start_date"] == new_start_date
         if new_target_date:
             assert response.json()["target_date"] == new_target_date
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "status_code",
+        "goals_qty",
+        "name",
+        "description",
+        "current_amount",
+        "amount_step",
+        "target_amount",
+        "start_date",
+        "target_date",
+        "min_current_amount",
+        "max_current_amount",
+        "min_target_amount",
+        "max_target_amount",
+        "name_search_term",
+        "description_search_term",
+        "start_date_from",
+        "start_date_to",
+        "target_date_from",
+        "target_date_to",
+        "end_date_from",
+        "end_date_to",
+        "goal_status",
+        "page",
+        "page_size",
+        "sort_params",
+        "expected_goals_qty",
+        "sign_in_another_user",
+    ),
+    [
+        (
+            "70Henry1",
+            status.HTTP_200_OK,
+            5,
+            "name",
+            "description",
+            0,
+            1000,
+            100000,
+            date(2028, 1, 1),
+            date(2030, 1, 1),
+            0,
+            4000,
+            100000,
+            100000,
+            "name",
+            None,
+            date(2028, 1, 1).isoformat(),
+            date(2029, 1, 1).isoformat(),
+            date(2030, 1, 1).isoformat(),
+            date(2031, 1, 1).isoformat(),
+            None,
+            None,
+            GoalStatus.IN_PROGRESS,
+            1,
+            20,
+            ["current_amount"],
+            5,
+            False,
+        ),
+        (
+            "70Henry2",
+            status.HTTP_200_OK,
+            5,
+            "name",
+            "description",
+            0,
+            1000,
+            100000,
+            date(2028, 1, 1),
+            date(2030, 1, 1),
+            0,
+            4000,
+            100000,
+            100000,
+            "name",
+            None,
+            date(2028, 1, 1).isoformat(),
+            date(2029, 1, 1).isoformat(),
+            date(2030, 1, 1).isoformat(),
+            date(2031, 1, 1).isoformat(),
+            None,
+            None,
+            GoalStatus.IN_PROGRESS,
+            1,
+            1,
+            ["current_amount"],
+            1,
+            False,
+        ),
+        (
+            "70Henry3",
+            status.HTTP_200_OK,
+            5,
+            "name",
+            "description",
+            0,
+            1000,
+            100000,
+            date(2028, 1, 1),
+            date(2030, 1, 1),
+            0,
+            4000,
+            100000,
+            100000,
+            "name",
+            None,
+            date(2028, 1, 1).isoformat(),
+            date(2029, 1, 1).isoformat(),
+            date(2030, 1, 1).isoformat(),
+            date(2031, 1, 1).isoformat(),
+            date(2028, 1, 1).isoformat(),
+            date(2030, 1, 1).isoformat(),
+            GoalStatus.IN_PROGRESS,
+            1,
+            1,
+            ["current_amount"],
+            0,
+            False,
+        ),
+        (
+            "70Henry4",
+            status.HTTP_200_OK,
+            5,
+            "name",
+            "description",
+            0,
+            1000,
+            100000,
+            date(2028, 1, 1),
+            date(2030, 1, 1),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            5,
+            False,
+        ),
+        (
+            "70Henry5",
+            status.HTTP_200_OK,
+            5,
+            "name",
+            "description",
+            0,
+            1000,
+            100000,
+            date(2028, 1, 1),
+            date(2030, 1, 1),
+            0,
+            4000,
+            100000,
+            100000,
+            "name",
+            None,
+            date(2010, 1, 1).isoformat(),
+            date(2050, 1, 1).isoformat(),
+            date(2010, 1, 1).isoformat(),
+            date(2050, 1, 1).isoformat(),
+            None,
+            None,
+            GoalStatus.IN_PROGRESS,
+            1,
+            20,
+            ["current_amount"],
+            0,
+            True,
+        ),
+    ]
+)
+async def test_goals__get(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    username: str,
+    status_code: int,
+    goals_qty: int,
+    name: str,
+    description: str | None,
+    current_amount: int,
+    amount_step: int,
+    target_amount: int,
+    start_date: date | None,
+    target_date: date,
+    min_current_amount: int | None,
+    max_current_amount: int | None,
+    min_target_amount: int | None,
+    max_target_amount: int | None,
+    name_search_term: str | None,
+    description_search_term: str | None,
+    start_date_from: str | None,
+    start_date_to: str | None,
+    target_date_from: str | None,
+    target_date_to: str | None,
+    end_date_from: str | None,
+    end_date_to: str | None,
+    goal_status: GoalStatus | None,
+    page: int | None,
+    page_size: int | None,
+    sort_params: list[str] | None,
+    expected_goals_qty: int,
+    sign_in_another_user: bool,
+):
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
+
+    for i in range(goals_qty):
+        await client.post(
+            url=f"{settings.api.prefix_v1}/goals/",
+            json={
+                "name": f"{name}_{i}",
+                "description": f"{description}_{i}",
+                "current_amount": current_amount + i * amount_step,
+                "target_amount": target_amount,
+                "start_date": (start_date + timedelta(days=i * 30)).isoformat(),
+                "target_date": (target_date + timedelta(days=i * 30)).isoformat(),
+            }
+        )
+
+    if sign_in_another_user:
+        another_username = f"Another{username}"
+        await sign_up_user(client, another_username)
+        await sign_in_user(client, another_username)
+
+    request_params = {}
+    if name_search_term:
+        request_params["name_search_term"] = name_search_term
+    if description_search_term:
+        request_params["description_search_term"] = description_search_term
+    if min_current_amount:
+        request_params["min_current_amount"] = min_current_amount
+    if max_current_amount:
+        request_params["max_current_amount"] = max_current_amount
+    if min_target_amount:
+        request_params["min_target_amount"] = min_target_amount
+    if max_target_amount:
+        request_params["max_target_amount"] = max_target_amount
+    if end_date_from:
+        request_params["end_date_from"] = end_date_from
+    if end_date_to:
+        request_params["end_date_to"] = end_date_to
+    if start_date_from:
+        request_params["start_date_from"] = start_date_from
+    if start_date_to:
+        request_params["start_date_to"] = start_date_to
+    if target_date_from:
+        request_params["target_date_from"] = target_date_from
+    if target_date_to:
+        request_params["target_date_to"] = target_date_to
+    if goal_status:
+        request_params["goal_status"] = goal_status
+    if page:
+        request_params["page"] = page
+    if page_size:
+        request_params["page_size"] = page_size
+    if sort_params:
+        request_params["sort_params"] = sort_params
+
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/goals/",
+        params=request_params,
+    )
+    assert response.status_code == status_code
+    assert len(response.json()) == expected_goals_qty
