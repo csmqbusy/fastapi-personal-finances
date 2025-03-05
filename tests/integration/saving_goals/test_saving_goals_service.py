@@ -1370,9 +1370,9 @@ async def test__complete_saving_goal(
     ]
 )
 def test_get_percentage(
-    first_num,
-    second_num,
-    expected_result,
+    first_num: int,
+    second_num: int,
+    expected_result: float,
 ):
     percent = saving_goals_service.get_percentage(
         first_num=first_num,
