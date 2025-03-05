@@ -111,22 +111,19 @@ async def saving_goals_get_all(
     sort_params: SGoalsSortParams = Depends(get_transactions_sort_params),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[SSavingGoalResponse]:
-    try:
-        goals = await saving_goals_service.get_goals_all(
-            session=db_session,
-            user_id=user.id,
-            current_amount_range=current_amount_params,
-            target_amount_range=target_amount_params,
-            name_search_term=name_search_term,
-            description_search_term=description_search_term,
-            start_date_range=start_date_range,
-            target_date_range=target_date_range,
-            end_date_range=end_date_range,
-            status=goal_status,
-            sort_params=sort_params,
-        )
-    except GoalNotFound:
-        raise GoalNotFoundError()
+    goals = await saving_goals_service.get_goals_all(
+        session=db_session,
+        user_id=user.id,
+        current_amount_range=current_amount_params,
+        target_amount_range=target_amount_params,
+        name_search_term=name_search_term,
+        description_search_term=description_search_term,
+        start_date_range=start_date_range,
+        target_date_range=target_date_range,
+        end_date_range=end_date_range,
+        status=goal_status,
+        sort_params=sort_params,
+    )
     goals = apply_pagination(goals, pagination)
     return goals
 
