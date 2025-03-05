@@ -169,3 +169,68 @@ async def test_goals_progress__get(
     if status_code == status.HTTP_200_OK:
         response_schema = SSavingGoalProgress.model_validate(response.json())
         assert type(response_schema) is SSavingGoalProgress
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "status_code",
+        "pass_invalid_goal_id",
+        "sign_in_another_user",
+    ),
+    [
+        (
+            "30Henry1",
+            status.HTTP_200_OK,
+            False,
+            False,
+        ),
+        (
+            "30Henry2",
+            status.HTTP_404_NOT_FOUND,
+            True,
+            False,
+        ),
+        (
+            "30Henry3",
+            status.HTTP_404_NOT_FOUND,
+            False,
+            True,
+        ),
+    ]
+)
+async def test_goals_goal_id__get(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    username: str,
+    status_code: int,
+    pass_invalid_goal_id: bool,
+    sign_in_another_user: bool,
+):
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
+
+    response = await client.post(
+        url=f"{settings.api.prefix_v1}/goals/",
+        json={
+            "name": "name",
+            "current_amount": 0,
+            "target_amount": 1,
+            "target_date": date.today().isoformat(),
+        }
+    )
+    goal_id = 99999 if pass_invalid_goal_id else response.json()["id"]
+
+    if sign_in_another_user:
+        another_username = f"Another{username}"
+        await sign_up_user(client, another_username)
+        await sign_in_user(client, another_username)
+
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/goals/{goal_id}/",
+    )
+    assert response.status_code == status_code
+    if status_code == status.HTTP_200_OK:
+        response_schema = SSavingGoalResponse.model_validate(response.json())
+        assert type(response_schema) is SSavingGoalResponse
