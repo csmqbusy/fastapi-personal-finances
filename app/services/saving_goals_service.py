@@ -272,6 +272,8 @@ class SavingGoalsService:
 
     @staticmethod
     def get_expected_daily_payment(rest_amount: int, days_left: int) -> int:
+        if days_left == 0:
+            return rest_amount
         return round(rest_amount / days_left)
 
 
