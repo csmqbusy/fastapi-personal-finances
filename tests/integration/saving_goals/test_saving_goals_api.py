@@ -131,7 +131,7 @@ async def test_goals__post(
         ),
     ]
 )
-async def test_saving_goal_progress_get(
+async def test_goals_progress__get(
     client: AsyncClient,
     db_session: AsyncSession,
     username: str,
