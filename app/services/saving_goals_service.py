@@ -118,7 +118,7 @@ class SavingGoalsService:
             goal.current_amount,
             goal.target_amount,
         )
-        days_left = self.get_days_before_date(goal.target_date)
+        days_left = self.get_days_between_dates(goal.target_date)
         expected_daily_payment = self.get_expected_daily_payment(
             rest_amount,
             days_left,
@@ -263,10 +263,12 @@ class SavingGoalsService:
         return round(first_num / second_num * 100, 2)
 
     @staticmethod
-    def get_days_before_date(d: date) -> int:
-        today = date.today()
-        delta = d - today
-        return delta.days
+    def get_days_between_dates(
+        d1: date,
+        d2: date = date.today(),
+    ) -> int:
+        delta = d2 - d1
+        return abs(delta.days)
 
     @staticmethod
     def get_expected_daily_payment(rest_amount: int, days_left: int) -> int:
