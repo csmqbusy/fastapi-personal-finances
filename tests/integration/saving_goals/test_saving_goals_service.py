@@ -1405,3 +1405,29 @@ def test_get_days_before_dates(
         d2=date2,
     )
     assert days == expected_result
+
+
+@pytest.mark.parametrize(
+    (
+        "amount",
+        "rest_days",
+        "expected_result",
+    ),
+    [
+        (3000, 10, 300),
+        (3332300, 250, 13329),
+        (2000, 1, 2000),
+        (2000, 0, 2000),
+        (0, 100, 0),
+    ]
+)
+def test_get_expected_daily_payment(
+    amount: int,
+    rest_days: int,
+    expected_result,
+):
+    daily_payment = saving_goals_service.get_expected_daily_payment(
+        rest_amount=amount,
+        days_left=rest_days,
+    )
+    assert daily_payment == expected_result
