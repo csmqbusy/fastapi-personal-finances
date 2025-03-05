@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories import user_repo
 from app.repositories.saving_goals_repository import saving_goals_repo
-from app.schemas.saving_goals_schemas import SSavingGoalCreate
+from app.schemas.saving_goals_schemas import SSavingGoalCreate, GoalStatus
 from app.services import saving_goals_service
 from tests.integration.helpers import add_mock_user
 
@@ -584,5 +584,77 @@ async def test_get_goals_from_db__with_end_date_range(
         user_id=user.id,
         end_date_from=end_date_from,
         end_date_to=end_date_to,
+    )
+    assert len(goals) == expected_goals_qty
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "current_amounts",
+        "target_amounts",
+        "status",
+        "expected_goals_qty",
+    ),
+    [
+        (
+            "20Ronaldo1",
+            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
+            [15000, 22000, 25000, 33000, 4000, 8000, 15000, 20000],
+            GoalStatus.IN_PROGRESS,
+            4,
+        ),
+        (
+            "20Ronaldo2",
+            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
+            [15000, 22000, 25000, 33000, 4000, 8000, 15000, 20000],
+            GoalStatus.COMPLETED,
+            4,
+        ),
+        (
+            "20Ronaldo3",
+            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
+            [15000, 22000, 25000, 33000, 4000, 8000, 15000, 20000],
+            GoalStatus.OVERDUE,
+            0,
+        ),
+        (
+            "20Ronaldo4",
+            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
+            [15000, 22000, 25000, 33000, 4000, 8000, 15000, 20000],
+            None,
+            8,
+        ),
+    ]
+)
+async def test_get_goals_from_db__with_status(
+    db_session: AsyncSession,
+    username: str,
+    current_amounts: list[int],
+    target_amounts: list[int],
+    status: GoalStatus | None,
+    expected_goals_qty: int,
+):
+    await add_mock_user(db_session, username)
+    user = await user_repo.get_by_username(db_session, username)
+
+    for i in range(len(current_amounts)):
+        goal = SSavingGoalCreate(
+            name="name",
+            current_amount=current_amounts[i],
+            target_amount=target_amounts[i],
+            target_date=date.today(),
+        )
+        await saving_goals_service.set_goal(
+            session=db_session,
+            goal=goal,
+            user_id=user.id,
+        )
+
+    goals = await saving_goals_repo.get_goals_from_db(
+        session=db_session,
+        user_id=user.id,
+        status=status,
     )
     assert len(goals) == expected_goals_qty
