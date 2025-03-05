@@ -1379,3 +1379,29 @@ def test_get_percentage(
         second_num=second_num,
     )
     assert percent == expected_result
+
+
+@pytest.mark.parametrize(
+    (
+        "date1",
+        "date2",
+        "expected_result",
+    ),
+    [
+        (date(2025, 1, 1), date(2025, 1, 1), 0),
+        (date(2025, 1, 1), date(2025, 1, 2), 1),
+        (date(2025, 1, 1), date(2025, 1, 20), 19),
+        (date(2023, 12, 1), date(2025, 3, 5), 460),
+        (date(2025, 3, 5), date(2023, 12, 1), 460),
+    ]
+)
+def test_get_days_before_dates(
+    date1: date,
+    date2: date,
+    expected_result: int,
+):
+    days = saving_goals_service.get_days_between_dates(
+        d1=date1,
+        d2=date2,
+    )
+    assert days == expected_result
