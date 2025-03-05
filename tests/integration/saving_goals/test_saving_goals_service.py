@@ -1107,6 +1107,8 @@ async def test_get_goals_all__with_end_date_range(
         "current_amounts",
         "target_amounts",
         "status",
+        "make_overdue",
+        "overdue_goal_index",
         "expected_goals_qty",
     ),
     [
@@ -1115,6 +1117,8 @@ async def test_get_goals_all__with_end_date_range(
             [100, 200, 300],
             [200, 400, 300],
             GoalStatus.IN_PROGRESS,
+            False,
+            None,
             2,
         ),
         (
@@ -1122,6 +1126,17 @@ async def test_get_goals_all__with_end_date_range(
             [100, 200, 300],
             [200, 400, 300],
             GoalStatus.COMPLETED,
+            False,
+            None,
+            1,
+        ),
+        (
+            "110Messi3",
+            [100, 200, 300],
+            [200, 400, 300],
+            GoalStatus.OVERDUE,
+            True,
+            0,
             1,
         ),
     ]
@@ -1132,6 +1147,8 @@ async def test_get_goals_all__with_status(
     current_amounts: list[int],
     target_amounts: list[int],
     status: GoalStatus,
+    make_overdue: bool,
+    overdue_goal_index: int | None,
     expected_goals_qty: int,
 ):
     await add_mock_user(db_session, username)
@@ -1142,13 +1159,18 @@ async def test_get_goals_all__with_status(
             name="mock",
             current_amount=current_amounts[i],
             target_amount=target_amounts[i],
-            target_date=date(2030, 1, 1),
+            target_date=date.today(),
         )
-        await saving_goals_service.set_goal(
+        goal_from_db = await saving_goals_service.set_goal(
             session=db_session,
             goal=goal,
             user_id=user.id,
         )
+        if make_overdue and overdue_goal_index == i:
+            await saving_goals_service.make_saving_goal_overdue(
+                goal_from_db.id,
+                db_session,
+            )
 
     goals = await saving_goals_service.get_goals_all(
         session=db_session,
