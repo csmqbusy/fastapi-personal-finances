@@ -1,5 +1,5 @@
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 from typing import Self
 
 from pydantic import (
@@ -13,7 +13,7 @@ from pydantic import (
 from app.schemas.common_schemas import SSortParamsBase
 
 
-class GoalStatus(Enum):
+class GoalStatus(StrEnum):
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     OVERDUE = "overdue"
