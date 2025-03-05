@@ -15,6 +15,8 @@ from app.schemas.saving_goals_schemas import (
     (
         "name",
         "description",
+        "current_amount",
+        "target_amount",
         "start_date",
         "target_date",
         "expected_name",
@@ -25,6 +27,8 @@ from app.schemas.saving_goals_schemas import (
         (
             "name",
             "description",
+            0,
+            100,
             date(2025, 1, 1),
             date(2025, 12, 1),
             "name",
@@ -34,6 +38,8 @@ from app.schemas.saving_goals_schemas import (
         (
             "name",
             "description",
+            0,
+            100,
             date(2025, 12, 1),
             date(2025, 1, 1),
             "name",
@@ -41,8 +47,21 @@ from app.schemas.saving_goals_schemas import (
             pytest.raises(ValidationError),
         ),
         (
+            "name",
+            "description",
+            120,
+            100,
+            date(2025, 1, 1),
+            date(2025, 12, 1),
+            "name",
+            "description",
+            pytest.raises(ValidationError),
+        ),
+        (
             "     name    ",
             " description ",
+            0,
+            100,
             date(2025, 1, 1),
             date(2025, 12, 1),
             "name",
@@ -52,6 +71,8 @@ from app.schemas.saving_goals_schemas import (
         (
             "name ",
             " description",
+            0,
+            100,
             date(2025, 1, 1),
             date(2025, 12, 1),
             "name",
@@ -61,6 +82,8 @@ from app.schemas.saving_goals_schemas import (
         (
             "name ",
             " description",
+            0,
+            100,
             None,
             date(2025, 12, 1),
             "name",
@@ -72,6 +95,8 @@ from app.schemas.saving_goals_schemas import (
 def test_SSavingGoalBase_schema(
     name: str,
     description: str,
+    current_amount: int,
+    target_amount: int,
     start_date: date,
     target_date: date,
     expected_name: str,
@@ -82,8 +107,8 @@ def test_SSavingGoalBase_schema(
         goal = SSavingGoalBase(
             name=name,
             description=description,
-            current_amount=0,
-            target_amount=100,
+            current_amount=current_amount,
+            target_amount=target_amount,
             start_date=start_date,
             target_date=target_date,
         )
