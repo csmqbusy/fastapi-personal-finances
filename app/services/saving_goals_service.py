@@ -7,6 +7,7 @@ from app.exceptions.saving_goals_exceptions import (
     GoalNotFound,
     GoalCurrentAmountInvalid,
 )
+from app.models import SavingGoalsModel
 from app.repositories.saving_goals_repository import (
     saving_goals_repo,
     SavingGoalsRepository,
@@ -251,6 +252,12 @@ class SavingGoalsService:
                 "end_date": date.today(),
             },
         )
+
+    @staticmethod
+    def _is_goal_overdue(
+        goal: SavingGoalsModel,
+    ) -> bool:
+        return date.today() > goal.target_date
 
     @staticmethod
     def get_percentage(first_num: int, second_num: int) -> float:
