@@ -131,7 +131,7 @@ async def test_goals__post(
         ),
     ]
 )
-async def test_goals_progress__get(
+async def test_goals_progress_goal_id__get(
     client: AsyncClient,
     db_session: AsyncSession,
     username: str,
@@ -355,7 +355,7 @@ async def test_goals_goal_id__delete(
         ),
     ]
 )
-async def test_update_amount__patch(
+async def test_goals_update_amount__patch(
     client: AsyncClient,
     db_session: AsyncSession,
     username: str,
@@ -396,3 +396,141 @@ async def test_update_amount__patch(
         assert response.json()["id"] == goal_id
         assert response.json()["current_amount"] == current_amount + payment
 
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "status_code",
+        "new_name",
+        "new_description",
+        "new_current_amount",
+        "new_target_amount",
+        "new_start_date",
+        "new_target_date",
+        "pass_invalid_goal_id",
+        "sign_in_another_user",
+    ),
+    [
+        (
+            "60Henry1",
+            status.HTTP_200_OK,
+            "new",
+            "new description",
+            2000,
+            100000,
+            date(2028, 1, 1).isoformat(),
+            date(2030, 1, 1).isoformat(),
+            False,
+            False,
+        ),
+        (
+            "60Henry2",
+            status.HTTP_200_OK,
+            None,
+            "new description",
+            2000,
+            None,
+            date(2028, 1, 1).isoformat(),
+            None,
+            False,
+            False,
+        ),
+        (
+            "60Henry3",
+            status.HTTP_200_OK,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            False,
+            False,
+        ),
+        (
+            "60Henry4",
+            status.HTTP_404_NOT_FOUND,
+            "new",
+            "new description",
+            2000,
+            100000,
+            date(2028, 1, 1).isoformat(),
+            date(2030, 1, 1).isoformat(),
+            True,
+            False,
+        ),
+        (
+            "60Henry5",
+            status.HTTP_404_NOT_FOUND,
+            "new",
+            "new description",
+            2000,
+            100000,
+            date(2028, 1, 1).isoformat(),
+            date(2030, 1, 1).isoformat(),
+            False,
+            True,
+        ),
+    ]
+)
+async def test_goals_goal_id__patch(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    username: str,
+    status_code: int,
+    new_name: str | None,
+    new_description: str | None,
+    new_current_amount: int | None,
+    new_target_amount: int | None,
+    new_start_date: str | None,
+    new_target_date: str | None,
+    pass_invalid_goal_id: bool,
+    sign_in_another_user: bool,
+):
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
+
+    response = await client.post(
+        url=f"{settings.api.prefix_v1}/goals/",
+        json={
+            "name": "name",
+            "current_amount": 0,
+            "target_amount": 10000,
+            "target_date": date.today().isoformat(),
+        }
+    )
+    goal_id = 99999 if pass_invalid_goal_id else response.json()["id"]
+
+    if sign_in_another_user:
+        another_username = f"Another{username}"
+        await sign_up_user(client, another_username)
+        await sign_in_user(client, another_username)
+
+    response = await client.patch(
+        url=f"{settings.api.prefix_v1}/goals/{goal_id}/",
+        json={
+            "name": new_name,
+            "description": new_description,
+            "current_amount": new_current_amount,
+            "target_amount": new_target_amount,
+            "start_date": new_start_date,
+            "target_date": new_target_date,
+        }
+    )
+    assert response.status_code == status_code
+    if status_code == status.HTTP_200_OK:
+        assert response.json()["id"] == goal_id
+        if new_name:
+            assert response.json()["name"] == new_name
+        if new_description:
+            assert response.json()["description"] == new_description
+        if new_current_amount:
+            assert response.json()["current_amount"] == new_current_amount
+        if new_target_amount:
+            assert response.json()["target_amount"] == new_target_amount
+        if new_start_date:
+            assert response.json()["start_date"] == new_start_date
+        if new_target_date:
+            assert response.json()["target_date"] == new_target_date
