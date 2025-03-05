@@ -40,7 +40,12 @@ class SSavingGoalBase(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_dates(self) -> Self:
+    def validate_model(self) -> Self:
+        if self.current_amount and self.target_amount:
+            if self.current_amount > self.target_amount:
+                raise ValueError(
+                    "current_amount cannot be greater than target_amount"
+                )
         if self.start_date and self.start_date > self.target_date:
             raise ValueError("start_date cannot be later than target_date")
         return self
@@ -93,7 +98,7 @@ class SSavingGoalUpdatePartial(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_dates(self) -> Self:
+    def validate_model(self) -> Self:
         if self.start_date and self.target_date:
             if self.start_date > self.target_date:
                 raise ValueError("start_date cannot be later than target_date")
