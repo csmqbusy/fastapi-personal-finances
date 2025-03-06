@@ -575,6 +575,93 @@ async def test_spendings__get(
     (
         "username",
         "category_name",
+        "wrong_category_name",
+        "spendings_qty",
+        "description",
+        "amount_start",
+        "amount_step",
+        "year_start",
+        "status_code",
+    ),
+    [
+        (
+            "10Lukaku1",
+            "Food",
+            False,
+            30,
+            "text",
+            500,
+            50,
+            2010,
+            status.HTTP_200_OK,
+        ),
+        (
+            "10Lukaku2",
+            "Food",
+            False,
+            0,
+            "text",
+            500,
+            50,
+            2010,
+            status.HTTP_200_OK,
+        ),
+    ]
+)
+async def test_spendings__get_csv(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    username: str,
+    category_name: str,
+    wrong_category_name: bool,
+    spendings_qty: int,
+    description: str,
+    amount_start: int,
+    amount_step: int,
+    year_start: int,
+    status_code: int,
+):
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
+    user = await get_user_by_username(username, db_session)
+
+    await user_spend_cat_service.add_category_to_db(
+        user.id,
+        category_name,
+        db_session,
+    )
+    for i in range(spendings_qty):
+        await client.post(
+            url=f"{settings.api.prefix_v1}/spendings/",
+            json={
+                "amount": amount_start + (amount_step * i),
+                "category_name": category_name,
+                "description": description,
+                "date": datetime(
+                    year=year_start + i, month=1, day=1
+                ).isoformat(),
+            }
+        )
+
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/spendings/",
+        params={
+            "in_csv": True,
+        }
+    )
+    assert response.status_code == status_code
+    assert type(response.content) is bytes
+    assert "text/csv" in response.headers["content-type"]
+    if spendings_qty:
+        assert len(response.content) > 2
+        assert int(response.headers["content-length"]) > 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "category_name",
         "try_add_again",
         "status_code",
     ),
