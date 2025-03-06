@@ -1,3 +1,4 @@
+from datetime import datetime, UTC
 from typing import Sequence
 
 import pandas as pd
@@ -45,3 +46,10 @@ def make_csv_from_pydantic_models(data: list[BaseModel]) -> str:
     df = pd.DataFrame([row.model_dump() for row in data])
     return df.to_csv(index=False)
 
+
+def get_filename_with_utc_datetime(
+    filename_prefix: str,
+    file_extension: str,
+) -> str:
+    utc_datetime = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    return f"{filename_prefix}_{utc_datetime}.{file_extension}"
