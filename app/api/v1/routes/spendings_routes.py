@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
+from app.api.dependencies.common_dependenceis import get_csv_params
 from app.api.dependencies.operations_dependencies import (
     get_pagination_params,
     get_date_range,
@@ -46,7 +47,11 @@ from app.schemas.common_schemas import (
     SDatetimeRange,
 )
 from app.services import spendings_service
-from app.services.common_service import apply_pagination
+from app.services.common_service import (
+    apply_pagination,
+    make_csv_from_pydantic_models,
+    get_filename_with_utc_datetime,
+)
 from app.services.users_spending_categories_service import user_spend_cat_service
 
 
@@ -184,6 +189,7 @@ async def spending_delete(
 @router.get(
     "/",
     status_code=status.HTTP_200_OK,
+    response_model=None,
 )
 async def spendings_get(
     user: UserModel = Depends(get_active_verified_user),
@@ -193,8 +199,9 @@ async def spendings_get(
     datetime_range: SDatetimeRange = Depends(get_date_range),
     pagination: SPagination = Depends(get_pagination_params),
     sort_params: STransactionsSortParams = Depends(get_transactions_sort_params),
+    in_csv: bool = Depends(get_csv_params),
     db_session: AsyncSession = Depends(get_db_session),
-) -> list[STransactionResponse]:
+) -> list[STransactionResponse] | Response:
     try:
         spendings = await spendings_service.get_transactions(
             session=db_session,
@@ -207,6 +214,16 @@ async def spendings_get(
         )
     except CategoryNotFound:
         raise CategoryNotFoundError()
+    if in_csv:
+        output_csv = make_csv_from_pydantic_models(spendings)
+        filename = get_filename_with_utc_datetime("spendings", "csv")
+        return Response(
+            content=output_csv,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )
     spendings = apply_pagination(spendings, pagination)
     return spendings
 
