@@ -1,3 +1,4 @@
+import re
 import uuid
 from random import randint
 from typing import Sequence, Type
@@ -10,7 +11,7 @@ from app.schemas.transactions_schemas import STransactionsSortParams
 from app.services.common_service import (
     apply_pagination,
     parse_sort_params_for_query,
-    make_csv_from_pydantic_models,
+    make_csv_from_pydantic_models, get_filename_with_utc_datetime,
 )
 
 
@@ -161,3 +162,31 @@ def test_make_csv_from_pydantic_models(
     result = make_csv_from_pydantic_models(data)
     assert type(result) is str
     assert len(result) >= objects_qty * avg_row_length
+
+
+@pytest.mark.parametrize(
+    "prefix, filetype",
+    [
+        (
+            "prefix",
+            "csv",
+        ),
+        (
+            "p",
+            "anyfiletype",
+        ),
+        (
+            "",
+            "py",
+        ),
+    ]
+)
+def test_get_filename_with_utc_datetime(
+    prefix: str,
+    filetype: str,
+    regular_expression: str = r"_\d{8}_\d{6}.",
+):
+    pattern = re.compile(fr"{prefix}{regular_expression}{filetype}")
+    result = get_filename_with_utc_datetime(prefix, filetype)
+    assert type(result) is str
+    assert re.match(pattern, result) is not None
