@@ -813,3 +813,97 @@ async def test_goals__get(
     )
     assert response.status_code == status_code
     assert len(response.json()) == expected_goals_qty
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "username",
+        "status_code",
+        "goals_qty",
+        "name",
+        "description",
+        "current_amount",
+        "amount_step",
+        "target_amount",
+        "start_date",
+        "target_date",
+        "sign_in_another_user",
+    ),
+    [
+        (
+            "80Henry1",
+            status.HTTP_200_OK,
+            5,
+            "name",
+            "description",
+            0,
+            1000,
+            100000,
+            date(2028, 1, 1),
+            date(2030, 1, 1),
+            False,
+        ),
+        (
+            "80Henry2",
+            status.HTTP_200_OK,
+            0,
+            "name",
+            "description",
+            0,
+            1000,
+            100000,
+            date(2028, 1, 1),
+            date(2030, 1, 1),
+            False,
+        ),
+    ]
+)
+async def test_goals__get_csv(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    username: str,
+    status_code: int,
+    goals_qty: int,
+    name: str,
+    description: str | None,
+    current_amount: int,
+    amount_step: int,
+    target_amount: int,
+    start_date: date | None,
+    target_date: date,
+    sign_in_another_user: bool,
+):
+    await sign_up_user(client, username)
+    await sign_in_user(client, username)
+
+    for i in range(goals_qty):
+        await client.post(
+            url=f"{settings.api.prefix_v1}/goals/",
+            json={
+                "name": f"{name}_{i}",
+                "description": f"{description}_{i}",
+                "current_amount": current_amount + i * amount_step,
+                "target_amount": target_amount,
+                "start_date": (start_date + timedelta(days=i * 30)).isoformat(),
+                "target_date": (target_date + timedelta(days=i * 30)).isoformat(),
+            }
+        )
+
+    if sign_in_another_user:
+        another_username = f"Another{username}"
+        await sign_up_user(client, another_username)
+        await sign_in_user(client, another_username)
+
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/goals/",
+        params={
+            "in_csv": True,
+        }
+    )
+    assert response.status_code == status_code
+    assert type(response.content) is bytes
+    assert "text/csv" in response.headers["content-type"]
+    if goals_qty:
+        assert len(response.content) > 2
+        assert int(response.headers["content-length"]) > 1
