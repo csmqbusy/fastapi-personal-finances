@@ -1,5 +1,8 @@
 from typing import Sequence
 
+import pandas as pd
+from pydantic import BaseModel
+
 from app.schemas.common_schemas import SPagination, SSortParamsBase, SortParam
 
 
@@ -36,3 +39,9 @@ def parse_sort_params_for_query(
             )
 
     return result if result else None
+
+
+def make_csv_from_pydantic_models(data: list[BaseModel]) -> str:
+    df = pd.DataFrame([row.model_dump() for row in data])
+    return df.to_csv(index=False)
+
