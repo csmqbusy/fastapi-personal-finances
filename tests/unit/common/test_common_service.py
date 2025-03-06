@@ -120,7 +120,7 @@ def test_parse_sort_params_for_query(
     assert result == expected_result
 
 
-class TestModel(BaseModel):
+class ModelForTest(BaseModel):
     name: str
     age: int
 
@@ -129,19 +129,19 @@ class TestModel(BaseModel):
     "pydantic_model, objects_qty",
     [
         (
-            TestModel,
+            ModelForTest,
             10,
         ),
         (
-            TestModel,
+            ModelForTest,
             500,
         ),
         (
-            TestModel,
+            ModelForTest,
             10000,
         ),
         (
-            TestModel,
+            ModelForTest,
             0,
         ),
     ]
