@@ -1,7 +1,8 @@
-from fastapi import APIRouter, status, Depends, Query
+from fastapi import APIRouter, status, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
+from app.api.dependencies.common_dependenceis import get_csv_params
 from app.api.dependencies.operations_dependencies import (
     get_pagination_params,
     get_transactions_sort_params,
@@ -32,7 +33,11 @@ from app.schemas.saving_goals_schemas import (
     GoalStatus,
     SGoalsSortParams,
 )
-from app.services.common_service import apply_pagination
+from app.services.common_service import (
+    apply_pagination,
+    make_csv_from_pydantic_models,
+    get_filename_with_utc_datetime,
+)
 from app.services.saving_goals_service import saving_goals_service
 
 
@@ -96,6 +101,7 @@ async def saving_goal_get(
     "/",
     status_code=status.HTTP_200_OK,
     summary="Get all saving goals",
+    response_model=None,
 )
 async def saving_goals_get_all(
     user: UserModel = Depends(get_active_verified_user),
@@ -109,8 +115,9 @@ async def saving_goals_get_all(
     goal_status: GoalStatus | None = Query(None),
     pagination: SPagination = Depends(get_pagination_params),
     sort_params: SGoalsSortParams = Depends(get_transactions_sort_params),
+    in_csv: bool = Depends(get_csv_params),
     db_session: AsyncSession = Depends(get_db_session),
-) -> list[SSavingGoalResponse]:
+) -> list[SSavingGoalResponse] | Response:
     goals = await saving_goals_service.get_goals_all(
         session=db_session,
         user_id=user.id,
@@ -124,6 +131,16 @@ async def saving_goals_get_all(
         status=goal_status,
         sort_params=sort_params,
     )
+    if in_csv:
+        output_csv = make_csv_from_pydantic_models(goals)
+        filename = get_filename_with_utc_datetime("saving_goals", "csv")
+        return Response(
+            content=output_csv,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                },
+            )
     goals = apply_pagination(goals, pagination)
     return goals
 
