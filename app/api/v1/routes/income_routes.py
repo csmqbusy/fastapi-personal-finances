@@ -1,7 +1,8 @@
-from fastapi import APIRouter, status, Depends, Query
+from fastapi import APIRouter, status, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
+from app.api.dependencies.common_dependenceis import get_csv_params
 from app.api.dependencies.operations_dependencies import (
     get_categories_params,
     get_amount_range,
@@ -44,7 +45,11 @@ from app.schemas.common_schemas import (
     SPagination,
     SDatetimeRange,
 )
-from app.services.common_service import apply_pagination
+from app.services.common_service import (
+    apply_pagination,
+    make_csv_from_pydantic_models,
+    get_filename_with_utc_datetime,
+)
 from app.services.income_service import income_service
 from app.services.users_income_categories_service import user_income_cat_service
 
@@ -183,6 +188,7 @@ async def income_delete(
     "/",
     status_code=status.HTTP_200_OK,
     summary="Get income",
+    response_model=None,
 )
 async def income_get_all(
     user: UserModel = Depends(get_active_verified_user),
@@ -192,8 +198,9 @@ async def income_get_all(
     datetime_range: SDatetimeRange = Depends(get_date_range),
     pagination: SPagination = Depends(get_pagination_params),
     sort_params: STransactionsSortParams = Depends(get_transactions_sort_params),
+    in_csv: bool = Depends(get_csv_params),
     db_session: AsyncSession = Depends(get_db_session),
-) -> list[STransactionResponse]:
+) -> list[STransactionResponse] | Response:
     try:
         income = await income_service.get_transactions(
             session=db_session,
@@ -206,6 +213,16 @@ async def income_get_all(
         )
     except CategoryNotFound:
         raise CategoryNotFoundError()
+    if in_csv:
+        output_csv = make_csv_from_pydantic_models(income)
+        filename = get_filename_with_utc_datetime("income", "csv")
+        return Response(
+            content=output_csv,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )
     income = apply_pagination(income, pagination)
     return income
 
