@@ -1,11 +1,17 @@
-from typing import Sequence
+import uuid
+from random import randint
+from typing import Sequence, Type
 
 import pytest
+from pydantic import BaseModel
 
-import app.services
 from app.schemas.common_schemas import SPagination, SortParam
 from app.schemas.transactions_schemas import STransactionsSortParams
-from app.services.common_service import apply_pagination
+from app.services.common_service import (
+    apply_pagination,
+    parse_sort_params_for_query,
+    make_csv_from_pydantic_models,
+)
 
 
 @pytest.mark.parametrize(
@@ -109,5 +115,49 @@ def test_parse_sort_params_for_query(
     expected_result: list[SortParam],
 ):
 
-    result = app.services.common_service.parse_sort_params_for_query(sort_params)
+    result = parse_sort_params_for_query(sort_params)
     assert result == expected_result
+
+
+class TestModel(BaseModel):
+    name: str
+    age: int
+
+
+@pytest.mark.parametrize(
+    "pydantic_model, objects_qty",
+    [
+        (
+            TestModel,
+            10,
+        ),
+        (
+            TestModel,
+            500,
+        ),
+        (
+            TestModel,
+            10000,
+        ),
+        (
+            TestModel,
+            0,
+        ),
+    ]
+)
+def test_make_csv_from_pydantic_models(
+    pydantic_model: Type[BaseModel],
+    objects_qty: int,
+    avg_row_length: int = 39,
+):
+    data = []
+    for _ in range(objects_qty):
+        obj = {
+            "name": str(uuid.uuid4()),
+            "age": randint(1, 100),
+        }
+        data.append(pydantic_model.model_validate(obj))
+
+    result = make_csv_from_pydantic_models(data)
+    assert type(result) is str
+    assert len(result) >= objects_qty * avg_row_length
