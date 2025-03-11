@@ -313,7 +313,11 @@ class TransactionsService:
         annual_by_month_schema = []
         for k, v in annual_by_month_dict.items():
             annual_by_month_schema.append(
-                MonthTransactionsSummary(month_number=int(k), summary=v)
+                MonthTransactionsSummary(
+                    month_number=int(k),
+                    total_amount=sum(cat.amount for cat in v),
+                    summary=v,
+                )
             )
         return annual_by_month_schema
 
