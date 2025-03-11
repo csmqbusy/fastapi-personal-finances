@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Response, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -40,6 +40,7 @@ from app.schemas.transactions_schemas import (
     STransactionUpdatePartial,
     STransactionsSortParams,
     STransactionsSummary,
+    MonthTransactionsSummary,
 )
 from app.schemas.common_schemas import (
     SAmountRange,
@@ -115,6 +116,24 @@ async def spendings_summary_get(
     except CategoryNotFound:
         raise CategoryNotFoundError()
     return spendings_summary
+
+
+@router.get(
+    "/summary/{year}",
+    status_code=200,
+    summary="Get annual spendings summary",
+)
+async def spendings_annual_summary_get(
+    user: UserModel = Depends(get_active_verified_user),
+    year: int = Path(),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> list[MonthTransactionsSummary]:
+    result = await spendings_service.get_annual_transactions_summary(
+            session=db_session,
+            user_id=user.id,
+            year=year,
+        )
+    return result
 
 
 @router.get(
