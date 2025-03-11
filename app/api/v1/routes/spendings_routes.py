@@ -128,12 +128,38 @@ async def spendings_annual_summary_get(
     year: int = Path(),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[MonthTransactionsSummary]:
-    result = await spendings_service.get_annual_transactions_summary(
+    result = await spendings_service.get_annual_summary(
             session=db_session,
             user_id=user.id,
             year=year,
         )
     return result
+
+
+@router.get(
+    "/summary/chart/",
+    status_code=200,
+    summary="Get chart with spendings by category",
+)
+async def spendings_summary_chart_get(
+    user: UserModel = Depends(get_active_verified_user),
+    chart_type: str | None = Query(None),
+    categories_params: list[SCategoryQueryParams] = Depends(get_categories_params),
+    amount_params: SAmountRange = Depends(get_amount_range),
+    description_search_term: str | None = Query(None),
+    datetime_range: SDatetimeRange = Depends(get_date_range),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> Response:
+    chart: bytes = await spendings_service.get_summary_chart(
+            session=db_session,
+            user_id=user.id,
+            chart_type=chart_type,
+            categories_params=categories_params,
+            amount_params=amount_params,
+            search_term=description_search_term,
+            datetime_range=datetime_range,
+        )
+    return Response(content=chart, media_type="image/png")
 
 
 @router.get(

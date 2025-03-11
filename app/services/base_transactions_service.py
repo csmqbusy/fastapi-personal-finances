@@ -260,7 +260,48 @@ class TransactionsService:
 
         return summary
 
-    async def get_annual_transactions_summary(
+    async def get_summary_chart(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        categories_params: list[SCategoryQueryParams],
+        chart_type: str | None = None,
+        amount_params: SAmountRange | None = None,
+        search_term: str | None = None,
+        datetime_range: SDatetimeRange | None = None,
+    ) -> bytes:
+        summary = await self.get_summary(
+            session=session,
+            user_id=user_id,
+            categories_params=categories_params,
+            amount_params=amount_params,
+            search_term=search_term,
+            datetime_range=datetime_range,
+        )
+        categories = []
+        amounts = []
+        for s in summary:
+            categories.append(s.category_name)
+            amounts.append(s.amount)
+
+        connection = await connect_robust(settings.broker.url)
+
+        async with connection:
+            channel = await connection.channel()
+
+            rpc = await RPC.create(channel)
+            result = await rpc.call(
+                method_name="create_simple_chart",
+                kwargs=dict(
+                    values=amounts,
+                    labels=categories,
+                    chart_type=chart_type or "barplot",
+                ),
+            )
+
+            return result
+
+    async def get_annual_summary(
         self,
         session: AsyncSession,
         user_id: int,
