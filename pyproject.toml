@@ -8,6 +8,9 @@ exclude = [
     "tests/",
 ]
 
+[tool.uv.workspace]
+members = ["charts_service"]
+
 [project]
 name = "personal-finance"
 version = "0.1.0"
@@ -15,6 +18,7 @@ description = "FastAPI application for personal finances"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aio-pika>=9.5.5",
     "alembic>=1.14.1",
     "bcrypt>=4.2.1",
     "fastapi[standard]>=0.115.6",

@@ -20,5 +20,19 @@ services:
     volumes:
       - "finances_db_data:/var/lib/postgresql/data"
 
+  rabbitmq:
+    image: rabbitmq:4.0.7-management-alpine
+    hostname: rabbitmq
+    container_name: finances_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
 volumes:
   finances_db_data:
+  rabbitmq-data:
