@@ -1,10 +1,11 @@
 from datetime import datetime
 from typing import Type
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.models import UsersSpendingCategoriesModel
 from app.models.base_transactions_model import BaseTranscationsModel
 from app.repositories.base_repository import BaseRepository
 from app.schemas.common_schemas import SortParam
@@ -78,3 +79,49 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
 
         result = await session.execute(query)
         return list(result.scalars().all())
+
+    async def get_annual_transactions_summary_from_db(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        year: int,
+    ) -> list:
+        """
+        SELECT SUM(amount) AS amount, category_name, EXTRACT(MONTH FROM date) AS month
+        FROM spendings
+        INNER JOIN users_spending_categories ON spendings.category_id = users_spending_categories.id
+        WHERE spendings.user_id = {user_id} AND EXTRACT(YEAR FROM date) = {year}
+        GROUP BY category_name, EXTRACT(MONTH FROM date)
+        ORDER BY month, amount DESC, category_name
+
+        result example: [(700, 'Beer', Decimal('1'))]
+        designations: [(summary amount, category name, month number)]
+        """
+        query = (
+            select(
+                func.sum(self.model.amount).label("amount"),
+                UsersSpendingCategoriesModel.category_name,
+                func.extract("month", self.model.date).label("month"),
+            )
+            .join(
+                UsersSpendingCategoriesModel,
+                self.model.category_id == UsersSpendingCategoriesModel.id,
+            )
+            .where(
+                and_(
+                    self.model.user_id == user_id,
+                    func.extract("year", self.model.date) == year,
+                )
+            )
+            .group_by(
+                UsersSpendingCategoriesModel.category_name,
+                func.extract("month", self.model.date),
+            )
+            .order_by(
+                "month",
+                desc("amount"),
+                UsersSpendingCategoriesModel.category_name,
+            )
+        )
+        result = await session.execute(query)
+        return list(result)
