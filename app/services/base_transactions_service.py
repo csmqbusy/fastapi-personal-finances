@@ -284,22 +284,13 @@ class TransactionsService:
             categories.append(s.category_name)
             amounts.append(s.amount)
 
-        connection = await connect_robust(settings.broker.url)
+        result = await self.rpc_call(
+            "create_simple_chart",
+            values=amounts,
+            labels=categories,
+            chart_type=chart_type or "barplot",)
 
-        async with connection:
-            channel = await connection.channel()
-
-            rpc = await RPC.create(channel)
-            result = await rpc.call(
-                method_name="create_simple_chart",
-                kwargs=dict(
-                    values=amounts,
-                    labels=categories,
-                    chart_type=chart_type or "barplot",
-                ),
-            )
-
-            return result
+        return result
 
     async def get_annual_summary(
         self,
@@ -325,6 +316,18 @@ class TransactionsService:
                 MonthTransactionsSummary(month_number=int(k), summary=v)
             )
         return annual_by_month_schema
+
+
+    @staticmethod
+    async def rpc_call(method_name, **kwargs):
+        connection = await connect_robust(settings.broker.url)
+        async with connection:
+            channel = await connection.channel()
+            rpc = await RPC.create(channel)
+            return await rpc.call(
+                method_name=method_name,
+                kwargs=kwargs,
+            )
 
     @staticmethod
     def _summarize(
