@@ -80,7 +80,7 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         result = await session.execute(query)
         return list(result.scalars().all())
 
-    async def get_annual_transactions_summary_from_db(
+    async def get_annual_summary_from_db(
         self,
         session: AsyncSession,
         user_id: int,

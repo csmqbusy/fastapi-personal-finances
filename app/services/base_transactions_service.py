@@ -298,7 +298,7 @@ class TransactionsService:
         user_id: int,
         year: int,
     ) -> list[MonthTransactionsSummary]:
-        annual_summary = await self.tx_repo.get_annual_transactions_summary_from_db(
+        annual_summary = await self.tx_repo.get_annual_summary_from_db(
             session=session,
             year=year,
             user_id=user_id,
