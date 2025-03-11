@@ -46,6 +46,11 @@ class AppConfig(BaseSettings):
     default_income_category_name: str = "Other income"
 
 
+class MessageBrokerConfig(BaseModel):
+    url: str
+    charts_service_queue_name: str = "charts-service-queue"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
             env_file=get_correct_cwd() / ".env.dev",
@@ -60,6 +65,7 @@ class Settings(BaseSettings):
     db: DatabaseConfig
     auth: JWTAuth = JWTAuth()
     app: AppConfig = AppConfig()
+    broker: MessageBrokerConfig
 
 
 settings = Settings()  # type: ignore
