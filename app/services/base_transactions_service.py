@@ -321,6 +321,56 @@ class TransactionsService:
             )
         return annual_by_month_schema
 
+    async def get_annual_summary_chart(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        year: int,
+        transactions_type: str,
+        split_by_category: bool,
+    ):
+        annual_summary = await self.get_annual_summary(session, user_id, year)
+
+        months = list(range(1, 13))
+        amounts = [0] * len(months)
+        if split_by_category:
+            categories = set()
+            for record in annual_summary:
+                for item in record.summary:
+                    categories.add(item.category_name)
+
+            transformed_data = []
+            for record in annual_summary:
+                month_data = {"month_number": record.month_number,
+                              "total_amount": record.total_amount}
+
+                for category in categories:
+                    month_data[category] = 0
+
+                for item in record.summary:
+                    month_data[item.category_name] = item.amount
+
+                transformed_data.append(month_data)
+
+            rpc_method_name = "create_annual_chart_with_categories"
+            rpc_kwargs = dict(
+                        data=transformed_data,
+                        categories=categories,
+                        title=f"{transactions_type.capitalize()} {year}",
+                    )
+
+        else:
+            total_amounts = amounts.copy()
+            for record in annual_summary:
+                total_amounts[record.month_number - 1] = record.total_amount
+            rpc_method_name = "create_simple_annual_chart"
+            rpc_kwargs = dict(
+                        values=total_amounts,
+                        title=f"{transactions_type.capitalize()} {year}",
+                    )
+
+        result = await self.rpc_call(rpc_method_name, **rpc_kwargs)
+        return result
 
     @staticmethod
     async def rpc_call(method_name, **kwargs):
