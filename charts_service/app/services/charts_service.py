@@ -66,6 +66,61 @@ def create_simple_annual_chart(
     return buffer.getvalue()
 
 
+def create_annual_chart_with_categories(
+    data: list[dict],
+    categories: set,
+    title: str = "Spendings by year",
+    xlabel: str = "Month",
+    ylabel: str = "Summary amount",
+):
+    if not data:
+        df = pd.DataFrame({'month_number': range(1, 13)})
+        for category in categories:
+            df[category] = 0
+        df['total_amount'] = 0
+    else:
+        df = pd.DataFrame(data)
+
+    all_months = pd.DataFrame({'month_number': range(1, 13)})
+    df = pd.merge(all_months, df, on='month_number', how='left').fillna(0)
+
+    for col in df.columns:
+        if col != "month_number":
+            df[col] = df[col].astype(int)
+
+    sns.set_theme(style="darkgrid")
+
+    fig, ax = plt.subplots()
+
+    bottom = pd.Series([0] * len(df))
+
+    for category in categories:
+        ax.bar(df['month_number'], df[category], bottom=bottom, label=category)
+        bottom += df[category]
+
+    for i, total in enumerate(df['total_amount']):
+        ax.text(
+            df['month_number'][i] - 0.1,
+            total,
+            f"{total}",
+            color='black',
+            fontsize=10,
+        )
+
+    ax.set_xticks(df['month_number'])
+    ax.set_xticklabels(df['month_number'])
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend()
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    plt.close()
+    buffer.seek(0)
+
+    return buffer.getvalue()
 
 
 async def _create_pie_chart(

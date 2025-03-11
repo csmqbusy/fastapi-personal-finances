@@ -7,6 +7,7 @@ from app.core.config import settings
 from charts_service.app.services import (
     create_simple_chart,
     create_simple_annual_chart,
+    create_annual_chart_with_categories,
 )
 
 
@@ -28,6 +29,11 @@ async def main() -> None:
     await rpc.register(
         "create_simple_annual_chart",
         create_simple_annual_chart,
+        auto_delete=True,
+    )
+    await rpc.register(
+        "create_annual_chart_with_categories",
+        create_annual_chart_with_categories,
         auto_delete=True,
     )
 
