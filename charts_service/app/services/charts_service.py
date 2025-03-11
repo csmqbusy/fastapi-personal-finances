@@ -3,6 +3,7 @@ from random import shuffle
 from typing import Literal
 
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 
 COLORS = ["#005f73", "#0a9396", "#94d2bd", "#e9d8a6", "#ee9b00", "#ca6702",
@@ -31,6 +32,40 @@ async def create_simple_chart(
     buffer.seek(0)
 
     return buffer.getvalue()
+
+
+def create_simple_annual_chart(
+    values: list[float],
+    title: str = "Spendings by year",
+    xlabel: str = "Month",
+    ylabel: str = "Summary amount",
+    color: str = "purple",
+    linewidth: int = 2,
+):
+    x_labels = [i for i in range(1, 13)]
+
+    sns.set_theme(style="darkgrid")
+
+    plt.figure(figsize=(8, 5))
+    sns.barplot(
+        x=x_labels,
+        y=values,
+        color=color,
+        linewidth=linewidth,
+    )
+
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    plt.close()
+    buffer.seek(0)
+
+    return buffer.getvalue()
+
+
 
 
 async def _create_pie_chart(
