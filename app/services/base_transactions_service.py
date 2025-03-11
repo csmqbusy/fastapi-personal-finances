@@ -1,8 +1,11 @@
 from collections import defaultdict
 from typing import Type
 
+from aio_pika import connect_robust
+from aio_pika.patterns import RPC
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.exceptions.categories_exceptions import (
     CategoryNotFound,
 )
@@ -10,6 +13,10 @@ from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.repositories import (
     BaseCategoriesRepository,
     BaseTransactionsRepository,
+)
+from app.schemas.common_schemas import (
+    SAmountRange,
+    SDatetimeRange,
 )
 from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
@@ -20,10 +27,7 @@ from app.schemas.transactions_schemas import (
     STransactionCreateInDB,
     STransactionUpdatePartial,
     STransactionsSummary,
-)
-from app.schemas.common_schemas import (
-    SAmountRange,
-    SDatetimeRange,
+    MonthTransactionsSummary,
 )
 from app.services.common_service import parse_sort_params_for_query
 
@@ -255,6 +259,31 @@ class TransactionsService:
         summary = self._sort_summarize(summary)
 
         return summary
+
+    async def get_annual_transactions_summary(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        year: int,
+    ) -> list[MonthTransactionsSummary]:
+        annual_summary = await self.tx_repo.get_annual_transactions_summary_from_db(
+            session=session,
+            year=year,
+            user_id=user_id,
+        )
+        annual_by_month_dict = defaultdict(list)
+        for elem in list(annual_summary):
+            month = elem[2]
+            annual_by_month_dict[month].append(
+                STransactionsSummary(amount=elem[0], category_name=elem[1])
+            )
+
+        annual_by_month_schema = []
+        for k, v in annual_by_month_dict.items():
+            annual_by_month_schema.append(
+                MonthTransactionsSummary(month_number=int(k), summary=v)
+            )
+        return annual_by_month_schema
 
     @staticmethod
     def _summarize(

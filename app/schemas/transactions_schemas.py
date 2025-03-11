@@ -56,3 +56,8 @@ class STransactionsSortParams(SSortParamsBase):
 class STransactionsSummary(BaseModel):
     category_name: str = Field(..., max_length=50)
     amount: int = Field(..., gt=0)
+
+
+class MonthTransactionsSummary(BaseModel):
+    month_number: int
+    summary: list[STransactionsSummary]
