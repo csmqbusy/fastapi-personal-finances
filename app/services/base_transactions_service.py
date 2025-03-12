@@ -339,36 +339,26 @@ class TransactionsService:
 
         months = list(range(1, 13))
         amounts = [0] * len(months)
+        rpc_params: dict[str, Any] = {
+            "title": f"{transactions_type.capitalize()} {year}",
+            "xlabel": "Month",
+            "width": 9,
+            "height": 5,
+        }
         if split_by_category:
-            categories = set()
-            for record in annual_summary:
-                for item in record.summary:
-                    categories.add(item.category_name)
-
-            transformed_data = []
-            for record in annual_summary:
-                month_data = {"month_number": record.month_number,
-                              "total_amount": record.total_amount}
-
-                for category in categories:
-                    month_data[category] = 0
-
-                for item in record.summary:
-                    month_data[item.category_name] = item.amount
-
-                transformed_data.append(month_data)
-
+            categories = self._get_categories_from_summary(annual_summary)
+            prepared_data = self._prepare_data_for_chart_with_categories_split(
+                annual_summary, categories)
             rpc_method_name = "create_annual_chart_with_categories"
-            rpc_params = dict(data=transformed_data, categories=categories)
+            rpc_params.update(dict(data=prepared_data, categories=categories))
 
         else:
             total_amounts = amounts.copy()
             for record in annual_summary:
                 total_amounts[record.month_number - 1] = record.total_amount
-            rpc_method_name = "create_simple_annual_chart"
-            rpc_params = dict(values=total_amounts)
+            rpc_method_name = "create_simple_bar_chart"
+            rpc_params.update(dict(values=total_amounts))
 
-        rpc_params["title"] = f"{transactions_type.capitalize()} {year}"
         result = await self.rpc_call(rpc_method_name, rpc_params)
         return result
 
@@ -524,7 +514,7 @@ class TransactionsService:
         user_id: int,
         categories_params: list[SCategoryQueryParams],
     ) -> list[int]:
-        category_ids = set()
+        category_ids: set[int] = set()
         for cat_params in categories_params:
             if cat_params.category_name and cat_params.category_id is None:
                 category = await self.tx_categories_repo.get_category(
@@ -535,5 +525,6 @@ class TransactionsService:
                 if not category:
                     raise CategoryNotFound
                 cat_params.category_id = category.id
-            category_ids.add(cat_params.category_id)
+            if cat_params.category_id:
+                category_ids.add(cat_params.category_id)
         return list(category_ids)
