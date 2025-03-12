@@ -1,3 +1,4 @@
+import calendar
 from collections import defaultdict
 from typing import Type, Any
 
@@ -400,6 +401,55 @@ class TransactionsService:
                 )
             )
         return monthly_by_day_schema
+
+    async def get_monthly_summary_chart(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        year: int,
+        month: int,
+        transactions_type: str,
+        split_by_category: bool,
+    ):
+        monthly_summary = await self.get_monthly_summary(
+            session, user_id, year, month)
+
+        month_name = calendar.month_name[month]
+        days_in_month = calendar.monthrange(year, month)[1]
+        days = list(range(1, days_in_month + 1))
+        amounts = [0] * len(days)
+        if split_by_category:
+            categories = set()
+            for record in monthly_summary:
+                for item in record.summary:
+                    categories.add(item.category_name)
+
+            transformed_data = []
+            for record in monthly_summary:
+                daily_data = {"day_number": record.day_number,
+                              "total_amount": record.total_amount}
+
+                for category in categories:
+                    daily_data[category] = 0
+
+                for item in record.summary:
+                    daily_data[item.category_name] = item.amount
+
+                transformed_data.append(daily_data)
+
+            rpc_method_name = "create_monthly_chart_with_categories"
+            rpc_params = dict(data=transformed_data, categories=categories, days_in_month=days_in_month)
+
+        else:
+            total_amounts = amounts.copy()
+            for record in monthly_summary:  # type: DayTransactionsSummary
+                total_amounts[record.day_number - 1] = record.total_amount
+            rpc_method_name = "create_simple_monthly_chart"
+            rpc_params = dict(values=total_amounts)
+
+        rpc_params["title"] = f"{transactions_type.capitalize()} {month_name} {year}"
+        result = await self.rpc_call(rpc_method_name, rpc_params)
+        return result
 
     @staticmethod
     async def rpc_call(method_name: str, params: dict[str, Any]) -> Any:
