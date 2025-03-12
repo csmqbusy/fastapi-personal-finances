@@ -1,10 +1,13 @@
 from datetime import datetime, UTC
-from typing import Sequence
+from typing import Sequence, TypeVar
 
 import pandas as pd
 from pydantic import BaseModel
 
 from app.schemas.common_schemas import SPagination, SSortParamsBase, SortParam
+
+
+AnyPydanticModel = TypeVar("AnyPydanticModel", bound=BaseModel)
 
 
 def apply_pagination(
@@ -42,7 +45,7 @@ def parse_sort_params_for_query(
     return result if result else None
 
 
-def make_csv_from_pydantic_models(data: list[BaseModel]) -> str:
+def make_csv_from_pydantic_models(data: list[AnyPydanticModel]) -> str:
     df = pd.DataFrame([row.model_dump() for row in data])
     return df.to_csv(index=False)
 
