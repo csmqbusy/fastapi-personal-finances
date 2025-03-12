@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Type
 
-from sqlalchemy import select, and_, func, desc
+from sqlalchemy import select, and_, func, desc, ColumnElement
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -45,7 +45,7 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
             .where(self.model.user_id == user_id)
         )
 
-        filters = []
+        filters: list[ColumnElement[bool]] = []
         if categories_ids:
             filters.append(self.model.category_id.in_(categories_ids))
         if description_search_term:
