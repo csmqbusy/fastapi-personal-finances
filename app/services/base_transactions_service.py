@@ -463,6 +463,25 @@ class TransactionsService:
         return categories
 
     @staticmethod
+    def _prepare_data_for_chart_with_categories_split(
+        summary: Sequence[BasePeriodTransactionsSummary],
+        categories: set,
+    ) -> list[dict[str, Any]]:
+        transformed_data = []
+        for record in summary:
+            period_data = record.model_dump(exclude={"summary"})
+            print(f"{period_data=}")
+
+            for category in categories:
+                period_data[category] = 0
+
+            for item in record.summary:
+                period_data[item.category_name] = item.amount
+
+            transformed_data.append(period_data)
+        return transformed_data
+
+    @staticmethod
     async def rpc_call(method_name: str, params: dict[str, Any]) -> Any:
         connection = await connect_robust(settings.broker.url)
         async with connection:
