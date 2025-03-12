@@ -1,6 +1,6 @@
 import calendar
 from collections import defaultdict
-from typing import Type, Any
+from typing import Type, Any, Sequence
 
 from aio_pika import connect_robust
 from aio_pika.patterns import RPC
@@ -30,6 +30,7 @@ from app.schemas.transactions_schemas import (
     STransactionsSummary,
     MonthTransactionsSummary,
     DayTransactionsSummary,
+    BasePeriodTransactionsSummary,
 )
 from app.services.common_service import parse_sort_params_for_query
 
@@ -450,6 +451,16 @@ class TransactionsService:
         rpc_params["title"] = f"{transactions_type.capitalize()} {month_name} {year}"
         result = await self.rpc_call(rpc_method_name, rpc_params)
         return result
+
+    @staticmethod
+    def _get_categories_from_summary(
+        summary: Sequence[BasePeriodTransactionsSummary],
+    ) -> set:
+        categories = set()
+        for record in summary:
+            for item in record.summary:
+                categories.add(item.category_name)
+        return categories
 
     @staticmethod
     async def rpc_call(method_name: str, params: dict[str, Any]) -> Any:
