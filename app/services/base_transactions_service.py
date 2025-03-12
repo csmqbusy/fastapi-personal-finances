@@ -286,9 +286,12 @@ class TransactionsService:
 
         result = await self.rpc_call(
             "create_simple_chart",
-            values=amounts,
-            labels=categories,
-            chart_type=chart_type or "barplot",)
+            dict(
+                values=amounts,
+                labels=categories,
+                chart_type=chart_type or "barplot",
+            )
+        )
 
         return result
 
@@ -353,34 +356,28 @@ class TransactionsService:
                 transformed_data.append(month_data)
 
             rpc_method_name = "create_annual_chart_with_categories"
-            rpc_kwargs = dict(
-                        data=transformed_data,
-                        categories=categories,
-                        title=f"{transactions_type.capitalize()} {year}",
-                    )
+            rpc_params = dict(data=transformed_data, categories=categories)
 
         else:
             total_amounts = amounts.copy()
             for record in annual_summary:
                 total_amounts[record.month_number - 1] = record.total_amount
             rpc_method_name = "create_simple_annual_chart"
-            rpc_kwargs = dict(
-                        values=total_amounts,
-                        title=f"{transactions_type.capitalize()} {year}",
-                    )
+            rpc_params = dict(values=total_amounts)
 
-        result = await self.rpc_call(rpc_method_name, **rpc_kwargs)
+        rpc_params["title"] = f"{transactions_type.capitalize()} {year}"
+        result = await self.rpc_call(rpc_method_name, rpc_params)
         return result
 
     @staticmethod
-    async def rpc_call(method_name, **kwargs):
+    async def rpc_call(method_name: str, params: dict[str, Any]) -> Any:
         connection = await connect_robust(settings.broker.url)
         async with connection:
             channel = await connection.channel()
             rpc = await RPC.create(channel)
             return await rpc.call(
                 method_name=method_name,
-                kwargs=kwargs,
+                kwargs=params,
             )
 
     @staticmethod
