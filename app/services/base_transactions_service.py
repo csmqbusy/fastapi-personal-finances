@@ -407,38 +407,33 @@ class TransactionsService:
 
         month_name = calendar.month_name[month]
         days_in_month = calendar.monthrange(year, month)[1]
-        days = list(range(1, days_in_month + 1))
-        amounts = [0] * len(days)
+        amounts = [0] * days_in_month
+        rpc_params: dict[str, Any] = {
+            "title": f"{transactions_type.capitalize()} {month_name} {year}",
+            "xlabel": "Day",
+            "width": 10,
+            "height": 5,
+        }
         if split_by_category:
-            categories = set()
-            for record in monthly_summary:
-                for item in record.summary:
-                    categories.add(item.category_name)
-
-            transformed_data = []
-            for record in monthly_summary:
-                daily_data = {"day_number": record.day_number,
-                              "total_amount": record.total_amount}
-
-                for category in categories:
-                    daily_data[category] = 0
-
-                for item in record.summary:
-                    daily_data[item.category_name] = item.amount
-
-                transformed_data.append(daily_data)
+            categories = self._get_categories_from_summary(monthly_summary)
+            prepared_data = self._prepare_data_for_chart_with_categories_split(
+                monthly_summary, categories)
 
             rpc_method_name = "create_monthly_chart_with_categories"
-            rpc_params = dict(data=transformed_data, categories=categories, days_in_month=days_in_month)
-
+            rpc_params.update(
+                dict(
+                    data=prepared_data,
+                    categories=categories,
+                    days_in_month=days_in_month,
+                )
+            )
         else:
             total_amounts = amounts.copy()
             for record in monthly_summary:  # type: DayTransactionsSummary
                 total_amounts[record.day_number - 1] = record.total_amount
-            rpc_method_name = "create_simple_monthly_chart"
-            rpc_params = dict(values=total_amounts)
+            rpc_method_name = "create_simple_bar_chart"
+            rpc_params.update(dict(values=total_amounts))
 
-        rpc_params["title"] = f"{transactions_type.capitalize()} {month_name} {year}"
         result = await self.rpc_call(rpc_method_name, rpc_params)
         return result
 
