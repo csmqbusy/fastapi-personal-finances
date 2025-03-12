@@ -34,25 +34,35 @@ async def create_simple_chart(
     return buffer.getvalue()
 
 
-def create_simple_annual_chart(
+def create_simple_bar_chart(
     values: list[float],
-    title: str = "Spendings by year",
-    xlabel: str = "Month",
+    width: int,
+    height: int,
+    title: str,
+    xlabel: str,
     ylabel: str = "Summary amount",
     color: str = "purple",
     linewidth: int = 2,
 ):
-    x_labels = [i for i in range(1, 13)]
+    x_labels = [i for i in range(1, len(values) + 1)]
 
-    sns.set_theme(style="darkgrid")
-
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(width, height))
+    sns.set_theme(style="whitegrid")
     sns.barplot(
         x=x_labels,
         y=values,
         color=color,
         linewidth=linewidth,
     )
+
+    for i, total in enumerate(values):
+        plt.text(
+            x_labels[i] - 1.1,
+            total,
+            f"{total}",
+            color='black',
+            fontsize=10,
+        )
 
     plt.title(title)
     plt.xlabel(xlabel)
@@ -69,7 +79,9 @@ def create_simple_annual_chart(
 def create_annual_chart_with_categories(
     data: list[dict],
     categories: set,
-    title: str = "Spendings by year",
+    width: int,
+    height: int,
+    title: str,
     xlabel: str = "Month",
     ylabel: str = "Summary amount",
 ):
@@ -91,8 +103,8 @@ def create_annual_chart_with_categories(
     sns.set_theme(style="darkgrid")
 
     fig, ax = plt.subplots()
-    fig.set_figwidth(8)
-    fig.set_figheight(5)
+    fig.set_figwidth(width)
+    fig.set_figheight(height)
 
     bottom = pd.Series([0] * len(df))
 
@@ -125,57 +137,18 @@ def create_annual_chart_with_categories(
     return buffer.getvalue()
 
 
-def create_simple_monthly_chart(
-    values: list[float],
-    title: str = "Spendings by year",
-    xlabel: str = "Day",
-    ylabel: str = "Summary amount",
-    color: str = "purple",
-    linewidth: int = 2,
-):
-    x_labels = [i for i in range(1, len(values) + 1)]
-
-    sns.set_theme(style="whitegrid")
-
-    plt.figure(figsize=(10, 5))
-    sns.barplot(
-        x=x_labels,
-        y=values,
-        color=color,
-        linewidth=linewidth,
-    )
-
-    for i, total in enumerate(values):
-        plt.text(
-            x_labels[i] - 1.1,
-            total,
-            f"{total}",
-            color='black',
-            fontsize=10,
-        )
-
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
-    plt.close()
-    buffer.seek(0)
-
-    return buffer.getvalue()
-
-
 def create_monthly_chart_with_categories(
     data: list[dict],
     days_in_month: int,
     categories: set,
-    title: str = "Spendings by month",
+    width: int,
+    height: int,
+    title: str,
     xlabel: str = "Day",
     ylabel: str = "Summary amount",
 ):
     if not data:
-        df = pd.DataFrame({'month_number': range(1, days_in_month + 1)})
+        df = pd.DataFrame({'day_number': range(1, days_in_month + 1)})
         for category in categories:
             df[category] = 0
         df['total_amount'] = 0
@@ -192,8 +165,8 @@ def create_monthly_chart_with_categories(
     sns.set_theme(style="whitegrid")
 
     fig, ax = plt.subplots()
-    fig.set_figwidth(10)
-    fig.set_figheight(5)
+    fig.set_figwidth(width)
+    fig.set_figheight(height)
 
     bottom = pd.Series([0] * len(df))
 
