@@ -41,6 +41,7 @@ from app.schemas.transactions_schemas import (
     STransactionsSortParams,
     STransactionsSummary,
     MonthTransactionsSummary,
+    DayTransactionsSummary,
 )
 from app.schemas.common_schemas import (
     SAmountRange,
@@ -181,6 +182,26 @@ async def spendings_annual_summary_chart_get(
             split_by_category=split_by_category,
         )
     return Response(content=chart, media_type="image/png")
+
+
+@router.get(
+    "/summary/{year}/{month}/",
+    status_code=200,
+    summary="Get monthly spendings summary",
+)
+async def spendings_monthly_summary_get(
+    user: UserModel = Depends(get_active_verified_user),
+    year: int = Path(),
+    month: int = Path(ge=1, le=12),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> list[DayTransactionsSummary]:
+    result = await spendings_service.get_monthly_summary(
+            session=db_session,
+            user_id=user.id,
+            year=year,
+            month=month,
+        )
+    return result
 
 
 @router.get(
