@@ -125,3 +125,50 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         )
         result = await session.execute(query)
         return list(result)
+
+    async def get_monthly_summary_from_db(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        year: int,
+        month: int,
+    ) -> list:
+        """
+        SELECT SUM(amount) AS amount, category_name, EXTRACT(DAY FROM date) AS day
+        FROM spendings INNER JOIN users_spending_categories ON spendings.category_id = users_spending_categories.id
+        WHERE spendings.user_id=12 AND EXTRACT(YEAR FROM date)=2025 AND EXTRACT(MONTH FROM date)=3
+        GROUP BY category_name, EXTRACT(DAY FROM date)
+        ORDER BY day, amount DESC, category_name
+
+        result example: [(700, 'Beer', Decimal('1'))]
+        designations: [(summary amount, category name, month number)]
+        """
+        query = (
+            select(
+                func.sum(self.model.amount).label("amount"),
+                UsersSpendingCategoriesModel.category_name,
+                func.extract("day", self.model.date).label("day"),
+            )
+            .join(
+                UsersSpendingCategoriesModel,
+                self.model.category_id == UsersSpendingCategoriesModel.id,
+            )
+            .where(
+                and_(
+                    self.model.user_id == user_id,
+                    func.extract("year", self.model.date) == year,
+                    func.extract("month", self.model.date) == month,
+                )
+            )
+            .group_by(
+                UsersSpendingCategoriesModel.category_name,
+                func.extract("day", self.model.date),
+            )
+            .order_by(
+                "day",
+                desc("amount"),
+                UsersSpendingCategoriesModel.category_name,
+            )
+        )
+        result = await session.execute(query)
+        return list(result)
