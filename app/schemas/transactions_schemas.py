@@ -58,13 +58,14 @@ class STransactionsSummary(BaseModel):
     amount: int = Field(..., gt=0)
 
 
-class MonthTransactionsSummary(BaseModel):
+class BasePeriodTransactionsSummary(BaseModel):
+    total_amount: int
+    summary: list[STransactionsSummary]
+
+
+class MonthTransactionsSummary(BasePeriodTransactionsSummary):
     month_number: int
-    total_amount: int
-    summary: list[STransactionsSummary]
 
 
-class DayTransactionsSummary(BaseModel):
+class DayTransactionsSummary(BasePeriodTransactionsSummary):
     day_number: int
-    total_amount: int
-    summary: list[STransactionsSummary]
