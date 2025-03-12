@@ -54,19 +54,18 @@ def get_categories_params(
     if category_id and category_name:
         raise CategoryInfoError()
 
-    if category_id is None and category_name is None:
-        return []
-
     if category_id:
         category_params = [
             SCategoryQueryParams(category_id=cat_id)
             for cat_id in category_id
         ]
-    else:
+    elif category_name:
         category_params = [
             SCategoryQueryParams(category_name=cat_name)
             for cat_name in category_name
         ]
+    else:
+        category_params = []
 
     return category_params
 
