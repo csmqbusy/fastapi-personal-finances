@@ -62,3 +62,9 @@ class MonthTransactionsSummary(BaseModel):
     month_number: int
     total_amount: int
     summary: list[STransactionsSummary]
+
+
+class DayTransactionsSummary(BaseModel):
+    day_number: int
+    total_amount: int
+    summary: list[STransactionsSummary]

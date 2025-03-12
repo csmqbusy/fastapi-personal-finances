@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Type
+from typing import Type, Any
 
 from aio_pika import connect_robust
 from aio_pika.patterns import RPC
@@ -28,6 +28,7 @@ from app.schemas.transactions_schemas import (
     STransactionUpdatePartial,
     STransactionsSummary,
     MonthTransactionsSummary,
+    DayTransactionsSummary,
 )
 from app.services.common_service import parse_sort_params_for_query
 
@@ -368,6 +369,37 @@ class TransactionsService:
         rpc_params["title"] = f"{transactions_type.capitalize()} {year}"
         result = await self.rpc_call(rpc_method_name, rpc_params)
         return result
+
+    async def get_monthly_summary(
+        self,
+        session: AsyncSession,
+        user_id: int,
+        year: int,
+        month: int,
+    ) -> list[DayTransactionsSummary]:
+        monthly_summary = await self.tx_repo.get_monthly_summary_from_db(
+            session=session,
+            year=year,
+            user_id=user_id,
+            month=month,
+        )
+        monthly_by_day_dict = defaultdict(list)
+        for elem in list(monthly_summary):
+            day = elem[2]
+            monthly_by_day_dict[day].append(
+                STransactionsSummary(amount=elem[0], category_name=elem[1])
+            )
+
+        monthly_by_day_schema = []
+        for k, v in monthly_by_day_dict.items():
+            monthly_by_day_schema.append(
+                DayTransactionsSummary(
+                    day_number=int(k),
+                    total_amount=sum(cat.amount for cat in v),
+                    summary=v,
+                )
+            )
+        return monthly_by_day_schema
 
     @staticmethod
     async def rpc_call(method_name: str, params: dict[str, Any]) -> Any:
