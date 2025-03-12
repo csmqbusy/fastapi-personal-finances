@@ -209,7 +209,7 @@ async def spendings_monthly_summary_get(
     status_code=200,
     summary="Get monthly spendings summary chart",
 )
-async def spendings_monthly_summary_get(
+async def spendings_monthly_summary_chart_get(
     user: UserModel = Depends(get_active_verified_user),
     year: int = Path(),
     month: int = Path(ge=1, le=12),
