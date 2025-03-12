@@ -91,6 +91,8 @@ def create_annual_chart_with_categories(
     sns.set_theme(style="darkgrid")
 
     fig, ax = plt.subplots()
+    fig.set_figwidth(8)
+    fig.set_figheight(5)
 
     bottom = pd.Series([0] * len(df))
 
@@ -109,6 +111,107 @@ def create_annual_chart_with_categories(
 
     ax.set_xticks(df['month_number'])
     ax.set_xticklabels(df['month_number'])
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend()
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    plt.close()
+    buffer.seek(0)
+
+    return buffer.getvalue()
+
+
+def create_simple_monthly_chart(
+    values: list[float],
+    title: str = "Spendings by year",
+    xlabel: str = "Day",
+    ylabel: str = "Summary amount",
+    color: str = "purple",
+    linewidth: int = 2,
+):
+    x_labels = [i for i in range(1, len(values) + 1)]
+
+    sns.set_theme(style="whitegrid")
+
+    plt.figure(figsize=(10, 5))
+    sns.barplot(
+        x=x_labels,
+        y=values,
+        color=color,
+        linewidth=linewidth,
+    )
+
+    for i, total in enumerate(values):
+        plt.text(
+            x_labels[i] - 1.1,
+            total,
+            f"{total}",
+            color='black',
+            fontsize=10,
+        )
+
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    plt.close()
+    buffer.seek(0)
+
+    return buffer.getvalue()
+
+
+def create_monthly_chart_with_categories(
+    data: list[dict],
+    days_in_month: int,
+    categories: set,
+    title: str = "Spendings by month",
+    xlabel: str = "Day",
+    ylabel: str = "Summary amount",
+):
+    if not data:
+        df = pd.DataFrame({'month_number': range(1, days_in_month + 1)})
+        for category in categories:
+            df[category] = 0
+        df['total_amount'] = 0
+    else:
+        df = pd.DataFrame(data)
+
+    all_days = pd.DataFrame({'day_number': range(1, days_in_month + 1)})
+    df = pd.merge(all_days, df, on='day_number', how='left').fillna(0)
+
+    for col in df.columns:
+        if col != "day_number":
+            df[col] = df[col].astype(int)
+
+    sns.set_theme(style="whitegrid")
+
+    fig, ax = plt.subplots()
+    fig.set_figwidth(10)
+    fig.set_figheight(5)
+
+    bottom = pd.Series([0] * len(df))
+
+    for category in categories:
+        ax.bar(df['day_number'], df[category], bottom=bottom, label=category)
+        bottom += df[category]
+
+    for i, total in enumerate(df['total_amount']):
+        ax.text(
+            df['day_number'][i] - 0.1,
+            total,
+            f"{total}",
+            color='black',
+            fontsize=10,
+        )
+
+    ax.set_xticks(df['day_number'])
+    ax.set_xticklabels(df['day_number'])
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
