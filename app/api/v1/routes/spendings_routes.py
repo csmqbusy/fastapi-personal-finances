@@ -123,18 +123,34 @@ async def spendings_summary_get(
     "/summary/{year}",
     status_code=200,
     summary="Get annual spendings summary",
+    response_model=None,
 )
 async def spendings_annual_summary_get(
     user: UserModel = Depends(get_active_verified_user),
     year: int = Path(),
+    in_csv: bool = Depends(get_csv_params),
     db_session: AsyncSession = Depends(get_db_session),
-) -> list[MonthTransactionsSummary]:
-    result = await spendings_service.get_annual_summary(
+) -> list[MonthTransactionsSummary] | Response:
+    summary = await spendings_service.get_annual_summary(
             session=db_session,
             user_id=user.id,
             year=year,
         )
-    return result
+    if in_csv:
+        prepared_data = spendings_service.prepare_period_summary_for_csv(
+            period_summary=summary,
+            period="year",
+        )
+        output_csv = make_csv_from_pydantic_models(prepared_data)
+        filename = get_filename_with_utc_datetime(f"{year}_summary", "csv")
+        return Response(
+            content=output_csv,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )
+    return summary
 
 
 @router.get(
