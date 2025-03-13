@@ -204,20 +204,36 @@ async def spendings_annual_summary_chart_get(
     "/summary/{year}/{month}/",
     status_code=200,
     summary="Get monthly spendings summary",
+    response_model=None,
 )
 async def spendings_monthly_summary_get(
     user: UserModel = Depends(get_active_verified_user),
     year: int = Path(),
     month: int = Path(ge=1, le=12),
+    in_csv: bool = Depends(get_csv_params),
     db_session: AsyncSession = Depends(get_db_session),
-) -> list[DayTransactionsSummary]:
-    result = await spendings_service.get_monthly_summary(
+) -> list[DayTransactionsSummary] | Response:
+    summary = await spendings_service.get_monthly_summary(
             session=db_session,
             user_id=user.id,
             year=year,
             month=month,
         )
-    return result
+    if in_csv:
+        prepared_data = spendings_service.prepare_period_summary_for_csv(
+            period_summary=summary,
+            period="month",
+        )
+        output_csv = make_csv_from_pydantic_models(prepared_data)
+        filename = get_filename_with_utc_datetime(f"{year}_{month}_summary", "csv")
+        return Response(
+            content=output_csv,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )
+    return summary
 
 
 @router.get(
