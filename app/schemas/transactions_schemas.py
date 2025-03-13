@@ -67,5 +67,19 @@ class MonthTransactionsSummary(BasePeriodTransactionsSummary):
     month_number: int
 
 
+class MonthTransactionsSummaryCSV(BaseModel):
+    month_number: int
+    category_name: str
+    amount: int
+    total_amount: int
+
+
 class DayTransactionsSummary(BasePeriodTransactionsSummary):
     day_number: int
+
+
+class DayTransactionsSummaryCSV(BaseModel):
+    day_number: int
+    category_name: str
+    amount: int
+    total_amount: int

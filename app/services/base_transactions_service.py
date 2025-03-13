@@ -1,6 +1,6 @@
 import calendar
 from collections import defaultdict
-from typing import Type, Any, Sequence
+from typing import Type, Any, Sequence, Literal
 
 from aio_pika import connect_robust
 from aio_pika.patterns import RPC
@@ -31,6 +31,8 @@ from app.schemas.transactions_schemas import (
     MonthTransactionsSummary,
     DayTransactionsSummary,
     BasePeriodTransactionsSummary,
+    MonthTransactionsSummaryCSV,
+    DayTransactionsSummaryCSV,
 )
 from app.services.common_service import parse_sort_params_for_query
 
@@ -523,3 +525,26 @@ class TransactionsService:
             if cat_params.category_id:
                 category_ids.add(cat_params.category_id)
         return list(category_ids)
+
+    @staticmethod
+    def prepare_period_summary_for_csv(
+        period_summary: list[MonthTransactionsSummary | DayTransactionsSummary],
+        period: Literal["year", "month"]
+    ) -> list[MonthTransactionsSummaryCSV | DayTransactionsSummaryCSV]:
+        result = []
+        for record in period_summary:
+            for summ in record.summary:
+                data = {
+                    "category_name": summ.category_name,
+                    "amount": summ.amount,
+                    "total_amount": record.total_amount,
+                }
+                if period == "year":
+                    data["month_number"] = record.month_number
+                    result.append(MonthTransactionsSummaryCSV.model_validate(data))
+                elif period == "month":
+                    data["day_number"] = record.day_number
+                    result.append(DayTransactionsSummaryCSV.model_validate(data))
+                else:
+                    raise ValueError("Unknown period type")
+        return result
