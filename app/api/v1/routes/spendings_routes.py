@@ -120,40 +120,6 @@ async def spendings_summary_get(
 
 
 @router.get(
-    "/summary/{year}",
-    status_code=200,
-    summary="Get annual spendings summary",
-    response_model=None,
-)
-async def spendings_annual_summary_get(
-    user: UserModel = Depends(get_active_verified_user),
-    year: int = Path(),
-    in_csv: bool = Depends(get_csv_params),
-    db_session: AsyncSession = Depends(get_db_session),
-) -> list[MonthTransactionsSummary] | Response:
-    summary = await spendings_service.get_annual_summary(
-            session=db_session,
-            user_id=user.id,
-            year=year,
-        )
-    if in_csv:
-        prepared_data = spendings_service.prepare_period_summary_for_csv(
-            period_summary=summary,
-            period="year",
-        )
-        output_csv = make_csv_from_pydantic_models(prepared_data)
-        filename = get_filename_with_utc_datetime(f"{year}_summary", "csv")
-        return Response(
-            content=output_csv,
-            media_type="text/csv",
-            headers={
-                "Content-Disposition": f"attachment; filename={filename}",
-            },
-        )
-    return summary
-
-
-@router.get(
     "/summary/chart/",
     status_code=200,
     summary="Get chart with spendings by category",
@@ -177,6 +143,40 @@ async def spendings_summary_chart_get(
             datetime_range=datetime_range,
         )
     return Response(content=chart, media_type="image/png")
+
+
+@router.get(
+    "/summary/{year}",
+    status_code=200,
+    summary="Get annual spendings summary",
+    response_model=None,
+)
+async def spendings_annual_summary_get(
+    user: UserModel = Depends(get_active_verified_user),
+    year: int = Path(),
+    in_csv: bool = Depends(get_csv_params),
+    db_session: AsyncSession = Depends(get_db_session),
+) -> list[MonthTransactionsSummary] | Response:
+    summary = await spendings_service.get_annual_summary(
+            session=db_session,
+            user_id=user.id,
+            year=year,
+        )
+    if in_csv:
+        prepared_data = spendings_service.prepare_period_summary_for_csv(
+            period_summary=summary,
+            period="year",
+        )
+        output_csv = make_csv_from_pydantic_models(prepared_data)
+        filename = get_filename_with_utc_datetime(f"{year}_spendings_summary", "csv")
+        return Response(
+            content=output_csv,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+            },
+        )
+    return summary
 
 
 @router.get(
@@ -225,7 +225,8 @@ async def spendings_monthly_summary_get(
             period="month",
         )
         output_csv = make_csv_from_pydantic_models(prepared_data)
-        filename = get_filename_with_utc_datetime(f"{year}_{month}_summary", "csv")
+        filename = get_filename_with_utc_datetime(
+            f"{year}_{month}_spendings_summary", "csv")
         return Response(
             content=output_csv,
             media_type="text/csv",
