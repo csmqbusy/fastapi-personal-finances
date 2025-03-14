@@ -41,11 +41,13 @@ class BaseRepository(Generic[T]):
     async def get_all(
         self,
         session: AsyncSession,
-        params: dict,
+        params: dict | None = None,
         order_by: str | None = None,
         order_direction: Literal["asc", "desc"] = "asc",
     ) -> list[T]:
-        query = select(self.model).filter_by(**params)
+        query = select(self.model)
+        if params:
+            query = query.filter_by(**params)
 
         if order_by:
             if order_direction == "asc":
