@@ -1,13 +1,20 @@
 from random import randint
+from typing import TypeVar, Type
 
+import factory
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.models import Base
 from app.repositories import user_repo, spendings_repo
 from app.schemas.transactions_schemas import STransactionCreateInDB
 from app.schemas.user_schemas import SUserSignUp
 from app.services import user_spend_cat_service
+
+
+AnySQLAlchemyModel = TypeVar("AnySQLAlchemyModel", bound=Base)
+AnyFactory = TypeVar("AnyFactory", bound=factory.Factory)
 
 
 async def sign_up_user(client: AsyncClient, username: str):
@@ -68,8 +75,21 @@ async def create_spendings(
         )
 
 
-async def add_obj_to_db(obj, db_session: AsyncSession):
+async def add_obj_to_db(obj: AnySQLAlchemyModel, db_session: AsyncSession):
     db_session.add(obj)
     await db_session.commit()
     await db_session.refresh(obj)
     return obj
+
+
+async def create_batch(
+    factory_: Type[AnyFactory],
+    qty: int,
+    db_session: AsyncSession,
+):
+    """
+    Creates a batch of objects of the transferred factory in the database.
+    """
+    for _ in range(qty):
+        obj = factory_()
+        await add_obj_to_db(obj, db_session)
