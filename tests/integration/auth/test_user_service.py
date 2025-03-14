@@ -2,12 +2,11 @@ from contextlib import nullcontext
 from typing import ContextManager
 
 import pytest
-from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
+from factory.faker import faker
 
 from app.exceptions.user_exceptions import UsernameAlreadyExists, EmailAlreadyExists
 from app.models import UserModel
-from app.repositories import user_repo
 from app.schemas.user_schemas import SUserSignUp
 from app.services.user_service import (
     _check_unique_username,
@@ -15,143 +14,65 @@ from app.services.user_service import (
     get_user_by_username,
     create_user,
 )
+from tests.factories import UserFactory
+
+
+fake = faker.Faker()
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "username, password, email",
-    [
-        (
-            "aubameyang",
-            "password",
-            "aubameyang@example.com",
-        ),
-    ]
-)
 async def test__check_unique_username(
     db_session: AsyncSession,
-    username: str,
-    password: str,
-    email: EmailStr,
+    user: UserModel,
 ):
-    assert await _check_unique_username(username, db_session) is True
-
-    user = SUserSignUp(
-        username=username,
-        password=password.encode(),
-        email=email,
-    )
-    await user_repo.add(db_session, user.model_dump())
-
-    assert await _check_unique_username(username, db_session) is False
+    assert await _check_unique_username(user.username, db_session) is False
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "username, password, email",
-    [
-        (
-            "ibrahimovic",
-            "password",
-            "ibrahimovic@example.com",
-        ),
-    ]
-)
 async def test__check_unique_email(
     db_session: AsyncSession,
-    username: str,
-    password: str,
-    email: EmailStr,
+    user: UserModel,
 ):
-    assert await _check_unique_email(email, db_session) is True
-
-    user = SUserSignUp(
-        username=username,
-        password=password.encode(),
-        email=email,
-    )
-    await user_repo.add(db_session, user.model_dump())
-
-    assert await _check_unique_email(email, db_session) is False
+    assert await _check_unique_email(user.email, db_session) is False
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "username, password, email",
-    [
-        (
-            "bukayo",
-            "password",
-            "bukayo@example.com",
-        ),
-    ]
-)
 async def test_get_user_by_username(
     db_session: AsyncSession,
-    username: str,
-    password: str,
-    email: EmailStr,
+    user: UserModel,
 ):
-    assert await get_user_by_username(username, db_session) is None
-
-    user = SUserSignUp(
-        username=username,
-        password=password.encode(),
-        email=email,
-    )
-    await user_repo.add(db_session, user.model_dump())
-
-    user_from_db = await get_user_by_username(username, db_session)
+    user_from_db = await get_user_by_username(user.username, db_session)
     assert isinstance(user_from_db, UserModel)
-    assert user_from_db.username == username
-    assert user_from_db.email == email
+    assert user_from_db.id == user.id
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "username, password, email, expectation",
+    "add_with_same_username, add_with_same_email, expectation",
     [
-        (
-            "salah",
-            "password",
-            "salah@example.com",
-            nullcontext(),
-        ),
-        (
-            "SALAH",
-            "password",
-            "mosalah@example.com",
-            pytest.raises(UsernameAlreadyExists),
-        ),
-        (
-            "mosalah",
-            "password",
-            "SALAH@example.com",
-            pytest.raises(EmailAlreadyExists),
-        ),
-        (
-            "bergkamp",
-            "password",
-            "bergkamp@example.com",
-            nullcontext(),
-        ),
+        (False, False, nullcontext()),
+        (True, False, pytest.raises(UsernameAlreadyExists)),
+        (False, True, pytest.raises(EmailAlreadyExists)),
     ]
 )
 async def test_add_user(
     db_session: AsyncSession,
-    username: str,
-    password: str,
-    email: EmailStr,
+    add_with_same_username: True,
+    add_with_same_email: True,
     expectation: ContextManager,
 ):
-    user = SUserSignUp(
-        username=username,
-        password=password.encode(),
-        email=email,
-    )
+    user = UserFactory()
+    user_schema = SUserSignUp.model_validate(user)
     with expectation:
-        await create_user(user, db_session)
+        await create_user(user_schema, db_session)
         user_from_db = await get_user_by_username(user.username, db_session)
         assert isinstance(user_from_db, UserModel)
-        assert user_from_db.username == username
-        assert user_from_db.email == email
+        assert user_from_db.username == user.username
+        assert user_from_db.email == user.email
+
+        if add_with_same_username:
+            user_schema.email = fake.email()
+            await create_user(user_schema, db_session)
+        if add_with_same_email:
+            user_schema.username = fake.user_name()
+            await create_user(user_schema, db_session)
