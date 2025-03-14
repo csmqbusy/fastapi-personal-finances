@@ -16,7 +16,7 @@ from app.schemas.transactions_schemas import (
 )
 from app.services import user_spend_cat_service
 from app.services.user_service import get_user_by_username
-from tests.integration.helpers import sign_up_user, sign_in_user
+from tests.helpers import sign_up_user, sign_in_user
 
 
 @pytest.mark.asyncio

@@ -20,7 +20,7 @@ from app.schemas.transactions_schemas import (
 )
 from app.schemas.common_schemas import SAmountRange, SDatetimeRange
 from app.services import user_spend_cat_service, spendings_service
-from tests.integration.helpers import add_mock_user, create_spendings
+from tests.helpers import add_mock_user, create_spendings
 
 
 @pytest.mark.asyncio

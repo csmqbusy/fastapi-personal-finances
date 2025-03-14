@@ -66,3 +66,10 @@ async def create_spendings(
             db_session,
             transaction_to_create.model_dump(),
         )
+
+
+async def add_obj_to_db(obj, db_session: AsyncSession):
+    db_session.add(obj)
+    await db_session.commit()
+    await db_session.refresh(obj)
+    return obj

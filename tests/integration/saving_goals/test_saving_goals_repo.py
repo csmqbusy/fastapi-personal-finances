@@ -8,7 +8,7 @@ from app.repositories.saving_goals_repository import saving_goals_repo
 from app.schemas.common_schemas import SortParam
 from app.schemas.saving_goals_schemas import SSavingGoalCreate, GoalStatus
 from app.services import saving_goals_service
-from tests.integration.helpers import add_mock_user
+from tests.helpers import add_mock_user
 
 
 @pytest.mark.asyncio

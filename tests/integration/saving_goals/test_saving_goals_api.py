@@ -10,7 +10,7 @@ from app.schemas.saving_goals_schemas import (
     SSavingGoalResponse,
     SSavingGoalProgress, GoalStatus,
 )
-from tests.integration.helpers import sign_up_user, sign_in_user
+from tests.helpers import sign_up_user, sign_in_user
 
 
 @pytest.mark.asyncio
