@@ -8,6 +8,9 @@ from app.core.config import settings
 from app.db.dependencies import database_manager
 from app.main import main_app
 from app.models import Base
+from tests.factories import (
+    UserFactory,
+)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -38,3 +41,16 @@ async def client():
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async for session in database_manager.get_session():
         yield session
+
+
+async def _add_obj_to_db(obj, db_session: AsyncSession):
+    db_session.add(obj)
+    await db_session.commit()
+    await db_session.refresh(obj)
+    return obj
+
+
+@pytest.fixture
+async def user(db_session: AsyncSession):
+    user = await _add_obj_to_db(UserFactory(), db_session)
+    return user
