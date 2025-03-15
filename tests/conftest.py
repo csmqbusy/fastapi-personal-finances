@@ -48,3 +48,16 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 async def user(db_session: AsyncSession):
     user = await add_obj_to_db(UserFactory(), db_session)
     return user
+
+
+@pytest.fixture
+async def auth_user(db_session: AsyncSession, client: AsyncClient):
+    user = await add_obj_to_db(UserFactory(), db_session)
+    await client.post(
+        url=f"{settings.api.prefix_v1}/sign_in/",
+        data={
+            "username": user.username,
+            "password": "password",
+        }
+    )
+    return user
