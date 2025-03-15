@@ -38,7 +38,7 @@ async def test_get_user(
 async def test_get_all_users(db_session: AsyncSession):
     num_of_users = 10
     users_before = await user_repo.get_all(db_session)
-    await create_batch(UserFactory, num_of_users, db_session)
+    await create_batch(db_session, num_of_users, UserFactory)
     users_after = await user_repo.get_all(db_session)
     assert len(users_before) == len(users_after) - num_of_users
 

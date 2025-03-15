@@ -1,5 +1,5 @@
 from random import randint
-from typing import TypeVar, Type
+from typing import TypeVar, Type, Any
 
 import factory
 from httpx import AsyncClient
@@ -83,13 +83,18 @@ async def add_obj_to_db(obj: AnySQLAlchemyModel, db_session: AsyncSession):
 
 
 async def create_batch(
-    factory_: Type[AnyFactory],
-    qty: int,
     db_session: AsyncSession,
+    qty: int,
+    factory_: Type[AnyFactory],
+    factory_params: dict[str, Any] | None = None,
 ):
     """
     Creates a batch of objects of the transferred factory in the database.
     """
     for _ in range(qty):
         obj = factory_()
+        if factory_params:
+            for param in factory_params:
+                setattr(obj, param, factory_params[param])
+
         await add_obj_to_db(obj, db_session)
