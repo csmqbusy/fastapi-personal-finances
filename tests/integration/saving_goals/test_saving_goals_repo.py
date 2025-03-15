@@ -2,67 +2,40 @@ from datetime import date, timedelta
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+from factory.faker import faker
 
+from app.models import UserModel
 from app.repositories import user_repo
 from app.repositories.saving_goals_repository import saving_goals_repo
 from app.schemas.common_schemas import SortParam
 from app.schemas.saving_goals_schemas import SSavingGoalCreate, GoalStatus
 from app.services import saving_goals_service
-from tests.helpers import add_mock_user
+from tests.factories import SavingGoalFactory
+from tests.helpers import add_mock_user, create_batch, add_obj_to_db
+
+
+fake = faker.Faker()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "username, goals_qty",
-    [
-        (
-            "10Ronaldo1",
-            5,
-        ),
-        (
-            "10Ronaldo2",
-            50,
-        ),
-        (
-            "10Ronaldo3",
-            0,
-        ),
-    ]
+    "goals_qty",
+    [1, 5, 50, 0]
 )
 async def test_get_goals_from_db__without_filters(
     db_session: AsyncSession,
-    username: str,
+    user: UserModel,
     goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
+    await create_batch(db_session, goals_qty, SavingGoalFactory, dict(user_id=user.id))
 
-    for _ in range(goals_qty):
-        goal = SSavingGoalCreate(
-            name="name",
-            current_amount=0,
-            target_amount=5000,
-            target_date=date.today(),
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
-            user_id=user.id,
-        )
-
-    goals = await saving_goals_repo.get_goals_from_db(
-        session=db_session,
-        user_id=user.id,
-    )
+    goals = await saving_goals_repo.get_goals_from_db(db_session, user.id)
     assert len(goals) == goals_qty
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "username",
-        "current_amounts",
-        "target_amounts",
         "min_current_amount",
         "max_current_amount",
         "min_target_amount",
@@ -70,114 +43,33 @@ async def test_get_goals_from_db__without_filters(
         "expected_goals_qty",
     ),
     [
-        (
-            "20Ronaldo1",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            0,
-            50000,
-            0,
-            5000000,
-            8,
-        ),
-        (
-            "20Ronaldo2",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            0,
-            20000,
-            0,
-            100000,
-            8,
-        ),
-        (
-            "20Ronaldo3",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            None,
-            None,
-            None,
-            None,
-            8,
-        ),
-        (
-            "20Ronaldo4",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            500,
-            None,
-            None,
-            None,
-            7,
-        ),
-        (
-            "20Ronaldo5",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            None,
-            1000,
-            None,
-            None,
-            3,
-        ),
-        (
-            "20Ronaldo6",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            None,
-            None,
-            40000,
-            None,
-            3,
-        ),
-        (
-            "20Ronaldo7",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            None,
-            None,
-            None,
-            33000,
-            4,
-        ),
-        (
-            "20Ronaldo8",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            1,
-            19999,
-            22001,
-            39999,
-            3,
-        ),
+        (0, 20000, 15000, 100000, 8),
+        (1, 19999, 22001, 39999, 3),
+        (500, None, None, None, 7),
+        (None, 1000, None, None, 3),
+        (None, None, 40000, None, 3),
+        (None, None, None, 33000, 4),
+        (None, None, None, None, 8),
     ]
 )
 async def test_get_goals_from_db__with_amounts(
     db_session: AsyncSession,
-    username: str,
-    current_amounts: list[int],
-    target_amounts: list[int],
+    user: UserModel,
     min_current_amount: int | None,
     max_current_amount: int | None,
     min_target_amount: int | None,
     max_target_amount: int | None,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
+    current_amounts = [0, 500, 1000, 2000, 4000, 8000, 15000, 20000]
+    target_amounts = [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000]
     for i in range(len(current_amounts)):
-        goal = SSavingGoalCreate(
-            name="name",
+        obj = SavingGoalFactory(
             current_amount=current_amounts[i],
             target_amount=target_amounts[i],
-            target_date=date.today(),
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
             user_id=user.id,
         )
+        await add_obj_to_db(obj, db_session)
 
     goals = await saving_goals_repo.get_goals_from_db(
         session=db_session,
@@ -193,97 +85,35 @@ async def test_get_goals_from_db__with_amounts(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "username",
-        "names",
-        "descriptions",
         "name_search_term",
         "description_search_term",
         "expected_goals_qty",
     ),
     [
-        (
-            "30Ronaldo1",
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            "NAME",
-            "DESC",
-            4,
-        ),
-        (
-            "30Ronaldo2",
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            None,
-            None,
-            8,
-        ),
-        (
-            "30Ronaldo3",
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            "NA",
-            None,
-            6,
-        ),
-        (
-            "30Ronaldo4",
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            "@",
-            None,
-            1,
-        ),
-        (
-            "30Ronaldo5",
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            None,
-            "3",
-            1,
-        ),
-        (
-            "30Ronaldo6",
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            None,
-            "description",
-            1,
-        ),
-        (
-            "30Ronaldo7",
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            None,
-            "desc",
-            5,
-        ),
+        ("NAME", "DESC", 2),
+        ("NA", None, 5),
+        ("@", None, 1),
+        (None, "desc", 3),
+        (None, "3", 1),
+        (None, None, 6),
     ]
 )
 async def test_get_goals_from_db__with_search_terms(
     db_session: AsyncSession,
-    username: str,
-    names: list[str],
-    descriptions: list[str],
+    user: UserModel,
     name_search_term: str | None,
     description_search_term: str | None,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
+    names = ["name", "n@m3", " name ", "_name_", "some name", "bad NAME"]
+    descs = ["de3c", "desc ", "description", "", "some desc ", "d"]
     for i in range(len(names)):
-        goal = SSavingGoalCreate(
+        obj = SavingGoalFactory(
             name=names[i],
-            description=descriptions[i],
-            current_amount=0,
-            target_amount=5000,
-            target_date=date.today(),
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
+            description=descs[i],
             user_id=user.id,
         )
+        await add_obj_to_db(obj, db_session)
 
     goals = await saving_goals_repo.get_goals_from_db(
         session=db_session,
@@ -297,9 +127,6 @@ async def test_get_goals_from_db__with_search_terms(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "username",
-        "start_dates",
-        "target_dates",
         "start_date_from",
         "start_date_to",
         "target_date_from",
@@ -307,203 +134,50 @@ async def test_get_goals_from_db__with_search_terms(
         "expected_goals_qty",
     ),
     [
-        (
-            "40Ronaldo1",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
-            date(2025, 1, 1),
-            date(2025, 12, 31),
-            date(2026, 1, 1),
-            date(2026, 12, 31),
-            8,
-        ),
-        (
-            "40Ronaldo2",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
-            date(2025, 1, 1),
-            None,
-            date(2026, 1, 1),
-            None,
-            8,
-        ),
-        (
-            "40Ronaldo3",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
-            None,
-            None,
-            None,
-            None,
-            8,
-        ),
-        (
-            "40Ronaldo4",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
-            None,
-            date(2025, 3, 20),
-            None,
-            date(2026, 3, 20),
-            3,
-        ),
-        (
-            "40Ronaldo5",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
-            date(2025, 12, 31),
-            date(2025, 12, 31),
-            None,
-            None,
-            1,
-        ),
-        (
-            "40Ronaldo6",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
-            None,
-            None,
-            date(2026, 12, 31),
-            date(2026, 12, 31),
-            1,
-        ),
+        (date(2025, 1, 1), date(2025, 12, 31), date(2026, 1, 1), date(2026, 12, 31), 8),
+        (date(2025, 1, 1), None, date(2026, 1, 1), None, 8),
+        (None, date(2025, 3, 20), None, date(2026, 3, 20), 3),
+        (date(2025, 12, 31), date(2025, 12, 31), None, None, 1),
+        (None, None, date(2026, 12, 31), date(2026, 12, 31), 1),
+        (None, None, None, None, 8),
     ]
 )
 async def test_get_goals_from_db__with_dates_ranges(
     db_session: AsyncSession,
-    username: str,
-    start_dates: list[date],
-    target_dates: list[date],
+    user: UserModel,
     start_date_from: date | None,
     start_date_to: date | None,
     target_date_from: date | None,
     target_date_to: date | None,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
+    start_dates = [
+        date(2025, 1, 1),
+        date(2025, 2, 15),
+        date(2025, 3, 20),
+        date(2025, 5, 23),
+        date(2025, 6, 30),
+        date(2025, 8, 26),
+        date(2025, 10, 10),
+        date(2025, 12, 31),
+    ]
+    target_dates = [
+        date(2026, 1, 1),
+        date(2026, 2, 15),
+        date(2026, 3, 20),
+        date(2026, 5, 23),
+        date(2026, 6, 30),
+        date(2026, 8, 26),
+        date(2026, 10, 10),
+        date(2026, 12, 31),
+    ]
     for i in range(len(start_dates)):
-        goal = SSavingGoalCreate(
-            name="names",
-            current_amount=0,
-            target_amount=5000,
+        obj = SavingGoalFactory(
             start_date=start_dates[i],
             target_date=target_dates[i],
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
             user_id=user.id,
         )
+        await add_obj_to_db(obj, db_session)
 
     goals = await saving_goals_repo.get_goals_from_db(
         session=db_session,
@@ -519,66 +193,34 @@ async def test_get_goals_from_db__with_dates_ranges(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "username",
-        "goals_qty",
         "end_date_from",
         "end_date_to",
         "expected_goals_qty",
     ),
     [
-        (
-            "50Ronaldo1",
-            5,
-            date.today(),
-            date.today(),
-            5,
-        ),
-        (
-            "50Ronaldo2",
-            5,
-            date.today(),
-            None,
-            5,
-        ),
-        (
-            "50Ronaldo3",
-            5,
-            None,
-            date.today(),
-            5,
-        ),
-        (
-            "50Ronaldo4",
-            5,
-            date.today() + timedelta(days=1),
-            date.today() + timedelta(days=1),
-            0,
-        ),
+        (date.today(), date.today(), 3),
+        (date.today(), None, 3),
+        (None, date.today(), 3),
+        (date.today() + timedelta(days=1), date.today() + timedelta(days=1), 0),
+        (date.today() - timedelta(days=1), date.today() - timedelta(days=1), 0),
     ]
 )
 async def test_get_goals_from_db__with_end_date_range(
     db_session: AsyncSession,
-    username: str,
-    goals_qty: int,
+    user: UserModel,
     end_date_from: date | None,
     end_date_to: date | None,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
+    goals_qty = 3
     for i in range(goals_qty):
-        goal = SSavingGoalCreate(
-            name="name",
+        obj = SavingGoalFactory(
             current_amount=5000,
             target_amount=5000,
-            target_date=date(2030, 5, 5),
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
+            end_date=date.today(),
             user_id=user.id,
         )
+        await add_obj_to_db(obj, db_session)
 
     goals = await saving_goals_repo.get_goals_from_db(
         session=db_session,
@@ -592,66 +234,29 @@ async def test_get_goals_from_db__with_end_date_range(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "username",
-        "current_amounts",
-        "target_amounts",
         "status",
         "expected_goals_qty",
     ),
     [
-        (
-            "60Ronaldo1",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 4000, 8000, 15000, 20000],
-            GoalStatus.IN_PROGRESS,
-            4,
-        ),
-        (
-            "60Ronaldo2",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 4000, 8000, 15000, 20000],
-            GoalStatus.COMPLETED,
-            4,
-        ),
-        (
-            "60Ronaldo3",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 4000, 8000, 15000, 20000],
-            GoalStatus.OVERDUE,
-            0,
-        ),
-        (
-            "60Ronaldo4",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 4000, 8000, 15000, 20000],
-            None,
-            8,
-        ),
+        (GoalStatus.IN_PROGRESS, 3),
+        (GoalStatus.COMPLETED, 3),
+        (GoalStatus.OVERDUE, 3),
+        (None, 9),
     ]
 )
 async def test_get_goals_from_db__with_status(
     db_session: AsyncSession,
-    username: str,
-    current_amounts: list[int],
-    target_amounts: list[int],
+    user: UserModel,
     status: GoalStatus | None,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
-    for i in range(len(current_amounts)):
-        goal = SSavingGoalCreate(
-            name="name",
-            current_amount=current_amounts[i],
-            target_amount=target_amounts[i],
-            target_date=date.today(),
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
+    st = [GoalStatus.IN_PROGRESS, GoalStatus.COMPLETED, GoalStatus.OVERDUE] * 3
+    for i in range(len(st)):
+        obj = SavingGoalFactory(
+            status=st[i],
             user_id=user.id,
         )
+        await add_obj_to_db(obj, db_session)
 
     goals = await saving_goals_repo.get_goals_from_db(
         session=db_session,
@@ -664,13 +269,6 @@ async def test_get_goals_from_db__with_status(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "username",
-        "current_amounts",
-        "target_amounts",
-        "names",
-        "descriptions",
-        "start_dates",
-        "target_dates",
         "min_current_amount",
         "max_current_amount",
         "min_target_amount",
@@ -690,31 +288,6 @@ async def test_get_goals_from_db__with_status(
     ),
     [
         (
-            "70Ronaldo1",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
             0,
             20000,
             15000,
@@ -731,35 +304,10 @@ async def test_get_goals_from_db__with_status(
             [
                 SortParam(order_by="current_amount", order_direction="desc"),
             ],
-            [20000, 15000, 8000, 4000, 2000, 1000, 500, 0],
-            8,
+            [15000, 8000, 4000, 2000, 1000, 500, 0],
+            7,
         ),
         (
-            "70Ronaldo2",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
             500,
             20000,
             22000,
@@ -780,31 +328,6 @@ async def test_get_goals_from_db__with_status(
             2,
         ),
         (
-            "70Ronaldo3",
-            [0, 500, 1000, 2000, 15000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 20000, 15000, 40000, 40000, 100000],
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n", "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "", "my desc"],
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
             500,
             20000,
             15000,
@@ -812,7 +335,7 @@ async def test_get_goals_from_db__with_status(
             "name",
             "d",
             date(2025, 3, 21),
-            date(2025, 12, 30),
+            date(2025, 12, 31),
             date(2026, 5, 24),
             date(2026, 12, 31),
             date.today(),
@@ -821,37 +344,10 @@ async def test_get_goals_from_db__with_status(
             [
                 SortParam(order_by="current_amount", order_direction="desc"),
             ],
-            [15000],
+            [20000],
             1,
         ),
         (
-            "70Ronaldo4",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n",
-             "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "",
-             "my desc"],
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
             500,
             20000,
             22000,
@@ -872,33 +368,6 @@ async def test_get_goals_from_db__with_status(
             2,
         ),
         (
-            "70Ronaldo5",
-            [0, 500, 1000, 2000, 4000, 8000, 15000, 20000],
-            [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000],
-            ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n",
-             "NaMe"],
-            ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "",
-             "my desc"],
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 15),
-                date(2025, 3, 20),
-                date(2025, 5, 23),
-                date(2025, 6, 30),
-                date(2025, 8, 26),
-                date(2025, 10, 10),
-                date(2025, 12, 31),
-            ],
-            [
-                date(2026, 1, 1),
-                date(2026, 2, 15),
-                date(2026, 3, 20),
-                date(2026, 5, 23),
-                date(2026, 6, 30),
-                date(2026, 8, 26),
-                date(2026, 10, 10),
-                date(2026, 12, 31),
-            ],
             None,
             None,
             None,
@@ -922,13 +391,7 @@ async def test_get_goals_from_db__with_status(
 )
 async def test_get_goals_from_db__with_all_filters(
     db_session: AsyncSession,
-    username: str,
-    current_amounts: list[int],
-    target_amounts: list[int],
-    names: list[str],
-    descriptions: list[str],
-    start_dates: list[date],
-    target_dates: list[date],
+    user: UserModel,
     min_current_amount: int | None,
     max_current_amount: int | None,
     min_target_amount: int | None,
@@ -946,23 +409,48 @@ async def test_get_goals_from_db__with_all_filters(
     sorted_current_amounts: list[int],
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
+    current_amounts = [0, 500, 1000, 2000, 4000, 8000, 15000, 20000]
+    target_amounts = [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000]
+    names = ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n",
+             "NaMe"]
+    descs = ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "",
+             "my desc"]
+    statuses = [GoalStatus.IN_PROGRESS] * 7 + [GoalStatus.COMPLETED]
+    end_dates = [None] * 7 + [date.today()]
 
+    start_dates = [
+        date(2025, 1, 1),
+        date(2025, 2, 15),
+        date(2025, 3, 20),
+        date(2025, 5, 23),
+        date(2025, 6, 30),
+        date(2025, 8, 26),
+        date(2025, 10, 10),
+        date(2025, 12, 31),
+    ]
+    target_dates = [
+        date(2026, 1, 1),
+        date(2026, 2, 15),
+        date(2026, 3, 20),
+        date(2026, 5, 23),
+        date(2026, 6, 30),
+        date(2026, 8, 26),
+        date(2026, 10, 10),
+        date(2026, 12, 31),
+    ]
     for i in range(len(current_amounts)):
-        goal = SSavingGoalCreate(
+        obj = SavingGoalFactory(
             name=names[i],
-            description=descriptions[i],
+            description=descs[i],
             current_amount=current_amounts[i],
             target_amount=target_amounts[i],
             start_date=start_dates[i],
             target_date=target_dates[i],
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
+            status=statuses[i],
+            end_date=end_dates[i],
             user_id=user.id,
         )
+        await add_obj_to_db(obj, db_session)
 
     goals = await saving_goals_repo.get_goals_from_db(
         session=db_session,

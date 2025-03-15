@@ -27,8 +27,8 @@ class SavingGoalFactory(factory.Factory):
 
     name = factory.Sequence(lambda n: "Saving Goal %s" % n)
     description = factory.Sequence(lambda n: "sg description %s" % n)
-    target_amount = fake.pyint(1000, 100000)
-    current_amount = fake.pyint(0, 900)
+    target_amount = 10000
+    current_amount = 0
     target_date = date(2050, 12, 31)
     start_date = date.today()
     end_date = None
