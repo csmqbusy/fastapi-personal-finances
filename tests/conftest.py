@@ -8,8 +8,10 @@ from app.core.config import settings
 from app.db.dependencies import database_manager
 from app.main import main_app
 from app.models import Base
+from app.schemas.saving_goals_schemas import SSavingGoalUpdatePartial
 from tests.factories import (
     UserFactory,
+    SavingGoalUpdateFactory,
 )
 from tests.helpers import add_obj_to_db
 
@@ -61,3 +63,8 @@ async def auth_user(db_session: AsyncSession, client: AsyncClient):
         }
     )
     return user
+
+
+@pytest.fixture
+async def saving_goal_update_obj() -> SSavingGoalUpdatePartial:
+    return SavingGoalUpdateFactory()
