@@ -147,7 +147,7 @@ class SavingGoalsService:
         new_amount = goal.current_amount + payment
         if new_amount < 0:
             raise GoalCurrentAmountInvalid
-        if new_amount > goal.target_amount:
+        if new_amount >= goal.target_amount:
             new_amount = goal.target_amount
             await self._complete_saving_goal(goal_id, session)
 
