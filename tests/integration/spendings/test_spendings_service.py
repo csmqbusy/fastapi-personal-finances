@@ -384,7 +384,7 @@ async def test__get_category_id(
         ),
     ]
 )
-async def test_get_transactions__errors(
+async def test_get_transactions__error(
     db_session: AsyncSession,
     create_user: bool,
     category_name: str,

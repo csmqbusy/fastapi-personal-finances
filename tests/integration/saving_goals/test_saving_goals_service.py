@@ -72,7 +72,7 @@ async def test_set_goal__add_completed_goal(
         (None, date(2020, 6, 20), date(2025, 6, 20)),
     ]
 )
-async def test_set_goal__errors(
+async def test_set_goal__error(
     db_session: AsyncSession,
     user: UserModel,
     name: str,
@@ -111,7 +111,7 @@ async def test_get_goal__success(db_session: AsyncSession, user: UserModel):
         (77777, None),
     ]
 )
-async def test_get_goal__errors(
+async def test_get_goal__error(
     db_session: AsyncSession,
     user: UserModel,
     wrong_user_id: int | None,
@@ -145,7 +145,7 @@ async def test_delete_goal__success(db_session: AsyncSession, user: UserModel):
         (77777, None),
     ]
 )
-async def test_delete_goal__errors(
+async def test_delete_goal__error(
     db_session: AsyncSession,
     user: UserModel,
     wrong_goal_id: int | None,
@@ -228,7 +228,7 @@ async def test_update_goal__success_partial_update(
         (200001, 200000, None, None),
     ]
 )
-async def test_update_goal__errors(
+async def test_update_goal__error(
     db_session: AsyncSession,
     user: UserModel,
     new_current_amount: int | None,
@@ -282,7 +282,7 @@ async def test_get_goal_progress__success(
         (None, 9999),
     ]
 )
-async def test_get_goal_progress__errors(
+async def test_get_goal_progress__error(
     db_session: AsyncSession,
     user: UserModel,
     wrong_user_id: int | None,
@@ -341,7 +341,7 @@ async def test_update_current_amount__success(
         (1000, None, 9999, pytest.raises(GoalNotFound)),
     ]
 )
-async def test_update_current_amount__errors(
+async def test_update_current_amount__error(
     db_session: AsyncSession,
     user: UserModel,
     payment: int,

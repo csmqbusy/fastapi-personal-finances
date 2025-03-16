@@ -15,8 +15,6 @@ from app.schemas.saving_goals_schemas import (
 )
 from tests.factories import SavingGoalFactory
 from tests.helpers import (
-    sign_up_user,
-    sign_in_user,
     auth_another_user,
     add_obj_to_db, create_batch,
 )
@@ -268,7 +266,7 @@ async def test_goals_goal_id__patch__success(
         (None, True),
     ]
 )
-async def test_goals_goal_id__patch__errors(
+async def test_goals_goal_id__patch__error(
     client: AsyncClient,
     db_session: AsyncSession,
     auth_user: UserModel,
