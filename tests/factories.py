@@ -1,6 +1,7 @@
 from datetime import date
 
 import factory
+from factory import LazyFunction
 from factory.faker import faker
 
 from app.models import (
@@ -12,6 +13,7 @@ from app.schemas.saving_goals_schemas import (
     GoalStatus,
     SSavingGoalUpdatePartial,
 )
+from app.schemas.transaction_category_schemas import STransactionCategoryUpdate
 from app.services.auth_service import hash_password
 
 
@@ -47,17 +49,32 @@ class SavingGoalUpdateFactory(factory.Factory):
     class Meta:
         model = SSavingGoalUpdatePartial
 
-    name = fake.text(max_nb_chars=20)
-    description = fake.text(max_nb_chars=100)
-    current_amount = fake.pyint(min_value=0, max_value=1000)
-    target_amount = fake.pyint(min_value=1001, max_value=100000)
-    start_date = fake.date_between_dates(date(2020, 1, 1), date(2020, 12, 31))
-    target_date = fake.date_between_dates(date(2021, 1, 1), date(2021, 12, 31))
+    name = LazyFunction(lambda: fake.text(max_nb_chars=20))
+    description = LazyFunction(lambda: fake.text(max_nb_chars=100))
+    current_amount = LazyFunction(
+        lambda: fake.pyint(min_value=0, max_value=1000)
+    )
+    target_amount = LazyFunction(
+        lambda: fake.pyint(min_value=1001, max_value=100000)
+    )
+    start_date = LazyFunction(
+        lambda: fake.date_between_dates(date(2020, 1, 1), date(2020, 12, 31))
+    )
+    target_date = LazyFunction(
+        lambda: fake.date_between_dates(date(2021, 1, 1), date(2021, 12, 31))
+    )
 
 
 class UsersSpendingCategoriesFactory(factory.Factory):
     class Meta:
         model = UsersSpendingCategoriesModel
 
-    category_name = fake.text(max_nb_chars=25)
+    category_name = LazyFunction(lambda: fake.text(max_nb_chars=20))
     user_id = None
+
+
+class TransactionCategoryUpdateFactory(factory.Factory):
+    class Meta:
+        model = STransactionCategoryUpdate
+
+    category_name = LazyFunction(lambda: fake.text(max_nb_chars=50))
