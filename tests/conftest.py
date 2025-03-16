@@ -12,6 +12,7 @@ from app.schemas.saving_goals_schemas import SSavingGoalUpdatePartial
 from tests.factories import (
     UserFactory,
     SavingGoalUpdateFactory,
+    TransactionCategoryUpdateFactory,
 )
 from tests.helpers import add_obj_to_db
 
@@ -67,3 +68,8 @@ async def auth_user(client: AsyncClient, user: UserModel) -> UserModel:
 @pytest.fixture
 async def saving_goal_update_obj() -> SSavingGoalUpdatePartial:
     return SavingGoalUpdateFactory()
+
+
+@pytest.fixture
+async def category_update_obj() -> TransactionCategoryUpdateFactory:
+    return TransactionCategoryUpdateFactory()
