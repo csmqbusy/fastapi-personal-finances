@@ -6,12 +6,12 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models import Base
+from app.models import Base, UserModel
 from app.repositories import user_repo, spendings_repo
 from app.schemas.transactions_schemas import STransactionCreateInDB
 from app.schemas.user_schemas import SUserSignUp
 from app.services import user_spend_cat_service
-
+from tests.factories import UserFactory
 
 AnySQLAlchemyModel = TypeVar("AnySQLAlchemyModel", bound=Base)
 AnyFactory = TypeVar("AnyFactory", bound=factory.Factory)
@@ -98,3 +98,18 @@ async def create_batch(
                 setattr(obj, param, factory_params[param])
 
         await add_obj_to_db(obj, db_session)
+
+
+async def auth_another_user(
+    db_session: AsyncSession,
+    client: AsyncClient,
+) -> UserModel:
+    user = await add_obj_to_db(UserFactory(), db_session)
+    await client.post(
+        url=f"{settings.api.prefix_v1}/sign_in/",
+        data={
+            "username": user.username,
+            "password": "password",
+        }
+    )
+    return user
