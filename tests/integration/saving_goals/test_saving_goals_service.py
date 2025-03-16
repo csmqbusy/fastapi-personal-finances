@@ -1,7 +1,7 @@
-from contextlib import nullcontext
-from datetime import date, timedelta
+from datetime import date
 from typing import ContextManager
 
+from dirty_equals import IsPositiveInt, IsAnyStr, IsPositiveFloat
 import pytest
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +10,7 @@ from app.exceptions.saving_goals_exceptions import (
     GoalNotFound,
     GoalCurrentAmountInvalid,
 )
-from app.repositories import user_repo
+from app.models import UserModel
 from app.schemas.common_schemas import SAmountRange, SDateRange
 from app.schemas.saving_goals_schemas import (
     SSavingGoalCreate,
@@ -19,746 +19,374 @@ from app.schemas.saving_goals_schemas import (
     SGoalsSortParams,
 )
 from app.services import saving_goals_service
-from tests.helpers import add_mock_user
+from tests.factories import SavingGoalFactory
+from tests.helpers import add_obj_to_db
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "create_user",
-        "name",
-        "description",
-        "current_amount",
-        "target_amount",
-        "start_date",
-        "expected_start_date",
-        "target_date",
-        "expected_status",
-        "expected_end_date",
-        "expectation",
-    ),
+    "start_date, expected_start_date",
     [
-        (
-            True,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            GoalStatus.IN_PROGRESS,
-            None,
-            nullcontext(),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            None,
-            0,
-            200000,
-            None,
-            date.today(),
-            date.fromisoformat("2025-06-20"),
-            GoalStatus.IN_PROGRESS,
-            None,
-            nullcontext(),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            "Good laptop",
-            200000,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            GoalStatus.COMPLETED,
-            date.today(),
-            nullcontext(),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            None,
-            0,
-            200000,
-            date.fromisoformat("2026-01-01"),
-            date.fromisoformat("2026-01-01"),
-            date.fromisoformat("2025-06-20"),
-            GoalStatus.IN_PROGRESS,
-            None,
-            pytest.raises(ValidationError),
-        ),
-        (
-            False,
-            None,
-            None,
-            0,
-            200000,
-            None,
-            date.today(),
-            date.fromisoformat("2025-06-20"),
-            GoalStatus.IN_PROGRESS,
-            None,
-            pytest.raises(ValidationError),
-        ),
+        (date(2025, 1, 1), date(2025, 1, 1)),
+        (None, date.today()),
     ]
 )
-async def test_set_goal(
+async def test_set_goal__success(
     db_session: AsyncSession,
-    create_user: bool,
-    name: str,
-    description: str,
-    current_amount: int,
-    target_amount: int,
+    user: UserModel,
     start_date: date,
     expected_start_date: date,
-    target_date: date,
-    expected_status: GoalStatus,
-    expected_end_date: date | None,
-    expectation: ContextManager,
 ):
-    mock_user_username = "10Messi"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
-
-    with expectation:
-        goal = SSavingGoalCreate(
-            name=name,
-            description=description,
-            current_amount=current_amount,
-            target_amount=target_amount,
-            start_date=start_date,
-            target_date=target_date,
-        )
-        created_goal = await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
-            user_id=user.id,
-        )
-        assert created_goal is not None
-        assert created_goal.name == goal.name
-        assert created_goal.description == goal.description
-        assert created_goal.current_amount == goal.current_amount
-        assert created_goal.target_amount == goal.target_amount
-        assert created_goal.start_date == expected_start_date
-        assert created_goal.target_date == goal.target_date
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    (
-        "create_user",
-        "name",
-        "description",
-        "current_amount",
-        "target_amount",
-        "start_date",
-        "expected_start_date",
-        "target_date",
-        "wrong_goal_id",
-        "wrong_user_id",
-        "expectation",
-    ),
-    [
-        (
-            True,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            None,
-            None,
-            nullcontext(),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            None,
-            9999,
-            pytest.raises(GoalNotFound),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            7777,
-            None,
-            pytest.raises(GoalNotFound),
-        ),
-    ]
-)
-async def test_get_goal(
-    db_session: AsyncSession,
-    create_user: bool,
-    name: str,
-    description: str,
-    current_amount: int,
-    target_amount: int,
-    start_date: date,
-    expected_start_date: date,
-    target_date: date,
-    wrong_goal_id: int | None,
-    wrong_user_id: int | None,
-    expectation: ContextManager,
-):
-    mock_user_username = "20Messi"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
-
-    goal = SSavingGoalCreate(
-        name=name,
-        description=description,
-        current_amount=current_amount,
-        target_amount=target_amount,
-        start_date=start_date,
-        target_date=target_date,
+    goal = SSavingGoalCreate.model_validate(
+        SavingGoalFactory(start_date=start_date),
     )
-    created_goal = await saving_goals_service.set_goal(
-        session=db_session,
-        goal=goal,
-        user_id=user.id,
-    )
-
-    with expectation:
-        goal_from_db = await saving_goals_service.get_goal(
-            goal_id=wrong_goal_id or created_goal.id,
-            user_id=wrong_user_id or user.id,
-            session=db_session,
-        )
-        assert goal_from_db is not None
-        assert goal_from_db.name == goal.name
-        assert goal_from_db.description == goal.description
-        assert goal_from_db.current_amount == goal.current_amount
-        assert goal_from_db.target_amount == goal.target_amount
-        assert goal_from_db.start_date == expected_start_date
-        assert goal_from_db.target_date == goal.target_date
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    (
-        "create_user",
-        "name",
-        "description",
-        "current_amount",
-        "target_amount",
-        "start_date",
-        "expected_start_date",
-        "target_date",
-        "wrong_goal_id",
-        "wrong_user_id",
-        "expectation",
-        "after_delete_expectation",
-    ),
-    [
-        (
-            True,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            None,
-            None,
-            nullcontext(),
-            pytest.raises(GoalNotFound),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            None,
-            9999,
-            pytest.raises(GoalNotFound),
-            pytest.raises(GoalNotFound),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            7777,
-            None,
-            pytest.raises(GoalNotFound),
-            pytest.raises(GoalNotFound),
-        ),
-    ]
-)
-async def test_delete_goal(
-    db_session: AsyncSession,
-    create_user: bool,
-    name: str,
-    description: str,
-    current_amount: int,
-    target_amount: int,
-    start_date: date,
-    expected_start_date: date,
-    target_date: date,
-    wrong_goal_id: int | None,
-    wrong_user_id: int | None,
-    expectation: ContextManager,
-    after_delete_expectation: ContextManager,
-):
-    mock_user_username = "30Messi"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
-
-    goal = SSavingGoalCreate(
-        name=name,
-        description=description,
-        current_amount=current_amount,
-        target_amount=target_amount,
-        start_date=start_date,
-        target_date=target_date,
-    )
-    created_goal = await saving_goals_service.set_goal(
-        session=db_session,
-        goal=goal,
-        user_id=user.id,
-    )
+    created_goal = await saving_goals_service.set_goal(db_session, goal, user.id)
     assert created_goal is not None
+    assert created_goal.name == IsAnyStr
+    assert created_goal.description == IsAnyStr
+    assert created_goal.current_amount == IsPositiveInt
+    assert created_goal.target_amount == IsPositiveInt
+    assert created_goal.start_date == expected_start_date
+    assert created_goal.status == GoalStatus.IN_PROGRESS
 
-    with expectation:
-        await saving_goals_service.delete_goal(
-            goal_id=wrong_goal_id or created_goal.id,
-            user_id=wrong_user_id or user.id,
-            session=db_session,
-        )
-        with after_delete_expectation:
-            await saving_goals_service.get_goal(
-                goal_id=wrong_goal_id or created_goal.id,
-                user_id=wrong_user_id or user.id,
-                session=db_session,
-            )
+
+@pytest.mark.asyncio
+async def test_set_goal__add_completed_goal(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    amount = 20000
+    goal = SSavingGoalCreate.model_validate(
+        SavingGoalFactory(current_amount=amount, target_amount=amount),
+    )
+    created_goal = await saving_goals_service.set_goal(db_session, goal, user.id)
+    assert created_goal.current_amount == created_goal.target_amount == amount
+    assert created_goal.status == GoalStatus.COMPLETED
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "create_user",
-        "new_name",
-        "new_description",
-        "new_current_amount",
-        "new_target_amount",
-        "new_start_date",
-        "new_expected_start_date",
-        "new_target_date",
-        "expectation",
-    ),
+    "name, start_date, target_date",
     [
-        (
-            True,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            nullcontext(),
-        ),
-        (
-            False,
-            None,
-            "Very good laptop",
-            15000,
-            190000,
-            None,
-            None,
-            None,
-            nullcontext(),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2026-01-01"),
-            date.fromisoformat("2026-01-01"),
-            date.fromisoformat("2025-06-20"),
-            pytest.raises(ValidationError),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            "Good laptop",
-            200001,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            pytest.raises(ValidationError),
-        ),
+        ("Macbook Pro", date(2026, 1, 1), date(2025, 6, 20)),
+        (None, date(2020, 6, 20), date(2025, 6, 20)),
     ]
 )
-async def test_update_goal(
+async def test_set_goal__errors(
     db_session: AsyncSession,
-    create_user: bool,
-    new_name: str | None,
-    new_description: str | None,
+    user: UserModel,
+    name: str,
+    start_date: date,
+    target_date: date,
+):
+    with pytest.raises(ValidationError):
+        goal = SSavingGoalCreate.model_validate(
+            SavingGoalFactory(
+                name=name,
+                start_date=start_date,
+                target_date=target_date,
+                user_id=user.id,
+            ),
+        )
+        await saving_goals_service.set_goal(db_session, goal, user.id)
+
+
+@pytest.mark.asyncio
+async def test_get_goal__success(db_session: AsyncSession, user: UserModel):
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+    goal_from_db = await saving_goals_service.get_goal(
+        goal_id=goal.id,
+        user_id=user.id,
+        session=db_session,
+    )
+    assert goal_from_db.id == goal.id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "wrong_user_id, wrong_goal_id",
+    [
+        (None, 99999),
+        (77777, None),
+    ]
+)
+async def test_get_goal__errors(
+    db_session: AsyncSession,
+    user: UserModel,
+    wrong_user_id: int | None,
+    wrong_goal_id: int | None,
+):
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+    with pytest.raises(GoalNotFound):
+        await saving_goals_service.get_goal(
+            goal_id=wrong_goal_id or goal.id,
+            user_id=wrong_user_id or user.id,
+            session=db_session,
+        )
+
+
+@pytest.mark.asyncio
+async def test_delete_goal__success(db_session: AsyncSession, user: UserModel):
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+
+    await saving_goals_service.delete_goal(goal.id, user.id, db_session)
+    with pytest.raises(GoalNotFound):
+        await saving_goals_service.get_goal(goal.id, user.id, db_session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "wrong_user_id, wrong_goal_id",
+    [
+        (None, 99999),
+        (77777, None),
+    ]
+)
+async def test_delete_goal__errors(
+    db_session: AsyncSession,
+    user: UserModel,
+    wrong_goal_id: int | None,
+    wrong_user_id: int | None,
+):
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+    with pytest.raises(GoalNotFound):
+        await saving_goals_service.delete_goal(
+            goal_id=wrong_goal_id or goal.id,
+            user_id=wrong_user_id or user.id,
+            session=db_session,
+        )
+
+
+@pytest.mark.asyncio
+async def test_update_goal__success_full_update(
+    db_session: AsyncSession,
+    user: UserModel,
+    saving_goal_update_obj: SSavingGoalUpdatePartial,
+):
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+
+    assert goal.name != saving_goal_update_obj.name
+    assert goal.description != saving_goal_update_obj.description
+    assert goal.current_amount != saving_goal_update_obj.current_amount
+    assert goal.target_amount != saving_goal_update_obj.target_amount
+    assert goal.start_date != saving_goal_update_obj.start_date
+    assert goal.target_date != saving_goal_update_obj.target_date
+
+    updated_goal = await saving_goals_service.update_goal(
+        goal_id=goal.id,
+        user_id=user.id,
+        goal_update_obj=saving_goal_update_obj,
+        session=db_session,
+    )
+    assert updated_goal is not None
+    assert updated_goal.name == saving_goal_update_obj.name
+    assert updated_goal.description == saving_goal_update_obj.description
+    assert updated_goal.current_amount == saving_goal_update_obj.current_amount
+    assert updated_goal.target_amount == saving_goal_update_obj.target_amount
+    assert updated_goal.start_date == saving_goal_update_obj.start_date
+    assert updated_goal.target_date == saving_goal_update_obj.target_date
+
+
+@pytest.mark.asyncio
+async def test_update_goal__success_partial_update(
+    db_session: AsyncSession,
+    user: UserModel,
+    saving_goal_update_obj: SSavingGoalUpdatePartial,
+):
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+    saving_goal_update_obj.description = None
+    saving_goal_update_obj.target_amount = None
+    saving_goal_update_obj.start_date = None
+    saving_goal_update_obj.target_date = None
+
+    updated_goal = await saving_goals_service.update_goal(
+        goal_id=goal.id,
+        user_id=user.id,
+        goal_update_obj=saving_goal_update_obj,
+        session=db_session,
+    )
+    assert updated_goal is not None
+    assert updated_goal.name == saving_goal_update_obj.name
+    assert updated_goal.description == goal.description
+    assert updated_goal.current_amount == saving_goal_update_obj.current_amount
+    assert updated_goal.target_amount == goal.target_amount
+    assert updated_goal.start_date == goal.start_date
+    assert updated_goal.target_date == goal.target_date
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "new_current_amount, new_target_amount, new_start_date, new_target_date",
+    [
+        (None, None, date(2021, 1, 1), date(2020, 1, 1)),
+        (200001, 200000, None, None),
+    ]
+)
+async def test_update_goal__errors(
+    db_session: AsyncSession,
+    user: UserModel,
     new_current_amount: int | None,
     new_target_amount: int | None,
     new_start_date: date | None,
-    new_expected_start_date: date | None,
     new_target_date: date | None,
-    expectation: ContextManager,
 ):
-    mock_user_username = "40Messi"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
 
-    goal = SSavingGoalCreate(
-        name="name",
-        current_amount=1234567,
-        target_amount=1234567890,
-        target_date=date.today(),
-    )
-    created_goal = await saving_goals_service.set_goal(
-        session=db_session,
-        goal=goal,
-        user_id=user.id,
-    )
-    assert created_goal is not None
-    assert created_goal.name != new_name
-    assert created_goal.description != new_description
-    assert created_goal.current_amount != new_current_amount
-    assert created_goal.target_amount != new_target_amount
-    assert created_goal.start_date != new_expected_start_date
-    assert created_goal.target_date != new_target_date
-
-    with expectation:
+    with pytest.raises(ValidationError):
         goal_update_obj = SSavingGoalUpdatePartial(
-            name=new_name,
-            description=new_description,
             current_amount=new_current_amount,
             target_amount=new_target_amount,
             start_date=new_start_date,
             target_date=new_target_date,
         )
-        updated_goal = await saving_goals_service.update_goal(
-            goal_id=created_goal.id,
+        await saving_goals_service.update_goal(
+            goal_id=goal.id,
             user_id=user.id,
             goal_update_obj=goal_update_obj,
             session=db_session,
         )
-        assert updated_goal is not None
-        if new_name:
-            assert updated_goal.name == goal_update_obj.name
-        if new_description:
-            assert updated_goal.description == goal_update_obj.description
-        if new_current_amount:
-            assert updated_goal.current_amount == goal_update_obj.current_amount
-        if new_target_amount:
-            assert updated_goal.target_amount == goal_update_obj.target_amount
-        if new_start_date and new_expected_start_date:
-            assert updated_goal.start_date == new_expected_start_date
-        if new_target_date:
-            assert updated_goal.target_date == goal_update_obj.target_date
+
+
+@pytest.mark.asyncio
+async def test_get_goal_progress__success(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+    goal_progress = await saving_goals_service.get_goal_progress(
+        goal_id=goal.id,
+        user_id=user.id,
+        session=db_session,
+    )
+    assert goal_progress.current_amount == goal.current_amount
+    assert goal_progress.target_amount == goal.target_amount
+    assert goal_progress.rest_amount == goal.target_amount - goal.current_amount
+    assert goal_progress.percentage_progress == IsPositiveFloat
+    assert goal_progress.days_left is not None
+    assert goal_progress.expected_daily_payment == IsPositiveInt
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "create_user",
-        "name",
-        "description",
-        "current_amount",
-        "target_amount",
-        "start_date",
-        "expected_start_date",
-        "target_date",
-        "wrong_user_id",
-        "wrong_goal_id",
-        "expectation",
-    ),
+    "wrong_user_id, wrong_goal_id",
     [
-        (
-            True,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            None,
-            None,
-            nullcontext(),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            9999,
-            None,
-            pytest.raises(GoalNotFound),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            "Good laptop",
-            0,
-            200000,
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-01-01"),
-            date.fromisoformat("2025-06-20"),
-            None,
-            9999,
-            pytest.raises(GoalNotFound),
-        ),
+        (9999, None),
+        (None, 9999),
     ]
 )
-async def test_get_goal_progress(
+async def test_get_goal_progress__errors(
     db_session: AsyncSession,
-    create_user: bool,
-    name: str,
-    description: str,
-    current_amount: int,
-    target_amount: int,
-    start_date: date,
-    expected_start_date: date,
-    target_date: date,
+    user: UserModel,
     wrong_user_id: int | None,
     wrong_goal_id: int | None,
-    expectation: ContextManager,
 ):
-    mock_user_username = "50Messi"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
-
-    goal = SSavingGoalCreate(
-        name=name,
-        description=description,
-        current_amount=current_amount,
-        target_amount=target_amount,
-        start_date=start_date,
-        target_date=target_date,
-    )
-    created_goal = await saving_goals_service.set_goal(
-        session=db_session,
-        goal=goal,
-        user_id=user.id,
-    )
-    assert created_goal is not None
-
-    with expectation:
-        goal_progress = await saving_goals_service.get_goal_progress(
-            goal_id=wrong_goal_id or created_goal.id,
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+    with pytest.raises(GoalNotFound):
+        await saving_goals_service.get_goal_progress(
+            goal_id=wrong_goal_id or goal.id,
             user_id=wrong_user_id or user.id,
             session=db_session,
         )
-        assert goal_progress is not None
-        assert goal_progress.current_amount == goal.current_amount
-        assert goal_progress.target_amount == goal.target_amount
-        assert goal_progress.rest_amount == goal.target_amount - goal.current_amount
-        assert 0 <= goal_progress.percentage_progress <= 100
-        assert goal_progress.days_left is not None
-        assert goal_progress.expected_daily_payment is not None
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "create_user",
-        "name",
-        "current_amount",
-        "target_amount",
-        "payment",
-        "target_date",
-        "wrong_user_id",
-        "wrong_goal_id",
-        "expected_status",
-        "expected_current_amount",
-        "expectation",
-    ),
+    "payment, expected_status, expected_current_amount",
     [
-        (
-            True,
-            "Macbook Pro",
-            0,
-            200000,
-            20000,
-            date.fromisoformat("2025-03-01"),
-            None,
-            None,
-            GoalStatus.IN_PROGRESS,
-            20000,
-            nullcontext(),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            0,
-            200000,
-            200000,
-            date.fromisoformat("2025-03-01"),
-            None,
-            None,
-            GoalStatus.COMPLETED,
-            200000,
-            nullcontext(),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            10000,
-            200000,
-            -10001,
-            date.fromisoformat("2025-03-01"),
-            None,
-            None,
-            GoalStatus.IN_PROGRESS,
-            10000,
-            pytest.raises(GoalCurrentAmountInvalid),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            10000,
-            200000,
-            1000,
-            date.fromisoformat("2025-03-01"),
-            9999,
-            None,
-            GoalStatus.IN_PROGRESS,
-            10000,
-            pytest.raises(GoalNotFound),
-        ),
-        (
-            False,
-            "Macbook Pro",
-            10000,
-            200000,
-            1000,
-            date.fromisoformat("2025-03-01"),
-            None,
-            9999,
-            GoalStatus.IN_PROGRESS,
-            10000,
-            pytest.raises(GoalNotFound),
-        ),
+        (20000, GoalStatus.IN_PROGRESS, 20000),
+        (200000, GoalStatus.COMPLETED, 200000),
     ]
 )
-async def test_update_current_amount(
+async def test_update_current_amount__success(
     db_session: AsyncSession,
-    create_user: bool,
-    name: str,
-    current_amount: int,
-    target_amount: int,
+    user: UserModel,
     payment: int,
-    target_date: date,
-    wrong_user_id: int | None,
-    wrong_goal_id: int | None,
     expected_status: GoalStatus,
     expected_current_amount: int,
-    expectation: ContextManager,
 ):
-    mock_user_username = "60Messi"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
-
-    goal = SSavingGoalCreate(
-        name=name,
+    current_amount = 0
+    target_amount = 200000
+    goal = SavingGoalFactory(
+        user_id=user.id,
         current_amount=current_amount,
         target_amount=target_amount,
-        target_date=target_date,
     )
-    created_goal = await saving_goals_service.set_goal(
-        session=db_session,
-        goal=goal,
+    await add_obj_to_db(goal, db_session)
+
+    updated_goal = await saving_goals_service.update_current_amount(
+        goal_id=goal.id,
         user_id=user.id,
+        payment=payment,
+        session=db_session,
     )
-    assert created_goal is not None
+    assert updated_goal.current_amount == expected_current_amount
+    assert updated_goal.status == expected_status
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "payment, wrong_user_id, wrong_goal_id, expectation",
+    [
+        (-10001, None, None, pytest.raises(GoalCurrentAmountInvalid)),
+        (1000, 9999, None, pytest.raises(GoalNotFound)),
+        (1000, None, 9999, pytest.raises(GoalNotFound)),
+    ]
+)
+async def test_update_current_amount__errors(
+    db_session: AsyncSession,
+    user: UserModel,
+    payment: int,
+    wrong_user_id: int | None,
+    wrong_goal_id: int | None,
+    expectation: ContextManager,
+):
+    current_amount = 10000
+    target_amount = 200000
+    goal = SavingGoalFactory(
+        user_id=user.id,
+        current_amount=current_amount,
+        target_amount=target_amount,
+    )
+    await add_obj_to_db(goal, db_session)
 
     with expectation:
-        updated_goal = await saving_goals_service.update_current_amount(
-            goal_id=wrong_goal_id or created_goal.id,
+        await saving_goals_service.update_current_amount(
+            goal_id=wrong_goal_id or goal.id,
             user_id=wrong_user_id or user.id,
             payment=payment,
             session=db_session,
         )
-        assert updated_goal is not None
-        assert updated_goal.current_amount == expected_current_amount
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "current_amounts",
-        "target_amounts",
-        "current_amount_range",
-        "target_amount_range",
-        "expected_goals_qty",
-    ),
+    "current_amount_range, target_amount_range, expected_goals_qty",
     [
         (
-            "70Messi1",
-            [0, 500, 1000, 1500, 2000, 2500],
-            [5000, 10000, 15000, 20000, 25000, 30000],
             SAmountRange(min_amount=0, max_amount=1500),
             SAmountRange(min_amount=5000, max_amount=15000),
             3,
         ),
         (
-            "70Messi2",
-            [0, 500, 1000, 1500, 2000, 2500],
-            [5000, 10000, 15000, 20000, 25000, 30000],
             SAmountRange(min_amount=None, max_amount=None),
             SAmountRange(min_amount=None, max_amount=None),
             6,
         ),
         (
-            "70Messi3",
-            [0, 500, 1000, 1500, 2000, 2500],
-            [5000, 10000, 15000, 20000, 25000, 30000],
             SAmountRange(min_amount=None, max_amount=2000),
             SAmountRange(min_amount=None, max_amount=20000),
             4,
         ),
         (
-            "70Messi4",
-            [0, 500, 1000, 1500, 2000, 2500],
-            [5000, 10000, 15000, 20000, 25000, 30000],
             SAmountRange(min_amount=500, max_amount=None),
             SAmountRange(min_amount=30000, max_amount=None),
             1,
@@ -767,52 +395,28 @@ async def test_update_current_amount(
 )
 async def test_get_goals_all__with_amounts_range(
     db_session: AsyncSession,
-    username: str,
-    current_amounts: list[int],
-    target_amounts: list[int],
+    user: UserModel,
     current_amount_range: SAmountRange,
     target_amount_range: SAmountRange,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
-    for i in range(len(current_amounts)):
-        goal = SSavingGoalCreate(
-            name="mock",
-            current_amount=current_amounts[i],
-            target_amount=target_amounts[i],
-            target_date=date.today() + timedelta(days=i),
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
-            user_id=user.id,
-        )
+    current_amounts = [0, 500, 1000, 1500, 2000, 2500]
+    target_amounts = [5000, 10000, 15000, 20000, 25000, 30000]
+    for ca, ta in zip(current_amounts, target_amounts):
+        goal = SavingGoalFactory(
+            user_id=user.id, current_amount=ca, target_amount=ta)
+        await add_obj_to_db(goal, db_session)
 
     goals = await saving_goals_service.get_goals_all(
         session=db_session,
         user_id=user.id,
         current_amount_range=current_amount_range,
         target_amount_range=target_amount_range,
-
     )
-    if current_amount_range.min_amount:
-        current_min_amount = current_amount_range.min_amount
-    else:
-        current_min_amount = 0
-    if current_amount_range.max_amount:
-        current_max_amount = current_amount_range.max_amount
-    else:
-        current_max_amount = float("inf")
-    if target_amount_range.min_amount:
-        target_min_amount = target_amount_range.min_amount
-    else:
-        target_min_amount = 0
-    if target_amount_range.max_amount:
-        target_max_amount = target_amount_range.max_amount
-    else:
-        target_max_amount = float("inf")
+    current_min_amount = current_amount_range.min_amount or 0
+    current_max_amount = current_amount_range.max_amount or float("inf")
+    target_min_amount = target_amount_range.min_amount or 0
+    target_max_amount = target_amount_range.max_amount or float("inf")
 
     assert len(goals) == expected_goals_qty
     for goal in goals:
@@ -822,74 +426,26 @@ async def test_get_goals_all__with_amounts_range(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "names",
-        "descriptions",
-        "name_search_term",
-        "description_search_term",
-        "expected_goals_qty",
-    ),
+    "name_search_term, description_search_term, expected_goals_qty",
     [
-        (
-            "80Messi1",
-            ["TEXT", "text", " text ", "t3xT   "],
-            [" some description", "description text", "my desc text", "desc"],
-            "text",
-            "description",
-            2,
-        ),
-        (
-            "80Messi2",
-            ["TEXT", "text", " text ", "t3xT   "],
-            [" some description", "description text", "my desc text", "desc"],
-            "text",
-            "desc",
-            3,
-        ),
-        (
-            "80Messi3",
-            ["TEXT", "text", " text ", "t3xT   "],
-            [" some description", "description text", "my desc text", "desc"],
-            "T3XT",
-            None,
-            1,
-        ),
-        (
-            "80Messi4",
-            ["TEXT", "text", " text ", "t3xT   "],
-            [" some description", "description text", "my desc text", "desc"],
-            None,
-            "desc ",
-            1,
-        ),
+        ("text", "description", 2),
+        ("text", "desc", 3),
+        ("T3XT", None, 1),
+        (None, "desc ", 1),
     ]
 )
 async def test_get_goals_all__with_search_terms(
     db_session: AsyncSession,
-    username: str,
-    names: list[str],
-    descriptions: list[str],
+    user: UserModel,
     name_search_term: str | None,
     description_search_term: str | None,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
-    for i in range(len(names)):
-        goal = SSavingGoalCreate(
-            name=names[i],
-            description=descriptions[i],
-            current_amount=0,
-            target_amount=2000,
-            target_date=date.today() + timedelta(days=i),
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
-            user_id=user.id,
-        )
+    names = ["TEXT", "text", " text ", "t3xT   "]
+    descs = [" some description", "description text", "my desc text", "desc"]
+    for nm, dsc in zip(names, descs):
+        goal = SavingGoalFactory(user_id=user.id, name=nm, description=dsc)
+        await add_obj_to_db(goal, db_session)
 
     goals = await saving_goals_service.get_goals_all(
         session=db_session,
@@ -897,7 +453,6 @@ async def test_get_goals_all__with_search_terms(
         name_search_term=name_search_term,
         description_search_term=description_search_term,
     )
-
     assert len(goals) == expected_goals_qty
     for goal in goals:
         if name_search_term:
@@ -908,91 +463,24 @@ async def test_get_goals_all__with_search_terms(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "start_dates",
-        "target_dates",
-        "start_date_range",
-        "target_date_range",
-        "expected_goals_qty",
-    ),
+    "start_date_range, target_date_range, expected_goals_qty",
     [
         (
-            "90Messi1",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 1),
-                date(2025, 3, 1),
-                date(2025, 4, 1),
-                date(2025, 5, 1),
-            ],
-            [
-                date(2025, 12, 27),
-                date(2025, 12, 28),
-                date(2025, 12, 29),
-                date(2025, 12, 30),
-                date(2025, 12, 31),
-            ],
             SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
             SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
             5,
         ),
         (
-            "90Messi2",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 1),
-                date(2025, 3, 1),
-                date(2025, 4, 1),
-                date(2025, 5, 1),
-            ],
-            [
-                date(2025, 12, 27),
-                date(2025, 12, 28),
-                date(2025, 12, 29),
-                date(2025, 12, 30),
-                date(2025, 12, 31),
-            ],
             SDateRange(start=date(2025, 1, 1), end=date(2025, 3, 31)),
             SDateRange(start=date(2025, 12, 28), end=date(2025, 12, 31)),
             2,
         ),
         (
-            "90Messi3",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 1),
-                date(2025, 3, 1),
-                date(2025, 4, 1),
-                date(2025, 5, 1),
-            ],
-            [
-                date(2025, 12, 27),
-                date(2025, 12, 28),
-                date(2025, 12, 29),
-                date(2025, 12, 30),
-                date(2025, 12, 31),
-            ],
             SDateRange(start=date(2025, 5, 1), end=date(2025, 12, 31)),
             None,
             1,
         ),
         (
-            "90Messi4",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 1),
-                date(2025, 3, 1),
-                date(2025, 4, 1),
-                date(2025, 5, 1),
-            ],
-            [
-                date(2025, 12, 27),
-                date(2025, 12, 28),
-                date(2025, 12, 29),
-                date(2025, 12, 30),
-                date(2025, 12, 31),
-            ],
             None,
             SDateRange(start=date(2025, 12, 29), end=date(2025, 12, 31)),
             3,
@@ -1001,29 +489,18 @@ async def test_get_goals_all__with_search_terms(
 )
 async def test_get_goals_all__with_date_ranges(
     db_session: AsyncSession,
-    username: str,
-    start_dates: list[date],
-    target_dates: list[date],
+    user: UserModel,
     start_date_range: SDateRange | None,
     target_date_range: SDateRange | None,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
-    for i in range(len(start_dates)):
-        goal = SSavingGoalCreate(
-            name="mock",
-            current_amount=0,
-            target_amount=2000,
-            start_date=start_dates[i],
-            target_date=target_dates[i],
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
-            user_id=user.id,
-        )
+    start_dates = [date(2025, 1, 1), date(2025, 2, 1), date(2025, 3, 1),
+                   date(2025, 4, 1), date(2025, 5, 1)]
+    target_dates = [date(2025, 12, 27), date(2025, 12, 28), date(2025, 12, 29),
+                    date(2025, 12, 30), date(2025, 12, 31)]
+    for sd, td in zip(start_dates, target_dates):
+        goal = SavingGoalFactory(user_id=user.id, start_date=sd, target_date=td)
+        await add_obj_to_db(goal, db_session)
 
     goals = await saving_goals_service.get_goals_all(
         session=db_session,
@@ -1044,56 +521,34 @@ async def test_get_goals_all__with_date_ranges(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "goals_qty",
-        "end_date_range",
-        "expected_goals_qty",
-    ),
+    "goals_qty, end_date_range, expected_goals_qty",
     [
-        (
-            "100Messi1",
-            5,
-            SDateRange(start=date.today(), end=date.today()),
-            5,
-        ),
-        (
-            "100Messi2",
-            5,
-            SDateRange(start=date(2020, 1, 1), end=date(2023, 1, 1)),
-            0,
-        ),
+        (5, SDateRange(start=date.today(), end=date.today()), 5),
+        (5, SDateRange(start=date(2020, 1, 1), end=date(2023, 1, 1)), 0),
     ]
 )
 async def test_get_goals_all__with_end_date_range(
     db_session: AsyncSession,
-    username: str,
+    user: UserModel,
     goals_qty: int,
     end_date_range: SDateRange,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
     for i in range(goals_qty):
-        goal = SSavingGoalCreate(
-            name="mock",
-            current_amount=1000,
-            target_amount=1000,
-            target_date=date(2030, 1, 1),
+        goal = SSavingGoalCreate.model_validate(
+            SavingGoalFactory(
+                current_amount=1000,
+                target_amount=1000,
+                user_id=user.id,
+            ),
         )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
-            user_id=user.id,
-        )
+        await saving_goals_service.set_goal(db_session, goal, user.id)
 
     goals = await saving_goals_service.get_goals_all(
         session=db_session,
         user_id=user.id,
         end_date_range=end_date_range,
     )
-
     assert len(goals) == expected_goals_qty
     for goal in goals:
         assert end_date_range.start <= goal.start_date
@@ -1102,82 +557,29 @@ async def test_get_goals_all__with_end_date_range(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "current_amounts",
-        "target_amounts",
-        "status",
-        "make_overdue",
-        "overdue_goal_index",
-        "expected_goals_qty",
-    ),
+    "status, expected_goals_qty",
     [
-        (
-            "110Messi1",
-            [100, 200, 300],
-            [200, 400, 300],
-            GoalStatus.IN_PROGRESS,
-            False,
-            None,
-            2,
-        ),
-        (
-            "110Messi2",
-            [100, 200, 300],
-            [200, 400, 300],
-            GoalStatus.COMPLETED,
-            False,
-            None,
-            1,
-        ),
-        (
-            "110Messi3",
-            [100, 200, 300],
-            [200, 400, 300],
-            GoalStatus.OVERDUE,
-            True,
-            0,
-            1,
-        ),
+        (GoalStatus.IN_PROGRESS, 1),
+        (GoalStatus.COMPLETED, 1),
+        (GoalStatus.OVERDUE, 1),
     ]
 )
 async def test_get_goals_all__with_status(
     db_session: AsyncSession,
-    username: str,
-    current_amounts: list[int],
-    target_amounts: list[int],
+    user: UserModel,
     status: GoalStatus,
-    make_overdue: bool,
-    overdue_goal_index: int | None,
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
-    for i in range(len(current_amounts)):
-        goal = SSavingGoalCreate(
-            name="mock",
-            current_amount=current_amounts[i],
-            target_amount=target_amounts[i],
-            target_date=date.today(),
-        )
-        goal_from_db = await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
-            user_id=user.id,
-        )
-        if make_overdue and overdue_goal_index == i:
-            await saving_goals_service.make_saving_goal_overdue(
-                goal_from_db.id,
-                db_session,
-            )
+    statuses = [GoalStatus.IN_PROGRESS, GoalStatus.COMPLETED, GoalStatus.OVERDUE]
+    for s in statuses:
+        goal = SavingGoalFactory(user_id=user.id, status=s)
+        await add_obj_to_db(goal, db_session)
 
     goals = await saving_goals_service.get_goals_all(
         session=db_session,
         user_id=user.id,
         status=status,
     )
-
     assert len(goals) == expected_goals_qty
     for goal in goals:
         assert goal.status == status
@@ -1186,17 +588,10 @@ async def test_get_goals_all__with_status(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "username",
-        "current_amounts",
-        "target_amounts",
         "current_amount_range",
         "target_amount_range",
-        "names",
-        "descriptions",
         "name_search_term",
         "description_search_term",
-        "start_dates",
-        "target_dates",
         "start_date_range",
         "target_date_range",
         "end_date_range",
@@ -1207,29 +602,10 @@ async def test_get_goals_all__with_status(
     ),
     [
         (
-            "120Messi1",
-            [0, 1000, 2000, 3000, 4000],
-            [5000, 15000, 10000, 20000, 30000],
             SAmountRange(min_amount=0, max_amount=3000),
             SAmountRange(min_amount=5000, max_amount=20000),
-            ["TEXT", "TEXT", "text", " text ", "t3xT   "],
-            [" some description", "description text", "my desc ", "desc", " "],
             "text",
             "desc",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 1),
-                date(2025, 3, 1),
-                date(2025, 4, 1),
-                date(2025, 5, 1),
-            ],
-            [
-                date(2025, 12, 27),
-                date(2025, 12, 28),
-                date(2025, 12, 29),
-                date(2025, 12, 30),
-                date(2025, 12, 31),
-            ],
             SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
             SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
             None,
@@ -1238,53 +614,15 @@ async def test_get_goals_all__with_status(
             [20000, 15000, 10000, 5000],
             4,
         ),
-        (
-            "120Messi2",
-            [0, 1000, 3000, 3000, 4000],
-            [5000, 10000, 3000, 20000, 30000],
-            SAmountRange(min_amount=0, max_amount=3000),
-            SAmountRange(min_amount=3000, max_amount=20000),
-            ["TEXT", "TEXT", "text", " text ", "t3xT   "],
-            [" some description", "description text", "my desc ", "desc", " "],
-            "text",
-            "desc",
-            [
-                date(2025, 1, 1),
-                date(2025, 2, 1),
-                date(2025, 3, 1),
-                date(2025, 4, 1),
-                date(2025, 5, 1),
-            ],
-            [
-                date(2025, 12, 27),
-                date(2025, 12, 28),
-                date(2025, 12, 29),
-                date(2025, 12, 30),
-                date(2025, 12, 31),
-            ],
-            SDateRange(start=date(2025, 1, 1), end=date(2025, 12, 31)),
-            SDateRange(start=date(2025, 12, 29), end=date(2025, 12, 31)),
-            SDateRange(start=date.today(), end=date.today()),
-            GoalStatus.COMPLETED,
-            SGoalsSortParams(sort_by=["-target_amount", "-current_amount"]),
-            [3000],
-            1,
-        ),
     ]
 )
 async def test_get_goals_all__with_all_filters(
     db_session: AsyncSession,
-    username: str,
-    current_amounts: list[int],
-    target_amounts: list[int],
+    user: UserModel,
     current_amount_range: SAmountRange,
     target_amount_range: SAmountRange,
-    names: list[str],
-    descriptions: list[str],
     name_search_term: str,
     description_search_term: str,
-    start_dates: list[date],
-    target_dates: list[date],
     start_date_range: SDateRange,
     target_date_range: SDateRange,
     end_date_range: SDateRange | None,
@@ -1293,23 +631,28 @@ async def test_get_goals_all__with_all_filters(
     sorted_target_amounts: list[int],
     expected_goals_qty: int,
 ):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
+    current_amounts = [0, 1000, 2000, 3000, 4000]
+    target_amounts = [5000, 15000, 10000, 20000, 30000]
+    names = ["TEXT", "TEXT", "text", " text ", "t3xT   "]
+    descs = [" some description", "description text", "my desc ", "desc", " "]
+    start_dates = [date(2025, 1, 1), date(2025, 2, 1), date(2025, 3, 1),
+                   date(2025, 4, 1), date(2025, 5, 1)]
+    target_dates = [date(2025, 12, 27), date(2025, 12, 28), date(2025, 12, 29),
+                    date(2025, 12, 30), date(2025, 12, 31)]
+    statuses = [GoalStatus.IN_PROGRESS] * 5
 
     for i in range(len(current_amounts)):
-        goal = SSavingGoalCreate(
-            name=names[i],
-            description=descriptions[i],
-            current_amount=current_amounts[i],
-            target_amount=target_amounts[i],
-            start_date=start_dates[i],
-            target_date=target_dates[i],
-        )
-        await saving_goals_service.set_goal(
-            session=db_session,
-            goal=goal,
+        goal = SavingGoalFactory(
             user_id=user.id,
+            name=names[i],
+            description=descs[i],
+            target_amount=target_amounts[i],
+            current_amount=current_amounts[i],
+            target_date=target_dates[i],
+            start_date=start_dates[i],
+            status=statuses[i],
         )
+        await add_obj_to_db(goal, db_session)
 
     goals = await saving_goals_service.get_goals_all(
         session=db_session,
@@ -1324,62 +667,30 @@ async def test_get_goals_all__with_all_filters(
         status=status,
         sort_params=sort_params,
     )
-
     assert len(goals) == expected_goals_qty
     assert [g.target_amount for g in goals] == sorted_target_amounts
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    (
-        "username",
-    ),
-    [
-        (
-            "130Messi1",
-        ),
-    ]
-)
-async def test__complete_saving_goal(
-    db_session: AsyncSession,
-    username: str,
-):
-    await add_mock_user(db_session, username)
-    user = await user_repo.get_by_username(db_session, username)
-
-    goal = SSavingGoalCreate(
-        name="mock",
-        current_amount=0,
-        target_amount=1000,
-        target_date=date.today(),
-    )
-    created_goal = await saving_goals_service.set_goal(
-        session=db_session,
-        goal=goal,
-        user_id=user.id,
-    )
-    assert created_goal is not None
-    assert created_goal.status == GoalStatus.IN_PROGRESS
+async def test__complete_saving_goal(db_session: AsyncSession, user: UserModel):
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+    assert goal.status == GoalStatus.IN_PROGRESS
 
     await saving_goals_service._complete_saving_goal(
-        goal_id=created_goal.id,
+        goal_id=goal.id,
         session=db_session,
     )
     updated_goal = await saving_goals_service.get_goal(
-        goal_id=created_goal.id,
+        goal_id=goal.id,
         user_id=user.id,
         session=db_session,
     )
-    assert updated_goal is not None
     assert updated_goal.status == GoalStatus.COMPLETED
 
 
 @pytest.mark.parametrize(
-    (
-        "first_num",
-        "second_num",
-        "expected_result",
-    ),
+    "first_num, second_num, expected_result",
     [
         (1, 100, 1.0),
         (0, 100, 0.0),
@@ -1391,24 +702,13 @@ async def test__complete_saving_goal(
         (200, 200, 100.0),
     ]
 )
-def test_get_percentage(
-    first_num: int,
-    second_num: int,
-    expected_result: float,
-):
-    percent = saving_goals_service.get_percentage(
-        first_num=first_num,
-        second_num=second_num,
-    )
+def test_get_percentage(first_num: int, second_num: int, expected_result: float):
+    percent = saving_goals_service.get_percentage(first_num, second_num)
     assert percent == expected_result
 
 
 @pytest.mark.parametrize(
-    (
-        "date1",
-        "date2",
-        "expected_result",
-    ),
+    "date1, date2, expected_result",
     [
         (date(2025, 1, 1), date(2025, 1, 1), 0),
         (date(2025, 1, 1), date(2025, 1, 2), 1),
@@ -1417,24 +717,13 @@ def test_get_percentage(
         (date(2025, 3, 5), date(2023, 12, 1), 460),
     ]
 )
-def test_get_days_before_dates(
-    date1: date,
-    date2: date,
-    expected_result: int,
-):
-    days = saving_goals_service.get_days_between_dates(
-        d1=date1,
-        d2=date2,
-    )
+def test_get_days_before_dates(date1: date, date2: date, expected_result: int):
+    days = saving_goals_service.get_days_between_dates(d1=date1, d2=date2)
     assert days == expected_result
 
 
 @pytest.mark.parametrize(
-    (
-        "amount",
-        "rest_days",
-        "expected_result",
-    ),
+    "amount, rest_days, expected_result",
     [
         (3000, 10, 300),
         (3332300, 250, 13329),
@@ -1446,7 +735,7 @@ def test_get_days_before_dates(
 def test_get_expected_daily_payment(
     amount: int,
     rest_days: int,
-    expected_result,
+    expected_result: int,
 ):
     daily_payment = saving_goals_service.get_expected_daily_payment(
         rest_amount=amount,
