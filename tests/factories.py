@@ -3,7 +3,11 @@ from datetime import date
 import factory
 from factory.faker import faker
 
-from app.models import UserModel, SavingGoalsModel
+from app.models import (
+    UserModel,
+    SavingGoalsModel,
+    UsersSpendingCategoriesModel,
+)
 from app.schemas.saving_goals_schemas import (
     GoalStatus,
     SSavingGoalUpdatePartial,
@@ -49,3 +53,11 @@ class SavingGoalUpdateFactory(factory.Factory):
     target_amount = fake.pyint(min_value=1001, max_value=100000)
     start_date = fake.date_between_dates(date(2020, 1, 1), date(2020, 12, 31))
     target_date = fake.date_between_dates(date(2021, 1, 1), date(2021, 12, 31))
+
+
+class UsersSpendingCategoriesFactory(factory.Factory):
+    class Meta:
+        model = UsersSpendingCategoriesModel
+
+    category_name = fake.text(max_nb_chars=25)
+    user_id = None
