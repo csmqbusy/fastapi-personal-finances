@@ -8,6 +8,7 @@ from app.models import (
     UserModel,
     SavingGoalsModel,
     UsersSpendingCategoriesModel,
+    SpendingsModel,
 )
 from app.schemas.saving_goals_schemas import (
     GoalStatus,
@@ -78,3 +79,18 @@ class TransactionCategoryUpdateFactory(factory.Factory):
         model = STransactionCategoryUpdate
 
     category_name = LazyFunction(lambda: fake.text(max_nb_chars=50))
+
+
+class SpendingsFactory(factory.Factory):
+    class Meta:
+        model = SpendingsModel
+
+    amount = LazyFunction(lambda: fake.pyint(min_value=0, max_value=10000))
+    description = LazyFunction(lambda: fake.text(max_nb_chars=30))
+    date = LazyFunction(
+        lambda: fake.date_time_between_dates(
+            date(2020, 1, 1), date(2028, 12, 31)
+        )
+    )
+    user_id = None
+    category_id = None
