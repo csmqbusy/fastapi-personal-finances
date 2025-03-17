@@ -11,7 +11,7 @@ from app.repositories import user_repo, spendings_repo
 from app.schemas.transactions_schemas import STransactionCreateInDB
 from app.schemas.user_schemas import SUserSignUp
 from app.services import user_spend_cat_service
-from tests.factories import UserFactory
+from tests.factories import UserFactory, UsersSpendingCategoriesFactory
 
 AnySQLAlchemyModel = TypeVar("AnySQLAlchemyModel", bound=Base)
 AnyFactory = TypeVar("AnyFactory", bound=factory.Factory)
@@ -113,3 +113,17 @@ async def auth_another_user(
         }
     )
     return user
+
+
+async def create_n_categories(
+    categories_qty: int,
+    user_id: int,
+    db_session: AsyncSession,
+) -> list[int]:
+    """Return list of created categories id's."""
+    categories_ids = []
+    for _ in range(categories_qty):
+        category = UsersSpendingCategoriesFactory(user_id=user_id)
+        await add_obj_to_db(category, db_session)
+        categories_ids.append(category.id)
+    return categories_ids
