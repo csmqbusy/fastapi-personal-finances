@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models import Base, UserModel
 from app.repositories import user_repo, spendings_repo
+from app.schemas.transaction_category_schemas import STransactionCategoryOut
 from app.schemas.transactions_schemas import STransactionCreateInDB
 from app.schemas.user_schemas import SUserSignUp
 from app.services import user_spend_cat_service
@@ -82,6 +83,15 @@ async def add_obj_to_db(obj: AnySQLAlchemyModel, db_session: AsyncSession):
     return obj
 
 
+async def add_obj_to_db_all(
+    objects: list[AnySQLAlchemyModel],
+    db_session: AsyncSession,
+) -> None:
+    for obj in objects:
+        db_session.add(obj)
+        await db_session.commit()
+
+
 async def create_batch(
     db_session: AsyncSession,
     qty: int,
@@ -127,3 +137,11 @@ async def create_n_categories(
         await add_obj_to_db(category, db_session)
         categories_ids.append(category.id)
     return categories_ids
+
+
+async def add_default_spendings_category(
+    user_id: int,
+    db_session: AsyncSession,
+) -> STransactionCategoryOut:
+    await user_spend_cat_service.add_user_default_category(user_id, db_session)
+    return await user_spend_cat_service.get_default_category(user_id, db_session)
