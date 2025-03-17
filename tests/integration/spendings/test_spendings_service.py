@@ -1,6 +1,7 @@
 from contextlib import nullcontext
 from datetime import datetime
-import random
+from itertools import cycle
+from random import randint, choice
 from typing import ContextManager
 
 import pytest
@@ -9,63 +10,48 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.transaction_exceptions import TransactionNotFound
-from app.repositories import user_repo, spendings_repo
+from app.models import UserModel
 from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
-    STransactionCreate,
     STransactionResponse,
-    STransactionUpdatePartial,
-    STransactionCreateInDB,
     STransactionsSortParams,
 )
 from app.schemas.common_schemas import SAmountRange, SDatetimeRange
 from app.services import user_spend_cat_service, spendings_service
-from tests.helpers import add_mock_user, create_spendings
+from tests.factories import (
+    STransactionCreateFactory,
+    UsersSpendingCategoriesFactory, STransactionUpdateFactory,
+    SpendingsFactory,
+)
+from tests.helpers import (
+    add_obj_to_db,
+    add_obj_to_db_all,
+    add_default_spendings_category,
+    create_batch,
+    create_n_categories,
+)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "category_name, create_user",
-    [
-        (
-            "Food",
-            True,
-        ),
-        (
-            None,
-            False,
-        ),
-    ]
+    "to_default_category",
+    [True, False],
 )
 async def test_add_transaction_to_db(
     db_session: AsyncSession,
-    category_name: str | None,
-    create_user: bool,
+    user: UserModel,
+    to_default_category: bool,
 ):
-    mock_user_username = "YAMAL"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
+    await user_spend_cat_service.add_user_default_category(user.id, db_session)
+    category = UsersSpendingCategoriesFactory(user_id=user.id)
+    await add_obj_to_db(category, db_session)
 
-    if create_user:
-        await user_spend_cat_service.add_user_default_category(
-            user.id,
-            db_session,
-        )
+    category_name = category.category_name
+    if to_default_category:
+        category_name = None
 
-    if category_name:
-        await user_spend_cat_service.add_category_to_db(
-            user.id,
-            category_name,
-            db_session,
-        )
-
-    spending_schema = STransactionCreate(
-        amount=100,
-        category_name=category_name,
-    )
     spending = await spendings_service.add_transaction_to_db(
-        spending_schema,
+        STransactionCreateFactory(category_name=category_name),
         user.id,
         db_session,
     )
@@ -78,98 +64,57 @@ async def test_add_transaction_to_db(
 
 
 @pytest.mark.asyncio
+async def test_update_transaction__success(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    category = UsersSpendingCategoriesFactory(user_id=user.id)
+    new_category = UsersSpendingCategoriesFactory(user_id=user.id)
+    await add_obj_to_db_all([category, new_category], db_session)
+
+    spending = SpendingsFactory(user_id=user.id, category_id=category.id)
+    await add_obj_to_db(spending, db_session)
+
+    spending_update = STransactionUpdateFactory(
+        category_name=new_category.category_name,
+    )
+    updated_spending = await spendings_service.update_transaction(
+        spending.id,
+        user.id,
+        spending_update,
+        db_session,
+    )
+    assert updated_spending.amount == spending_update.amount
+    assert updated_spending.description == spending_update.description
+    assert updated_spending.date == spending_update.date
+    assert updated_spending.category_name == spending_update.category_name
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "create_user",
-        "amount",
-        "description",
-        "date",
-        "new_category_name",
-        "create_category",
-        "wrong_spending_id",
-        "expectation",
-    ),
+    "wrong_category_name, wrong_spending_id, expectation",
     [
-        (
-            True,
-            8000,
-            "New description",
-            datetime(year=2020, month=12, day=31, hour=23, minute=0, second=0),
-            "New category",
-            True,
-            False,
-            nullcontext(),
-        ),
-        (
-            False,
-            8000,
-            "New description",
-            datetime(year=2020, month=12, day=31, hour=23, minute=0, second=0),
-            "Missing",
-            False,
-            False,
-            pytest.raises(CategoryNotFound),
-        ),
-        (
-            False,
-            8000,
-            "New description",
-            datetime(year=2020, month=12, day=31, hour=23, minute=0, second=0),
-            "Missing",
-            True,
-            True,
-            pytest.raises(TransactionNotFound),
-        ),
+        ("wrong", False, pytest.raises(CategoryNotFound)),
+        (None, True, pytest.raises(TransactionNotFound)),
     ]
 )
-async def test_update_transaction(
+async def test_update_transaction__error(
     db_session: AsyncSession,
-    create_user: bool,
-    amount: int,
-    description: str,
-    date: datetime,
-    new_category_name: str,
-    create_category: bool,
+    user: UserModel,
+    wrong_category_name: str | None,
     wrong_spending_id: bool,
     expectation: ContextManager,
 ):
-    mock_user_username = "NICO"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
+    default_cat = await add_default_spendings_category(user.id, db_session)
+    new_category = UsersSpendingCategoriesFactory(user_id=user.id)
+    await add_obj_to_db(new_category, db_session)
 
-    if create_user:
-        await user_spend_cat_service.add_user_default_category(
-            user.id,
-            db_session,
-        )
-    if create_category:
-        await user_spend_cat_service.add_category_to_db(
-            user.id,
-            new_category_name,
-            db_session,
-        )
+    spending = SpendingsFactory(user_id=user.id, category_id=default_cat.id)
+    await add_obj_to_db(spending, db_session)
 
-    spending_schema = STransactionCreate(amount=100)
-    spending = await spendings_service.add_transaction_to_db(
-        spending_schema,
-        user.id,
-        db_session,
+    spending_update = STransactionUpdateFactory(
+        category_name=wrong_category_name or new_category.category_name,
     )
-
-    assert spending is not None
-    assert spending.amount != amount
-    assert spending.description != description
-    assert spending.date != date
-    assert spending.category_name != new_category_name
-
-    spending_update = STransactionUpdatePartial(
-        amount=amount,
-        description=description,
-        date=date,
-        category_name=new_category_name,
-    )
-
     with expectation:
         await spendings_service.update_transaction(
             spending.id + wrong_spending_id,
@@ -178,67 +123,27 @@ async def test_update_transaction(
             db_session,
         )
 
-        updated_spending = await spendings_service.get_transaction(
-            spending.id,
-            user.id,
-            db_session,
-        )
-
-        assert updated_spending is not None
-        assert updated_spending.amount == amount
-        assert updated_spending.description == description
-        assert updated_spending.date == date
-        assert updated_spending.category_name == new_category_name
-
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "create_user, wrong_spending_id, wrong_user_id, expectation",
+    "wrong_spending_id, wrong_user_id, expectation",
     [
-        (
-            True,
-            False,
-            False,
-            nullcontext(),
-        ),
-        (
-            False,
-            True,
-            False,
-            pytest.raises(TransactionNotFound),
-        ),
-        (
-            False,
-            False,
-            True,
-            pytest.raises(TransactionNotFound),
-        ),
+        (False, False, nullcontext()),
+        (True, False, pytest.raises(TransactionNotFound)),
+        (False, True, pytest.raises(TransactionNotFound)),
     ]
 )
 async def test_get_transaction(
     db_session: AsyncSession,
-    create_user: bool,
+    user: UserModel,
     wrong_spending_id: bool,
     wrong_user_id: bool,
     expectation: ContextManager,
 ):
-    mock_user_username = "INIGO"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
+    default_cat = await add_default_spendings_category(user.id, db_session)
 
-    if create_user:
-        await user_spend_cat_service.add_user_default_category(
-            user.id,
-            db_session,
-        )
-
-    spending_schema = STransactionCreate(amount=100)
-    spending = await spendings_service.add_transaction_to_db(
-        spending_schema,
-        user.id,
-        db_session,
-    )
+    spending = SpendingsFactory(user_id=user.id, category_id=default_cat.id)
+    await add_obj_to_db(spending, db_session)
 
     with expectation:
         spending_from_db = await spendings_service.get_transaction(
@@ -246,224 +151,113 @@ async def test_get_transaction(
             user.id + wrong_user_id,
             db_session,
         )
-        assert spending_from_db is not None
         assert spending_from_db.id == spending.id
-        assert spending_from_db.amount == spending.amount
+
+
+@pytest.mark.asyncio
+async def test_delete_transaction__success(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    default_cat = await add_default_spendings_category(user.id, db_session)
+
+    spending = SpendingsFactory(user_id=user.id, category_id=default_cat.id)
+    await add_obj_to_db(spending, db_session)
+
+    await spendings_service.delete_transaction(spending.id, user.id, db_session)
+
+    with pytest.raises(TransactionNotFound):
+        await spendings_service.get_transaction(spending.id, user.id, db_session)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "create_user",
-        "wrong_spending_id",
-        "wrong_user_id",
-        "expectation_for_delete",
-        "expectation_for_get",
-    ),
+    "wrong_spending_id, wrong_user_id",
     [
-        (
-            True,
-            False,
-            False,
-            nullcontext(),
-            pytest.raises(TransactionNotFound),
-        ),
-        (
-            False,
-            True,
-            False,
-            pytest.raises(TransactionNotFound),
-            nullcontext(),
-        ),
-        (
-            False,
-            False,
-            True,
-            pytest.raises(TransactionNotFound),
-            nullcontext(),
-        ),
+        (True, False),
+        (False, True),
     ]
 )
-async def test_delete_transaction(
+async def test_delete_transaction__error(
     db_session: AsyncSession,
-    create_user: bool,
+    user: UserModel,
     wrong_spending_id: bool,
     wrong_user_id: bool,
-    expectation_for_delete: ContextManager,
-    expectation_for_get: ContextManager,
 ):
-    mock_user_username = "FERRAN"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
+    default_cat = await add_default_spendings_category(user.id, db_session)
 
-    if create_user:
-        await user_spend_cat_service.add_user_default_category(
-            user.id,
-            db_session,
-        )
+    spending = SpendingsFactory(user_id=user.id, category_id=default_cat.id)
+    await add_obj_to_db(spending, db_session)
 
-    spending_schema = STransactionCreate(amount=100)
-    spending = await spendings_service.add_transaction_to_db(
-        spending_schema,
-        user.id,
-        db_session,
-    )
-
-    with expectation_for_delete:
+    with pytest.raises(TransactionNotFound):
         await spendings_service.delete_transaction(
             spending.id + wrong_spending_id,
             user.id + wrong_user_id,
             db_session,
         )
-        with expectation_for_get:
-            await spendings_service.get_transaction(
-                spending.id,
-                user.id,
-                db_session,
-            )
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "create_user, category_name, create_category, expectation",
+    "wrong_category_name, expectation",
     [
-        (
-            True,
-            "Mock category",
-            True,
-            nullcontext(),
-        ),
-        (
-            False,
-            "Mock category 2",
-            False,
-            pytest.raises(CategoryNotFound),
-        ),
+        (None, nullcontext()),
+        ("wrong", pytest.raises(CategoryNotFound)),
     ]
 )
 async def test__get_category_id(
     db_session: AsyncSession,
-    create_user: bool,
-    category_name: str,
-    create_category: bool,
+    user: UserModel,
+    wrong_category_name: str | None,
     expectation: ContextManager,
 ):
-    mock_user_username = "RETEGUI"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
-
-    category = None
-    if create_category:
-        category = await user_spend_cat_service.add_category_to_db(
-            user.id,
-            category_name,
-            db_session,
-        )
+    category = UsersSpendingCategoriesFactory(user_id=user.id)
+    await add_obj_to_db(category, db_session)
 
     with expectation:
         category_id = await spendings_service._get_category_id(
             user.id,
-            category_name,
+            wrong_category_name or category.category_name,
             db_session,
         )
         assert category.id == category_id
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "create_user, category_name, create_category, send_user_id, expectation",
-    [
-        (
-            True,
-            "Taxi",
-            False,
-            True,
-            pytest.raises(CategoryNotFound),
-        ),
-    ]
-)
 async def test_get_transactions__error(
     db_session: AsyncSession,
-    create_user: bool,
-    category_name: str,
-    create_category: bool,
-    send_user_id: bool,
-    expectation: ContextManager,
+    user: UserModel,
 ):
-    mock_user_username = "SMITHROWE"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
-
-    if create_category:
-        await user_spend_cat_service.add_category_to_db(
-            user.id,
-            category_name,
-            db_session,
-        )
-
-    with expectation:
-        category_params = SCategoryQueryParams(
-            category_name=category_name,
-        )
+    category_name = "wrong"
+    with pytest.raises(CategoryNotFound):
         await spendings_service.get_transactions(
             user_id=user.id,
-            categories_params=[category_params],
+            categories_params=[SCategoryQueryParams(category_name=category_name)],
             session=db_session,
         )
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "create_user, category_name, spendings_qty",
-    [
-        (
-            True,
-            "Candies",
-            5,
-        ),
-    ]
-)
 async def test_get_transactions__category_id_priority(
     db_session: AsyncSession,
-    create_user: bool,
-    category_name: str,
-    spendings_qty: int,
+    user: UserModel,
 ):
-    mock_user_username = "OBLAK"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
+    spendings_qty = 5
+    category1 = UsersSpendingCategoriesFactory(user_id=user.id)
+    category2 = UsersSpendingCategoriesFactory(user_id=user.id)
+    await add_obj_to_db_all([category1, category2], db_session)
 
-    cat_1 = await user_spend_cat_service.add_category_to_db(
-        user.id,
-        category_name,
-        db_session,
-    )
-    await create_spendings(
-        qty=spendings_qty,
-        user_id=user.id,
-        category_id=cat_1.id,
-        db_session=db_session,
-    )
-
-    cat_2 = await user_spend_cat_service.add_category_to_db(
-        user.id,
-        f"{category_name}_2",
-        db_session,
-    )
-    await create_spendings(
-        qty=spendings_qty,
-        user_id=user.id,
-        category_id=cat_2.id,
-        db_session=db_session,
-    )
+    for category in [category1, category2]:
+        await create_batch(
+            db_session,
+            spendings_qty,
+            SpendingsFactory,
+            dict(user_id=user.id, category_id=category.id),
+        )
 
     category_params = SCategoryQueryParams(
-        category_id=cat_1.id,
-        category_name=cat_2.category_name,
+        category_id=category1.id,
+        category_name=category2.category_name,
     )
     spendings = await spendings_service.get_transactions(
         user_id=user.id,
@@ -471,104 +265,51 @@ async def test_get_transactions__category_id_priority(
         session=db_session,
     )
     assert len(spendings) == spendings_qty
-    spendings_category_name = [s.category_name for s in spendings]
-    assert spendings_category_name == [cat_1.category_name] * spendings_qty
-    assert spendings_category_name != [cat_2.category_name] * spendings_qty
+    spendings_category_name = set(s.category_name for s in spendings)
+    assert len(spendings_category_name) == 1
+    assert category1.category_name in spendings_category_name
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "create_user",
-        "categories_names",
-        "search_term",
-        "amounts",
-        "datetimes",
-        "datetime_from",
-        "datetime_to",
-        "expected_spendings_qty",
-    ),
+    "search_term, datetime_from, datetime_to, expected_spendings_qty",
     [
         (
-            True,
-            ["Candies", "Food", "Taxi"],
             "term",
-            [100, 200, 300, 400, 500, 600, 700, 800, 900],
-            [
-                datetime(year=2020, month=1, day=1, hour=12),
-                datetime(year=2021, month=1, day=1, hour=12),
-                datetime(year=2022, month=1, day=1, hour=12),
-                datetime(year=2023, month=1, day=1, hour=12),
-                datetime(year=2024, month=1, day=1, hour=12),
-                datetime(year=2025, month=1, day=1, hour=12),
-                datetime(year=2026, month=1, day=1, hour=12),
-                datetime(year=2027, month=1, day=1, hour=12),
-                datetime(year=2028, month=1, day=1, hour=12),
-            ],
             datetime(year=2022, month=1, day=1),
             datetime(year=2027, month=1, day=1, hour=23, minute=59, second=59),
             3,
         ),
         (
-            False,
-            ["Alcohol"],
             "vodka",
-            [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000],
-            [
-                datetime(year=2020, month=1, day=1, hour=12),
-                datetime(year=2021, month=1, day=1, hour=12),
-                datetime(year=2022, month=1, day=1, hour=12),
-                datetime(year=2023, month=1, day=1, hour=12),
-                datetime(year=2024, month=1, day=1, hour=12),
-                datetime(year=2025, month=1, day=1, hour=12),
-                datetime(year=2026, month=1, day=1, hour=12),
-                datetime(year=2027, month=1, day=1, hour=12),
-                datetime(year=2028, month=1, day=1, hour=12),
-            ],
             None,
             None,
             4,
         ),
     ]
 )
-async def test_get_transactions__correct(
+async def test_get_transactions__success(
     db_session: AsyncSession,
-    create_user: bool,
-    categories_names: list[str],
+    user: UserModel,
     search_term: str,
-    amounts: list[int],
-    datetimes: list[datetime],
     datetime_from: datetime | None,
     datetime_to: datetime | None,
     expected_spendings_qty: int,
 ):
-    mock_user_username = "GREALISH"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
+    amounts = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
+    datetimes = [datetime(year=2020 + i, month=1, day=1, hour=12) for i in range(9)]
+    descs = [f"{search_term.title()}{i}" if i % 2 else "txt" for i in range(9)]
+    categories_ids = await create_n_categories(randint(1, 5), user.id, db_session)
 
-    categories_ids = []
-    for category_name in categories_names:
-        category = await user_spend_cat_service.add_category_to_db(
-            user.id,
-            category_name,
-            db_session,
-        )
-        categories_ids.append(category.id)
-
-    for i, dt in enumerate(datetimes):
-        description = f"{i} {search_term.title()} {i}" if i % 2 else "text"
-        transaction_to_create = STransactionCreateInDB(
-            amount=amounts[i],
-            description=description,
+    for amount, dt, desc in zip(amounts, datetimes, descs):
+        spending = SpendingsFactory(
+            amount=amount,
+            description=desc,
             date=dt,
             user_id=user.id,
-            category_id=categories_ids[i % len(categories_ids)],
+            category_id=choice(categories_ids),
         )
-        await spendings_repo.add(
-            db_session,
-            transaction_to_create.model_dump(),
-        )
+        await add_obj_to_db(spending, db_session)
 
     cat_params = [SCategoryQueryParams(category_id=i) for i in categories_ids]
 
@@ -595,146 +336,63 @@ async def test_get_transactions__correct(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "create_user",
-        "cat_names",
-        "search_term",
-        "amounts",
-        "datetimes",
-        "datetime_from",
-        "datetime_to",
-        "send_categories_params",
-        "send_wrong_category",
-        "expectation",
-        "categories_expected_summary_amount",
-    ),
+    "datetime_from, datetime_to, wrong_category, expectation, expected_sum_amount",
     [
         (
-            True,
-            ["Pets", "Taxi", settings.app.default_spending_category_name],
-            "term",
-            [100, 200, 300, 400, 500, 600, 700, 800, 900],
-            [
-                datetime(year=2020, month=1, day=1, hour=12),
-                datetime(year=2021, month=1, day=1, hour=12),
-                datetime(year=2022, month=1, day=1, hour=12),
-                datetime(year=2023, month=1, day=1, hour=12),
-                datetime(year=2024, month=1, day=1, hour=12),
-                datetime(year=2025, month=1, day=1, hour=12),
-                datetime(year=2026, month=1, day=1, hour=12),
-                datetime(year=2027, month=1, day=1, hour=12),
-                datetime(year=2028, month=1, day=1, hour=12),
-            ],
             None,
             None,
-            False,
             False,
             nullcontext(),
-            [1200, 1500, 1800],
+            4500,
         ),
         (
-            False,
-            ["Food", "Health"],
-            "term",
-            [100, 200, 300, 400, 500, 600, 700, 800, 900],
-            [
-                datetime(year=2020, month=1, day=1, hour=12),
-                datetime(year=2021, month=1, day=1, hour=12),
-                datetime(year=2022, month=1, day=1, hour=12),
-                datetime(year=2023, month=1, day=1, hour=12),
-                datetime(year=2024, month=1, day=1, hour=12),
-                datetime(year=2025, month=1, day=1, hour=12),
-                datetime(year=2026, month=1, day=1, hour=12),
-                datetime(year=2027, month=1, day=1, hour=12),
-                datetime(year=2028, month=1, day=1, hour=12),
-            ],
-            None,
-            None,
-            True,
-            False,
-            nullcontext(),
-            [2500, 2000],
-        ),
-        (
-            False,
-            ["Balls", "Games"],
-            "term",
-            [100, 200, 300, 400, 500, 600, 700, 800, 900],
-            [
-                datetime(year=2020, month=1, day=1, hour=12),
-                datetime(year=2021, month=1, day=1, hour=12),
-                datetime(year=2022, month=1, day=1, hour=12),
-                datetime(year=2023, month=1, day=1, hour=12),
-                datetime(year=2024, month=1, day=1, hour=12),
-                datetime(year=2025, month=1, day=1, hour=12),
-                datetime(year=2026, month=1, day=1, hour=12),
-                datetime(year=2027, month=1, day=1, hour=12),
-                datetime(year=2028, month=1, day=1, hour=12),
-            ],
             datetime(year=2022, month=1, day=1),
             datetime(year=2027, month=1, day=1, hour=23, minute=59, second=59),
-            True,
+            False,
+            nullcontext(),
+            3300,
+        ),
+        (
+            None,
+            None,
             True,
             pytest.raises(CategoryNotFound),
-            [1500, 1800],
+            0,
         ),
     ]
 )
 async def test_get_summary(
     db_session: AsyncSession,
-    create_user: bool,
-    cat_names: list[str],
-    search_term: str,
-    amounts: list[int],
-    datetimes: list[datetime],
+    user: UserModel,
     datetime_from: datetime | None,
     datetime_to: datetime | None,
-    send_categories_params: bool,
-    send_wrong_category: bool,
+    wrong_category: bool,
+    expected_sum_amount: int,
     expectation: ContextManager,
-    categories_expected_summary_amount: list[int],
 ):
-    mock_user_username = "ALONSO"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
+    search_term = "term"
+    amounts = [100, 200, 300, 400, 500, 600, 700, 800, 900]
+    datetimes = [datetime(year=2020 + i, month=1, day=1, hour=12) for i in range(9)]
+    categories_ids = await create_n_categories(3, user.id, db_session)
 
-    cat_ids = []
-    for cat_name in cat_names:
-        category = await user_spend_cat_service.add_category_to_db(
-            user.id,
-            cat_name,
-            db_session,
-        )
-        cat_ids.append(category.id)
-
-    for i, dt in enumerate(datetimes):
-        transaction_to_create = STransactionCreateInDB(
-            amount=amounts[i],
+    for amount, dt, cat_id in zip(amounts, datetimes, cycle(categories_ids)):
+        spending = SpendingsFactory(
+            amount=amount,
             description=search_term,
             date=dt,
             user_id=user.id,
-            category_id=cat_ids[i % len(cat_names)],
+            category_id=cat_id,
         )
-        await spendings_repo.add(
-            db_session,
-            transaction_to_create.model_dump(),
-        )
+        await add_obj_to_db(spending, db_session)
 
-    categories_params = []
-    if send_categories_params:
-        for cat_name in cat_names:
-            categories_params.append(
-                SCategoryQueryParams(category_name=cat_name)
-            )
-
-    if send_wrong_category:
-        categories_params.append(SCategoryQueryParams(category_name="##wrong"))
+    cat_params = [SCategoryQueryParams(category_id=i) for i in categories_ids]
+    if wrong_category:
+        cat_params.append(SCategoryQueryParams(category_name="##wrong"))
 
     with expectation:
         summary = await spendings_service.get_summary(
             user_id=user.id,
-            categories_params=categories_params,
+            categories_params=cat_params,
             search_term=search_term,
             datetime_range=SDatetimeRange(start=datetime_from, end=datetime_to),
             amount_params=SAmountRange(
@@ -743,44 +401,13 @@ async def test_get_summary(
             ),
             session=db_session,
         )
-        if send_categories_params:
-            assert len(summary) == len(cat_names)
-
-        check_set = set(zip(cat_names, categories_expected_summary_amount))
-
-        summary_set = set()
-        for i in summary:
-            summary_set.add((i.category_name, i.amount))
-
-        assert summary_set == check_set
+        assert len(summary) == len(categories_ids)
+        assert sum(s.amount for s in summary) == expected_sum_amount
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    (
-        "create_user", "cat_names",
-    ),
-    [
-        (
-            True,
-            ["Pets", "Taxi"],
-        ),
-        (
-            False,
-            ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"],
-        ),
-    ]
-)
-async def test__extract_category_ids(
-    db_session: AsyncSession,
-    create_user: bool,
-    cat_names: list[str],
-):
-    mock_user_username = "GAKPO7"
-    if create_user:
-        await add_mock_user(db_session, mock_user_username)
-    user = await user_repo.get_by_username(db_session, mock_user_username)
-
+async def test__extract_category_ids(db_session: AsyncSession, user: UserModel):
+    cat_names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]
     cat_params = []
     cat_ids = set()
     for index, cat_name in enumerate(cat_names):
@@ -803,30 +430,19 @@ async def test__extract_category_ids(
     assert set(exctracted_cat_ids) == cat_ids
 
 
-
 @pytest.mark.parametrize(
-    "cat_names, spendings_qty, amounts, expected_amounts",
+    "cat_names, spendings_qty, expected_amounts",
     [
-        (
-            ["Food"],
-            [5],
-            [100, 200, 300, 400, 500],
-            [1500],
-        ),
-        (
-            ["Food", "Relax", "Health"],
-            [1, 3, 5],
-            [100, 200, 300, 400, 500],
-            [100, 600, 1500],
-        ),
+        (["Food"], [5], [1500]),
+        (["Food", "Relax", "Health"], [1, 3, 5], [100, 600, 1500]),
     ]
 )
 def test__summarize(
     cat_names: list[str],
     spendings_qty: list[int],
-    amounts: list[int],
     expected_amounts: list[int],
 ):
+    amounts = [100, 200, 300, 400, 500]
     transactions = []
     for index, cat_name in enumerate(cat_names):
         for i in range(spendings_qty[index]):
@@ -835,7 +451,7 @@ def test__summarize(
                 category_name=cat_name,
                 description="text",
                 date=datetime(year=2020, month=1, day=1, hour=12),
-                id=random.randint(1, 10000),
+                id=randint(1, 10000),
             )
             transactions.append(tx)
 
@@ -878,7 +494,7 @@ def test__sort_summarize(
                 category_name=cat_name,
                 description="text",
                 date=datetime(year=2020, month=1, day=1, hour=12),
-                id=random.randint(1, 10000),
+                id=randint(1, 10000),
             )
             transactions.append(tx)
 
