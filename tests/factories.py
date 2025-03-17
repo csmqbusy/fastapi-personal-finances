@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 import factory
 from factory import LazyFunction
@@ -15,6 +15,10 @@ from app.schemas.saving_goals_schemas import (
     SSavingGoalUpdatePartial,
 )
 from app.schemas.transaction_category_schemas import STransactionCategoryUpdate
+from app.schemas.transactions_schemas import (
+    STransactionCreate,
+    STransactionUpdatePartial,
+)
 from app.services.auth_service import hash_password
 
 
@@ -94,3 +98,31 @@ class SpendingsFactory(factory.Factory):
     )
     user_id = None
     category_id = None
+
+
+class STransactionCreateFactory(factory.Factory):
+    class Meta:
+        model = STransactionCreate
+
+    amount = LazyFunction(lambda: fake.pyint(min_value=0, max_value=10000))
+    description = LazyFunction(lambda: fake.text(max_nb_chars=30))
+    date = LazyFunction(
+        lambda: fake.date_time_between_dates(
+            date(2020, 1, 1), date(2028, 12, 31)
+        )
+    )
+    category_name: str | None = None
+
+
+class STransactionUpdateFactory(factory.Factory):
+    class Meta:
+        model = STransactionUpdatePartial
+
+    amount: int | None = LazyFunction(lambda: fake.pyint(min_value=0, max_value=10000))
+    description: str | None = LazyFunction(lambda: fake.text(max_nb_chars=30))
+    date: datetime | None = LazyFunction(
+        lambda: fake.date_time_between_dates(
+            date(2020, 1, 1), date(2028, 12, 31)
+        )
+    )
+    category_name: str | None = None
