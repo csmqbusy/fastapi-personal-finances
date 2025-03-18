@@ -128,22 +128,10 @@ class ModelForTest(BaseModel):
 @pytest.mark.parametrize(
     "pydantic_model, objects_qty",
     [
-        (
-            ModelForTest,
-            10,
-        ),
-        (
-            ModelForTest,
-            500,
-        ),
-        (
-            ModelForTest,
-            10000,
-        ),
-        (
-            ModelForTest,
-            0,
-        ),
+        (ModelForTest, 10),
+        (ModelForTest, 500),
+        (ModelForTest, 10000),
+        (ModelForTest, 0),
     ]
 )
 def test_make_csv_from_pydantic_models(
@@ -167,18 +155,9 @@ def test_make_csv_from_pydantic_models(
 @pytest.mark.parametrize(
     "prefix, filetype",
     [
-        (
-            "prefix",
-            "csv",
-        ),
-        (
-            "p",
-            "anyfiletype",
-        ),
-        (
-            "",
-            "py",
-        ),
+        ("prefix", "csv"),
+        ("p", "anyfiletype"),
+        ("", "py"),
     ]
 )
 def test_get_filename_with_utc_datetime(

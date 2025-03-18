@@ -89,7 +89,7 @@ async def add_obj_to_db_all(
 ) -> None:
     for obj in objects:
         db_session.add(obj)
-        await db_session.commit()
+    await db_session.commit()
 
 
 async def create_batch(
@@ -101,13 +101,15 @@ async def create_batch(
     """
     Creates a batch of objects of the transferred factory in the database.
     """
+    objects = []
     for _ in range(qty):
         obj = factory_()
         if factory_params:
             for param in factory_params:
                 setattr(obj, param, factory_params[param])
+        objects.append(obj)
 
-        await add_obj_to_db(obj, db_session)
+        await add_obj_to_db_all(objects, db_session)
 
 
 async def auth_another_user(

@@ -9,6 +9,7 @@ from app.db.dependencies import database_manager
 from app.main import main_app
 from app.models import Base, UserModel
 from app.schemas.saving_goals_schemas import SSavingGoalUpdatePartial
+from app.services import user_spend_cat_service
 from tests.factories import (
     UserFactory,
     SavingGoalUpdateFactory,
@@ -54,7 +55,12 @@ async def user(db_session: AsyncSession) -> UserModel:
 
 
 @pytest.fixture
-async def auth_user(client: AsyncClient, user: UserModel) -> UserModel:
+async def auth_user(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    user: UserModel
+) -> UserModel:
+    await user_spend_cat_service.add_user_default_category(user.id, db_session)
     await client.post(
         url=f"{settings.api.prefix_v1}/sign_in/",
         data={

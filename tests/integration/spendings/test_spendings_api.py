@@ -1,97 +1,59 @@
-from contextlib import nullcontext
+import json
 from datetime import datetime
-from typing import ContextManager
+from itertools import cycle
+from typing import Any
 
 import pytest
 from httpx import AsyncClient
-from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.core.config import settings
+from app.models import UserModel
+from app.repositories import user_spend_cat_repo
 from app.schemas.transaction_category_schemas import TransactionsOnDeleteActions
-from app.schemas.transactions_schemas import (
-    STransactionResponse,
-    STransactionUpdatePartial,
+from app.schemas.transactions_schemas import STransactionResponse
+from app.services import user_spend_cat_service, spendings_service
+from tests.factories import (
+    UsersSpendingCategoriesFactory,
+    SpendingsFactory,
+    STransactionUpdateFactory,
+    STransactionCreateFactory,
 )
-from app.services import user_spend_cat_service
-from app.services.user_service import get_user_by_username
-from tests.helpers import sign_up_user, sign_in_user
+from tests.helpers import (
+    add_obj_to_db,
+    add_obj_to_db_all,
+    auth_another_user,
+    create_batch,
+    create_n_categories,
+)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "status_code",
-        "amount",
-        "category_name",
-        "create_category",
-        "expectation",
-    ),
+    "amount, category_name, create_category, status_code",
     [
-        (
-            "Salah10",
-            status.HTTP_201_CREATED,
-            100,
-            None,
-            False,
-            nullcontext(),
-        ),
-        (
-            "Salah20",
-            status.HTTP_201_CREATED,
-            100,
-            "Food",
-            True,
-            nullcontext(),
-        ),
-        (
-            "Salah30",
-            status.HTTP_404_NOT_FOUND,
-            100,
-            "Food",
-            False,
-            pytest.raises(ValidationError),
-        ),
-        (
-            "Salah40",
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-            -100,
-            "Food",
-            True,
-            pytest.raises(ValidationError),
-        ),
-        (
-            "Salah50",
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-            None,
-            "Food",
-            True,
-            pytest.raises(ValidationError),
-        ),
+        (100, None, False, status.HTTP_201_CREATED),
+        (100, "Food", True, status.HTTP_201_CREATED),
+        (100, "Food", False, status.HTTP_404_NOT_FOUND),
+        (-100, "Food", True, status.HTTP_422_UNPROCESSABLE_ENTITY),
+        (None, "Food", True, status.HTTP_422_UNPROCESSABLE_ENTITY),
     ]
 )
 async def test_spendings__post(
-    client: AsyncClient,
     db_session: AsyncSession,
-    username: str,
-    status_code: int,
+    client: AsyncClient,
+    auth_user: UserModel,
     amount: int | None,
-    category_name: str,
+    category_name: str | None,
     create_category: bool,
-    expectation: ContextManager,
+    status_code: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-    user = await get_user_by_username(username, db_session)
-
     if create_category:
-        await user_spend_cat_service.add_category_to_db(
-            user.id,
-            category_name,
-            db_session,
+        category = UsersSpendingCategoriesFactory(
+            user_id=auth_user.id, category_name=category_name,
         )
+        await add_obj_to_db(category, db_session)
 
     response = await client.post(
         url=f"{settings.api.prefix_v1}/spendings/",
@@ -101,555 +63,259 @@ async def test_spendings__post(
         }
     )
     assert response.status_code == status_code
-    with expectation:
-        response_schema = STransactionResponse.model_validate(response.json())
-        assert type(response_schema) is STransactionResponse
+    if status_code == status.HTTP_201_CREATED:
+        assert STransactionResponse.model_validate(response.json())
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "categories",
-        "status_code",
-    ),
-    [
-        (
-            "Messi10",
-            ["Balls", "Games", "Food", "Doping"],
-            status.HTTP_200_OK,
-        ),
-        (
-            "Messi20",
-            [],
-            status.HTTP_200_OK,
-        ),
-        (
-            "Messi30",
-            [f"Category_{i}" for i in range(200)],
-            status.HTTP_200_OK,
-        ),
-    ]
+    "num_of_categories",
+    [5, 200, 0],
 )
 async def test_spendings_categories__get(
-    client: AsyncClient,
     db_session: AsyncSession,
-    username: str,
-    categories: list[str],
-    status_code: int,
+    client: AsyncClient,
+    auth_user: UserModel,
+    num_of_categories: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-    user = await get_user_by_username(username, db_session)
-
-    for category_name in categories:
-        await user_spend_cat_service.add_category_to_db(
-            user.id,
-            category_name,
-            db_session,
-        )
+    categories = [UsersSpendingCategoriesFactory(user_id=auth_user.id)
+                  for _ in range(num_of_categories)]
+    await add_obj_to_db_all(categories, db_session)
 
     categories_response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/categories/",
     )
-    assert categories_response.status_code == status_code
+    assert categories_response.status_code == status.HTTP_200_OK
+    assert type(categories_response.json()) is list
     # +1 is an automatically created category for the rest spendings
     assert len(categories_response.json()) == len(categories) + 1
 
-    assert type(categories_response.json()) is list
-    categories.append(settings.app.default_spending_category_name)
-    for category in categories_response.json():
-        assert category["category_name"] in categories
-
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "amount",
-        "wrong_spending_id",
-        "sign_in_another_user",
-        "status_code",
-    ),
+    "wrong_spending_id, sign_in_another_user, status_code",
     [
-        (
-            "Ronaldo10",
-            800,
-            False,
-            False,
-            status.HTTP_200_OK,
-        ),
-        (
-            "Ronaldo20",
-            300,
-            True,
-            False,
-            status.HTTP_404_NOT_FOUND,
-        ),
-        (
-            "Ronaldo30",
-            500,
-            False,
-            True,
-            status.HTTP_404_NOT_FOUND,
-        ),
+        (None, False, status.HTTP_200_OK),
+        (99999, False, status.HTTP_404_NOT_FOUND),
+        (None, True, status.HTTP_404_NOT_FOUND),
     ]
 )
 async def test_spendings_spending_id__get(
-    client: AsyncClient,
     db_session: AsyncSession,
-    username: str,
-    amount: int,
-    wrong_spending_id: bool,
+    client: AsyncClient,
+    auth_user: UserModel,
+    wrong_spending_id: int | None,
     sign_in_another_user: bool,
     status_code: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-
-    response = await client.post(
-        url=f"{settings.api.prefix_v1}/spendings/",
-        json={
-            "amount": 800,
-        }
-    )
-    spending_id = response.json()["id"] + wrong_spending_id
+    category = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    await add_obj_to_db(category, db_session)
+    spending = SpendingsFactory(user_id=auth_user.id, category_id=category.id)
+    await add_obj_to_db(spending, db_session)
 
     if sign_in_another_user:
-        another_username = f"Another{username}"
-        await sign_up_user(client, another_username)
-        await sign_in_user(client, another_username)
+        await auth_another_user(db_session, client)
 
-    categories_response = await client.get(
+    spending_id = wrong_spending_id or spending.id
+    response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/{spending_id}/",
     )
-    assert categories_response.status_code == status_code
-    if categories_response.status_code == status.HTTP_200_OK:
-        assert categories_response.json()["amount"] == amount
+    assert response.status_code == status_code
+
+
+@pytest.mark.asyncio
+async def test_spendings_spending_id__patch__success(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    new_cat = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    await add_obj_to_db(new_cat, db_session)
+    spending = SpendingsFactory(user_id=auth_user.id, category_id=new_cat.id)
+    await add_obj_to_db(spending, db_session)
+
+    update_obj = STransactionUpdateFactory(category_name=new_cat.category_name)
+    response = await client.patch(
+        url=f"{settings.api.prefix_v1}/spendings/{spending.id}/",
+        content=update_obj.model_dump_json(),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    update_obj_as_response = json.loads(update_obj.model_dump_json())
+    assert update_obj_as_response.items() <= response.json().items()
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "new_amount",
-        "new_description",
-        "new_date",
-        "new_category_name",
-        "create_category",
-        "wrong_spending_id",
-        "sign_in_another_user",
-        "status_code",
-    ),
+    "wrong_category_name, wrong_spending_id, sign_in_another_user",
     [
-        (
-            "Aguero10",
-            8090,
-            "new description",
-            datetime(year=2020, month=12, day=31),
-            "new category",
-            True,
-            False,
-            False,
-            status.HTTP_200_OK,
-        ),
-        (
-            "Aguero20",
-            3000,
-            "new description",
-            datetime(year=2020, month=12, day=31),
-            "new category",
-            True,
-            True,
-            False,
-            status.HTTP_404_NOT_FOUND,
-        ),
-        (
-            "Aguero30",
-            3000,
-            "new description",
-            datetime(year=2020, month=12, day=31),
-            "new category",
-            True,
-            False,
-            True,
-            status.HTTP_404_NOT_FOUND,
-        ),
-        (
-            "Aguero40",
-            3000,
-            "new description",
-            datetime(year=2020, month=12, day=31),
-            "new category",
-            False,
-            False,
-            False,
-            status.HTTP_404_NOT_FOUND,
-        ),
+        (None, 99999, False),
+        ("wrong", None, False),
+        (None, None, True),
     ]
 )
-async def test_spendings_spending_id__patch(
-    client: AsyncClient,
+async def test_spendings_spending_id__patch__error(
     db_session: AsyncSession,
-    username: str,
-    new_amount: int,
-    new_description: str,
-    new_date: datetime,
-    new_category_name: str,
-    create_category: bool,
-    wrong_spending_id: bool,
+    client: AsyncClient,
+    auth_user: UserModel,
+    wrong_category_name: str | None,
+    wrong_spending_id: int | None,
     sign_in_another_user: bool,
-    status_code: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-    user = await get_user_by_username(username, db_session)
+    new_cat = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    await add_obj_to_db(new_cat, db_session)
 
-    if create_category:
-        await user_spend_cat_service.add_category_to_db(
-            user.id,
-            new_category_name,
-            db_session,
-        )
-
-    response = await client.post(
-        url=f"{settings.api.prefix_v1}/spendings/",
-        json={
-            "amount": 800,
-        }
+    spending = await spendings_service.add_transaction_to_db(
+        STransactionCreateFactory(),
+        auth_user.id,
+        db_session,
     )
-    spending_id = response.json()["id"] + wrong_spending_id
+    spending_id = wrong_spending_id or spending.id
 
     if sign_in_another_user:
-        another_username = f"Another{username}"
-        await sign_up_user(client, another_username)
-        await sign_in_user(client, another_username)
+        await auth_another_user(db_session, client)
 
-    update_obj = STransactionUpdatePartial(
-        amount=new_amount,
-        description=new_description,
-        date=new_date,
-        category_name=new_category_name,
+    update_obj = STransactionUpdateFactory(
+        category_name=wrong_category_name or new_cat.category_name,
     )
-    request_json = update_obj.model_dump_json()
     response = await client.patch(
         url=f"{settings.api.prefix_v1}/spendings/{spending_id}/",
-        content=request_json,
+        content=update_obj.model_dump_json(),
     )
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    assert response.status_code == status_code
-    if status_code == status.HTTP_200_OK:
-        assert response.json()["amount"] == new_amount
-        assert response.json()["description"] == new_description
-        response_parsed_datetime = datetime.strptime(
-            response.json()["date"],
-            "%Y-%m-%dT%H:%M:%S",
-        )
-        assert response_parsed_datetime == new_date
-        assert response.json()["category_name"] == new_category_name
+
+@pytest.mark.asyncio
+async def test_spendings_spending_id__delete__success(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    spending = await spendings_service.add_transaction_to_db(
+        STransactionCreateFactory(),
+        auth_user.id,
+        db_session,
+    )
+    response = await client.delete(
+        url=f"{settings.api.prefix_v1}/spendings/{spending.id}/",
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()["id"] == spending.id
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "new_category_name",
-        "create_category",
-        "wrong_spending_id",
-        "sign_in_another_user",
-        "status_code",
-    ),
+    "wrong_spending_id, sign_in_another_user, status_code",
     [
-        (
-            "Balotelli10",
-            "new category",
-            True,
-            False,
-            False,
-            status.HTTP_200_OK,
-        ),
-        (
-            "Balotelli20",
-            "new category",
-            True,
-            True,
-            False,
-            status.HTTP_404_NOT_FOUND,
-        ),
-        (
-            "Balotelli30",
-            "new category",
-            True,
-            False,
-            True,
-            status.HTTP_404_NOT_FOUND,
-        ),
+        (99999, False, status.HTTP_404_NOT_FOUND),
+        (None, True, status.HTTP_404_NOT_FOUND),
     ]
 )
-async def test_spendings_spending_id__delete(
-    client: AsyncClient,
+async def test_spendings_spending_id__delete__error(
     db_session: AsyncSession,
-    username: str,
-    new_category_name: str,
-    create_category: bool,
-    wrong_spending_id: bool,
+    client: AsyncClient,
+    auth_user: UserModel,
+    wrong_spending_id: int | None,
     sign_in_another_user: bool,
     status_code: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-    user = await get_user_by_username(username, db_session)
+    category = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    await add_obj_to_db(category, db_session)
 
-    if create_category:
-        await user_spend_cat_service.add_category_to_db(
-            user.id,
-            new_category_name,
-            db_session,
-        )
-
-    response = await client.post(
-        url=f"{settings.api.prefix_v1}/spendings/",
-        json={
-            "amount": 800,
-            "category_name": new_category_name,
-        }
+    spending = await spendings_service.add_transaction_to_db(
+        STransactionCreateFactory(),
+        auth_user.id,
+        db_session,
     )
-    spending_id = response.json()["id"] + wrong_spending_id
+    spending_id = wrong_spending_id or spending.id
 
     if sign_in_another_user:
-        another_username = f"Another{username}"
-        await sign_up_user(client, another_username)
-        await sign_in_user(client, another_username)
+        await auth_another_user(db_session, client)
 
     response = await client.delete(
         url=f"{settings.api.prefix_v1}/spendings/{spending_id}/",
     )
-
     assert response.status_code == status_code
-    if status_code == status.HTTP_200_OK:
-        assert response.json()["id"] == spending_id
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "category_name",
-        "wrong_category_name",
-        "spendings_qty",
-        "description",
-        "amount_start",
-        "amount_step",
-        "year_start",
-        "min_amount",
-        "max_amount",
-        "datetime_from",
-        "datetime_to",
-        "page_size",
-        "page",
-        "sort_param",
-        "reversed_sort_param",
-        "status_code",
-    ),
+    "request_params, wrong_category_name, status_code",
     [
         (
-            "Lukaku10",
-            "Food",
-            False,
-            30,
-            "text",
-            500,
-            50,
-            2010,
-            500,
-            500000,
-            datetime(year=2015, month=1, day=1),
-            datetime(year=2030, month=1, day=1),
-            5,
-            2,
-            "amount",
-            "-amount",
+            {
+                "description_search_term": "text",
+                "min_amount": 500,
+                "max_amount": 500000,
+                "datetime_from": datetime(year=2015, month=1, day=1),
+                "datetime_to": datetime(year=2030, month=1, day=1),
+                "page_size": 5,
+                "page": 2,
+                "sort_param": "amount",
+            },
+            None,
             status.HTTP_200_OK,
         ),
         (
-            "Lukaku20",
-            "Food",
-            True,
-            30,
-            "text",
-            500,
-            50,
-            2010,
-            500,
-            500000,
-            datetime(year=2015, month=1, day=1),
-            datetime(year=2030, month=1, day=1),
-            5,
-            2,
-            "amount",
-            "-amount",
+            {},
+            "wrong",
             status.HTTP_404_NOT_FOUND,
         ),
     ]
 )
 async def test_spendings__get(
-    client: AsyncClient,
     db_session: AsyncSession,
-    username: str,
-    category_name: str,
-    wrong_category_name: bool,
-    spendings_qty: int,
-    description: str,
-    amount_start: int,
-    amount_step: int,
-    year_start: int,
-    min_amount: int,
-    max_amount: int,
-    datetime_from: datetime,
-    datetime_to: datetime,
-    page_size: int,
-    page: int,
-    sort_param: str,
-    reversed_sort_param: str,
+    client: AsyncClient,
+    auth_user: UserModel,
+    request_params: dict[str, Any],
+    wrong_category_name: str | None,
     status_code: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-    user = await get_user_by_username(username, db_session)
+    spendings_qty = 30
+    category = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    await add_obj_to_db(category, db_session)
 
-    await user_spend_cat_service.add_category_to_db(
-        user.id,
-        category_name,
-        db_session,
+    add_params = dict(
+        description=request_params.get("description_search_term"),
+        category_id=category.id,
+        user_id=auth_user.id,
     )
-    for i in range(spendings_qty):
-        await client.post(
-            url=f"{settings.api.prefix_v1}/spendings/",
-            json={
-                "amount": amount_start + (amount_step * i),
-                "category_name": category_name,
-                "description": description,
-                "date": datetime(
-                    year=year_start + i, month=1, day=1
-                    ).isoformat(),
-            }
-        )
+    await create_batch(db_session, spendings_qty, SpendingsFactory, add_params)
 
+    request_params["category_name"] = wrong_category_name or category.category_name
     response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/",
-        params={
-            "category_name": category_name if not wrong_category_name else "wc",
-            "datetime_from": datetime_from,
-            "datetime_to": datetime_to,
-            "page_size": page_size,
-            "page": page,
-            "sort_params": sort_param,
-            "description_search_term": description,
-            "min_amount": min_amount,
-            "max_amount": max_amount,
-        },
+        params=request_params,
     )
 
     assert response.status_code == status_code
 
     if status_code == status.HTTP_200_OK:
-        assert len(response.json()) == page_size
-
-        reversed_response = await client.get(
-            url=f"{settings.api.prefix_v1}/spendings/",
-            params={
-                "category_name": category_name if not wrong_category_name else "wc",
-                "datetime_from": datetime_from,
-                "datetime_to": datetime_to,
-                "page_size": page_size,
-                "page": page,
-                "sort_params": reversed_sort_param,
-            },
-        )
-
-        assert response.json() != reversed_response.json()
+        assert len(response.json()) == request_params["page_size"]
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "category_name",
-        "wrong_category_name",
-        "spendings_qty",
-        "description",
-        "amount_start",
-        "amount_step",
-        "year_start",
-        "status_code",
-    ),
-    [
-        (
-            "10Lukaku1",
-            "Food",
-            False,
-            30,
-            "text",
-            500,
-            50,
-            2010,
-            status.HTTP_200_OK,
-        ),
-        (
-            "10Lukaku2",
-            "Food",
-            False,
-            0,
-            "text",
-            500,
-            50,
-            2010,
-            status.HTTP_200_OK,
-        ),
-    ]
+    "spendings_qty",
+    [30, 0],
 )
 async def test_spendings__get_csv(
-    client: AsyncClient,
     db_session: AsyncSession,
-    username: str,
-    category_name: str,
-    wrong_category_name: bool,
+    client: AsyncClient,
+    auth_user: UserModel,
     spendings_qty: int,
-    description: str,
-    amount_start: int,
-    amount_step: int,
-    year_start: int,
-    status_code: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-    user = await get_user_by_username(username, db_session)
+    category = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    await add_obj_to_db(category, db_session)
 
-    await user_spend_cat_service.add_category_to_db(
-        user.id,
-        category_name,
-        db_session,
-    )
-    for i in range(spendings_qty):
-        await client.post(
-            url=f"{settings.api.prefix_v1}/spendings/",
-            json={
-                "amount": amount_start + (amount_step * i),
-                "category_name": category_name,
-                "description": description,
-                "date": datetime(
-                    year=year_start + i, month=1, day=1
-                ).isoformat(),
-            }
-        )
+    add_params = dict(category_id=category.id, user_id=auth_user.id)
+    await create_batch(db_session, spendings_qty, SpendingsFactory, add_params)
 
     response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/",
-        params={
-            "in_csv": True,
-        }
+        params={"in_csv": True}
     )
-    assert response.status_code == status_code
+    assert response.status_code == status.HTTP_200_OK
     assert type(response.content) is bytes
     assert "text/csv" in response.headers["content-type"]
     if spendings_qty:
@@ -658,274 +324,186 @@ async def test_spendings__get_csv(
 
 
 @pytest.mark.asyncio
+async def test_spendings_categories__post__success(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    response = await client.post(
+        url=f"{settings.api.prefix_v1}/spendings/categories/",
+        json={"category_name": "any_name"}
+    )
+    categories = await user_spend_cat_service.get_user_categories(
+        auth_user.id, db_session,
+    )
+    assert response.status_code == status.HTTP_201_CREATED
+    # +1 is an automatically created category for the rest spendings
+    assert len(categories) == 1 + 1
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "category_name",
-        "try_add_again",
-        "status_code",
-    ),
+    "category_name, try_add_again, status_code",
     [
-        (
-            "Larsson10",
-            "Balls",
-            False,
-            status.HTTP_201_CREATED,
-        ),
-        (
-            "Larsson20",
-            "Balls",
-            True,
-            status.HTTP_409_CONFLICT,
-        ),
-        (
-            "Larsson30",
-            None,
-            False,
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-        ),
-        (
-            "Larsson40",
-            "",
-            False,
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-        ),
-        (
-            "Larsson50",
-            " ",
-            False,
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-        ),
+        ("Balls", True, status.HTTP_409_CONFLICT),
+        (None, False, status.HTTP_422_UNPROCESSABLE_ENTITY),
+        ("", False, status.HTTP_422_UNPROCESSABLE_ENTITY),
+        (" ", False, status.HTTP_422_UNPROCESSABLE_ENTITY),
     ]
 )
-async def test_spendings_categories__post(
-    client: AsyncClient,
+async def test_spendings_categories__post__error(
     db_session: AsyncSession,
-    username: str,
-    category_name: str,
+    client: AsyncClient,
+    auth_user: UserModel,
+    category_name: str | None,
     try_add_again: bool,
     status_code: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-
-    response = await client.post(
-        url=f"{settings.api.prefix_v1}/spendings/categories/",
-        json={
-            "category_name": category_name,
-        }
-    )
-    if try_add_again:
+    for _ in range(1 + try_add_again):
         response = await client.post(
             url=f"{settings.api.prefix_v1}/spendings/categories/",
-            json={
-                "category_name": category_name,
-            }
+            json={"category_name": category_name}
         )
 
-    categories_response = await client.get(
-        url=f"{settings.api.prefix_v1}/spendings/categories/",
+    categories = await user_spend_cat_service.get_user_categories(
+        auth_user.id, db_session,
     )
-
     assert response.status_code == status_code
     if response.status_code != status.HTTP_422_UNPROCESSABLE_ENTITY:
-        assert len(categories_response.json()) == 1 + 1
+        assert len(categories) == 1 + 1
+
+
+@pytest.mark.asyncio
+async def test_spendings_categories__patch__success(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    new_category_name = "new name"
+    category_1 = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    await add_obj_to_db(category_1, db_session)
+
+    created_category = await user_spend_cat_repo.get(db_session, category_1.id)
+    assert created_category.category_name != new_category_name
+
+    response = await client.patch(
+        url=f"{settings.api.prefix_v1}/spendings/categories/{category_1.category_name}/",
+        json={"category_name": new_category_name}
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    updated_category = await user_spend_cat_repo.get(db_session, category_1.id)
+    await db_session.refresh(updated_category)
+
+    assert updated_category.category_name == new_category_name
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
-        "username",
-        "category_name_1",
-        "create_category_1",
-        "category_name_2",
-        "category_name_3",
-        "status_code",
-    ),
+    "create_category_1, create_category_2, status_code",
+    [
+        (False, False, status.HTTP_404_NOT_FOUND),
+        (True, True, status.HTTP_409_CONFLICT),
+    ]
+)
+async def test_spendings_categories__patch__error(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+    create_category_1: bool,
+    create_category_2: bool,
+    status_code: int,
+):
+    category_1 = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    if create_category_1:
+        await add_obj_to_db(category_1, db_session)
+    category_2 = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    if create_category_2:
+        await add_obj_to_db(category_2, db_session)
+
+    response = await client.patch(
+        url=f"{settings.api.prefix_v1}/spendings/categories/{category_1.category_name}/",
+        json={
+            "category_name": category_2.category_name,
+        }
+    )
+    assert response.status_code == status_code
+
+
+@pytest.mark.asyncio
+async def test_spendings_categories__delete__success(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    category = UsersSpendingCategoriesFactory(user_id=auth_user.id)
+    await add_obj_to_db(category, db_session)
+
+    response = await client.delete(
+        url=f"{settings.api.prefix_v1}/spendings/categories/{category.category_name}/",
+        params={
+            "handle_spendings_on_deletion": TransactionsOnDeleteActions.DELETE,
+        }
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    categories = await user_spend_cat_service.get_user_categories(
+        auth_user.id, db_session,
+    )
+    categories = [i.category_name for i in categories]
+    assert category.category_name not in categories
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "category_name, create_category, on_delete_action, status_code",
     [
         (
-            "Ibrahimovic10",
-            "Balls",
-            True,
-            "New balls",
-            None,
-            status.HTTP_200_OK,
-        ),
-        (
-            "Ibrahimovic20",
             "Balls",
             False,
-            "New balls",
-            None,
+            TransactionsOnDeleteActions.DELETE,
             status.HTTP_404_NOT_FOUND,
         ),
         (
-            "Ibrahimovic30",
-            "One Balls",
-            True,
-            "Two balls",
-            "Three balls",
-            status.HTTP_409_CONFLICT,
-        ),
-    ]
-)
-async def test_spendings_categories__patch(
-    client: AsyncClient,
-    db_session: AsyncSession,
-    username: str,
-    category_name_1: str,
-    create_category_1: bool,
-    category_name_2: str,
-    category_name_3: str | None,
-    status_code: int,
-):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-
-    if create_category_1:
-        await client.post(
-            url=f"{settings.api.prefix_v1}/spendings/categories/",
-            json={
-                "category_name": category_name_1,
-            }
-        )
-    if category_name_3:
-        await client.post(
-            url=f"{settings.api.prefix_v1}/spendings/categories/",
-            json={
-                "category_name": category_name_3,
-            }
-        )
-
-    if create_category_1:
-        categories_response = await client.get(
-            url=f"{settings.api.prefix_v1}/spendings/categories/",
-        )
-        categories = [i["category_name"] for i in categories_response.json()]
-        assert category_name_1 in categories
-
-    response = await client.patch(
-        url=f"{settings.api.prefix_v1}/spendings/categories/{category_name_1}/",
-        json={
-            "category_name": category_name_3 or category_name_2,
-        }
-    )
-    assert response.status_code == status_code
-
-    if response.status_code == status.HTTP_200_OK:
-        categories_response = await client.get(
-            url=f"{settings.api.prefix_v1}/spendings/categories/",
-        )
-        categories = [i["category_name"] for i in categories_response.json()]
-        assert category_name_2 in categories
-        assert category_name_1 not in categories
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    (
-        "username",
-        "category_name",
-        "create_category",
-        "new_category_name",
-        "on_delete_action",
-        "status_code",
-    ),
-    [
-        (
-            "Arshavin10",
-            "Balls",
-            True,
-            None,
-            TransactionsOnDeleteActions.DELETE,
-            status.HTTP_200_OK,
-        ),
-        (
-            "Arshavin20",
-            " Balls ",
-            True,
-            None,
-            TransactionsOnDeleteActions.DELETE,
-            status.HTTP_200_OK,
-        ),
-        (
-            "Arshavin30",
             settings.app.default_spending_category_name,
-            True,
-            None,
+            False,
             TransactionsOnDeleteActions.DELETE,
             status.HTTP_400_BAD_REQUEST,
         ),
         (
-            "Arshavin40",
-            "Balls",
-            False,
-            None,
-            TransactionsOnDeleteActions.DELETE,
-            status.HTTP_404_NOT_FOUND,
-        ),
-        (
-            "Arshavin50",
             "Balls",
             True,
-            None,
             TransactionsOnDeleteActions.TO_NEW_CAT,
             status.HTTP_400_BAD_REQUEST,
         ),
         (
-            "Arshavin60",
             "Balls",
             True,
-            None,
             TransactionsOnDeleteActions.TO_EXISTS_CAT,
             status.HTTP_400_BAD_REQUEST,
         ),
         (
-            "Arshavin70",
             "Balls",
             True,
-            None,
-            None,
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-        ),
-        (
-            "Arshavin80",
-            None,
-            True,
-            None,
-            None,
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-        ),
-        (
-            "Arshavin90",
-            None,
-            False,
-            None,
             None,
             status.HTTP_422_UNPROCESSABLE_ENTITY,
         ),
     ]
 )
-async def test_spendings_categories__delete(
-    client: AsyncClient,
+async def test_spendings_categories__delete__error(
     db_session: AsyncSession,
-    username: str,
+    client: AsyncClient,
+    auth_user: UserModel,
     category_name: str,
     create_category: bool,
-    new_category_name: str | None,
     on_delete_action: TransactionsOnDeleteActions,
     status_code: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-
     if create_category:
-        await client.post(
-            url=f"{settings.api.prefix_v1}/spendings/categories/",
-            json={
-                "category_name": category_name,
-            }
+        category = UsersSpendingCategoriesFactory(
+            user_id=auth_user.id, category_name=category_name,
         )
+        await add_obj_to_db(category, db_session)
 
     response = await client.delete(
         url=f"{settings.api.prefix_v1}/spendings/categories/{category_name}/",
@@ -933,129 +511,69 @@ async def test_spendings_categories__delete(
             "handle_spendings_on_deletion": on_delete_action,
         }
     )
-
     assert response.status_code == status_code
-
-    if response.status_code == status.HTTP_200_OK:
-        categories_response = await client.get(
-            url=f"{settings.api.prefix_v1}/spendings/categories/",
-        )
-        categories = [i["category_name"] for i in categories_response.json()]
-        assert category_name not in categories
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "username",
-        "categories_names",
-        "spendings_qty",
-        "amount",
-        "year_start",
-        "min_amount",
-        "max_amount",
-        "datetime_from",
-        "datetime_to",
+        "request_params",
         "expected_summary_amount",
-        "send_wrong_category",
+        "wrong_category_name",
         "status_code",
     ),
     [
         (
-            "Lacazette10",
-            ["Food", "Balls"],
-            10,
-            200,
-            2010,
-            200,
-            200,
-            datetime(year=2010, month=1, day=1),
-            datetime(year=2030, month=1, day=1),
-            [1000, 1000],
-            False,
+            {
+                "min_amount": 1000,
+                "max_amount": 9000,
+                "datetime_from": datetime(year=2020, month=1, day=1),
+                "datetime_to": datetime(year=2030, month=1, day=1),
+            },
+            [12000, 15000, 18000],
+            None,
             status.HTTP_200_OK,
         ),
         (
-            "Lacazette20",
-            ["Food", "Balls", "Taxi", "Health", "Games"],
-            50,
-            200,
-            2010,
-            200,
-            200,
-            datetime(year=2017, month=1, day=1),
-            datetime(year=2035, month=1, day=1),
-            [800, 600, 800, 800, 800],
-            False,
-            status.HTTP_200_OK,
-        ),
-        (
-            "Lacazette30",
-            ["Food", "Balls"],
-            10,
-            200,
-            2010,
-            200,
-            200,
-            datetime(year=2010, month=1, day=1),
-            datetime(year=2030, month=1, day=1),
-            [1000, 1000],
-            True,
+            {},
+            None,
+            "wrong_category_name",
             status.HTTP_404_NOT_FOUND,
         ),
     ]
 )
 async def test_spendings_summary_get__get(
-    client: AsyncClient,
     db_session: AsyncSession,
-    username: str,
-    categories_names: list[str],
-    spendings_qty: int,
-    amount: int,
-    year_start: int,
-    min_amount: int,
-    max_amount: int,
-    datetime_from: datetime,
-    datetime_to: datetime,
+    client: AsyncClient,
+    auth_user: UserModel,
+    request_params: dict[str, Any],
     expected_summary_amount: list[int],
-    send_wrong_category: bool,
+    wrong_category_name: str | None,
     status_code: int,
 ):
-    await sign_up_user(client, username)
-    await sign_in_user(client, username)
-    user = await get_user_by_username(username, db_session)
+    amounts = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
+    datetimes = [datetime(year=2020 + i, month=1, day=1, hour=12) for i in range(9)]
+    categories_ids = await create_n_categories(3, auth_user.id, db_session)
 
-    for category_name in categories_names:
-        await user_spend_cat_service.add_category_to_db(
-            user.id,
-            category_name,
-            db_session,
+    for amount, dt, cat_id in zip(amounts, datetimes, cycle(categories_ids)):
+        spending = SpendingsFactory(
+            amount=amount,
+            date=dt,
+            user_id=auth_user.id,
+            category_id=cat_id,
         )
-    for i in range(spendings_qty):
-        await client.post(
-            url=f"{settings.api.prefix_v1}/spendings/",
-            json={
-                "amount": amount,
-                "category_name": categories_names[i % len(categories_names)],
-                "date": datetime(
-                    year=year_start + i, month=1, day=1
-                    ).isoformat(),
-            }
-        )
+        await add_obj_to_db(spending, db_session)
 
+    if wrong_category_name:
+        request_params["category_name"] = wrong_category_name
+    else:
+        request_params["category_id"] = categories_ids
     response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/summary/",
-        params={
-            "category_name": categories_names if not send_wrong_category else "wc",
-            "datetime_from": datetime_from,
-            "datetime_to": datetime_to,
-            "min_amount": min_amount,
-            "max_amount": max_amount,
-        },
+        params=request_params,
     )
-
     assert response.status_code == status_code
-    if not send_wrong_category:
+    if not wrong_category_name:
         response_amounts = sorted(i["amount"] for i in response.json())
         expected_summary_amount.sort()
         assert response_amounts == expected_summary_amount

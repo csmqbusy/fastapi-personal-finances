@@ -94,7 +94,7 @@ class SpendingsFactory(factory.Factory):
     date = LazyFunction(
         lambda: fake.date_time_between_dates(
             date(2020, 1, 1), date(2028, 12, 31)
-        )
+        ).replace(microsecond=0)
     )
     user_id = None
     category_id = None
@@ -109,7 +109,7 @@ class STransactionCreateFactory(factory.Factory):
     date = LazyFunction(
         lambda: fake.date_time_between_dates(
             date(2020, 1, 1), date(2028, 12, 31)
-        )
+        ).replace(microsecond=0)
     )
     category_name: str | None = None
 
@@ -123,6 +123,6 @@ class STransactionUpdateFactory(factory.Factory):
     date: datetime | None = LazyFunction(
         lambda: fake.date_time_between_dates(
             date(2020, 1, 1), date(2028, 12, 31)
-        )
+        ).replace(microsecond=0)
     )
     category_name: str | None = None
