@@ -18,6 +18,7 @@ from app.schemas.transaction_category_schemas import STransactionCategoryUpdate
 from app.schemas.transactions_schemas import (
     STransactionCreate,
     STransactionUpdatePartial,
+    STransactionsSummary,
 )
 from app.services.auth_service import hash_password
 
@@ -126,3 +127,11 @@ class STransactionUpdateFactory(factory.Factory):
         ).replace(microsecond=0)
     )
     category_name: str | None = None
+
+
+class STransactionsSummaryFactory(factory.Factory):
+    class Meta:
+        model = STransactionsSummary
+
+    category_name = LazyFunction(lambda: fake.text(max_nb_chars=10))
+    amount = LazyFunction(lambda: fake.pyint(min_value=1, max_value=10000))

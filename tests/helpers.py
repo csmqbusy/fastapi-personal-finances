@@ -1,18 +1,26 @@
 from random import randint
-from typing import TypeVar, Type, Any
+from typing import TypeVar, Type, Any, Literal
 
 import factory
+from factory.faker import faker
+from factory import LazyFunction
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models import Base, UserModel
-from app.repositories import user_repo, spendings_repo
+from app.repositories import user_repo
 from app.schemas.transaction_category_schemas import STransactionCategoryOut
-from app.schemas.transactions_schemas import STransactionCreateInDB
 from app.schemas.user_schemas import SUserSignUp
 from app.services import user_spend_cat_service
-from tests.factories import UserFactory, UsersSpendingCategoriesFactory
+from tests.factories import (
+    UserFactory,
+    UsersSpendingCategoriesFactory,
+    SpendingsFactory,
+)
+
+
+fake = faker.Faker()
 
 AnySQLAlchemyModel = TypeVar("AnySQLAlchemyModel", bound=Base)
 AnyFactory = TypeVar("AnyFactory", bound=factory.Factory)
@@ -49,33 +57,6 @@ async def add_mock_user(db_session: AsyncSession, username: str) -> None:
     await user_repo.add(db_session, user_schema.model_dump())
 
 
-async def create_spendings(
-    qty: int,
-    user_id: int,
-    category_id: int | None,
-    db_session: AsyncSession,
-):
-    if category_id is None:
-        category = await user_spend_cat_service.get_default_category(
-            user_id,
-            db_session,
-        )
-        category_id = category.id
-
-    for i in range(qty):
-        transaction_to_create = STransactionCreateInDB(
-            amount=1000 + i,
-            description="Some description",
-            date=None,
-            user_id=user_id,
-            category_id=category_id,
-        )
-        await spendings_repo.add(
-            db_session,
-            transaction_to_create.model_dump(),
-        )
-
-
 async def add_obj_to_db(obj: AnySQLAlchemyModel, db_session: AsyncSession):
     db_session.add(obj)
     await db_session.commit()
@@ -109,7 +90,39 @@ async def create_batch(
                 setattr(obj, param, factory_params[param])
         objects.append(obj)
 
-        await add_obj_to_db_all(objects, db_session)
+    await add_obj_to_db_all(objects, db_session)
+
+
+async def create_test_spendings(
+    db_session: AsyncSession,
+    user_id: int,
+    *,
+    spendings_date_range: Literal["this_year", "this_month"] = "this_year",
+    spendings_qty: int = 20,
+    num_of_categories: int = 3,
+):
+    categories_ids = await create_n_categories(
+        num_of_categories, user_id, db_session
+    )
+
+    if spendings_date_range == "this_year":
+        date_range = LazyFunction(
+                lambda: fake.date_time_this_year().replace(microsecond=0)
+            )
+    elif spendings_date_range == "this_month":
+        date_range = LazyFunction(
+            lambda: fake.date_time_this_month().replace(microsecond=0)
+        )
+    else:
+        raise ValueError(f"{spendings_date_range} is not supported")
+
+    for i in range(spendings_qty):
+        spending = SpendingsFactory(
+            date=date_range,
+            user_id=user_id,
+            category_id=categories_ids[i % len(categories_ids)],
+        )
+        await add_obj_to_db(spending, db_session)
 
 
 async def auth_another_user(
