@@ -20,6 +20,9 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         session: AsyncSession,
         transaction_id: int,
     ) -> BaseTranscationsModel | None:
+        """
+        Get transactions with `category` relation.
+        """
         query = (
             select(self.model)
             .filter_by(id=transaction_id)
@@ -89,7 +92,8 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         """
         SELECT SUM(amount) AS amount, category_name, EXTRACT(MONTH FROM date) AS month
         FROM spendings
-        INNER JOIN users_spending_categories ON spendings.category_id = users_spending_categories.id
+        INNER JOIN users_spending_categories
+           ON spendings.category_id = users_spending_categories.id
         WHERE spendings.user_id = {user_id}
           AND EXTRACT(YEAR FROM date) = {year}
         GROUP BY category_name, EXTRACT(MONTH FROM date)
@@ -137,7 +141,8 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         """
         SELECT SUM(amount) AS amount, category_name, EXTRACT(DAY FROM date) AS day
         FROM spendings
-        INNER JOIN users_spending_categories ON spendings.category_id = users_spending_categories.id
+        INNER JOIN users_spending_categories
+           ON spendings.category_id = users_spending_categories.id
         WHERE spendings.user_id=12
           AND EXTRACT(YEAR FROM date)=2025
           AND EXTRACT(MONTH FROM date)=3

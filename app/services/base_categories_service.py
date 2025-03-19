@@ -182,6 +182,10 @@ class BaseCategoriesService:
         new_category_id: int,
         session: AsyncSession,
     ) -> None:
+        """
+        The function changes the value in the `category_id` field
+        for transactions transmitted in the `transactions` parameter.
+        """
         repo = self.transaction_repo
 
         for t in transactions:

@@ -42,6 +42,9 @@ class SavingGoalsService:
         goal: SSavingGoalCreate,
         user_id: int,
     ) -> SSavingGoalResponse:
+        """
+        Create saving goal.
+        """
         goal_to_create = self.creation_in_db_schema(
             name=goal.name,
             description=goal.description,

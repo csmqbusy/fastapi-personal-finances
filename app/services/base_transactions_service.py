@@ -233,6 +233,9 @@ class TransactionsService:
         search_term: str | None = None,
         datetime_range: SDatetimeRange | None = None,
     ) -> list[STransactionsSummary]:
+        """
+        Returns summary – the sum of transactions amount by category.
+        """
         categories_ids = await self._extract_category_ids(
             session=session,
             user_id=user_id,
@@ -306,6 +309,9 @@ class TransactionsService:
         user_id: int,
         year: int,
     ) -> list[MonthTransactionsSummary]:
+        """
+        Returns an annual summary divided by month and category.
+        """
         annual_summary = await self.tx_repo.get_annual_summary_from_db(
             session=session,
             year=year,
@@ -371,6 +377,9 @@ class TransactionsService:
         year: int,
         month: int,
     ) -> list[DayTransactionsSummary]:
+        """
+        Returns a monthly summary divided by day and category.
+        """
         monthly_summary = await self.tx_repo.get_monthly_summary_from_db(
             session=session,
             year=year,
@@ -443,6 +452,9 @@ class TransactionsService:
     def _get_categories_from_summary(
         summary: Sequence[BasePeriodTransactionsSummary],
     ) -> set:
+        """
+        Extracts all categories that occur in summary.
+        """
         categories = set()
         for record in summary:
             for item in record.summary:
@@ -521,6 +533,10 @@ class TransactionsService:
         user_id: int,
         categories_params: list[SCategoryQueryParams],
     ) -> list[int]:
+        """
+        Retrieves category IDs from the list of SCategoryQueryParams objects,
+        which may contain category names.
+        """
         category_ids: set[int] = set()
         for cat_params in categories_params:
             if cat_params.category_name and cat_params.category_id is None:
@@ -541,6 +557,10 @@ class TransactionsService:
         period_summary: list[MonthTransactionsSummary | DayTransactionsSummary],
         period: Literal["year", "month"]
     ) -> list[MonthTransactionsSummaryCSV | DayTransactionsSummaryCSV]:
+        """
+        Converts a nested JSON object to a format suitable for CSV,
+        when the bulk JSON data is repeated in each nested object.
+        """
         result = []
         for record in period_summary:
             for summ in record.summary:
