@@ -121,7 +121,7 @@ async def spendings_summary_get(
 
 @router.get(
     "/summary/chart/",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     summary="Get chart with spendings by category",
 )
 async def spendings_summary_chart_get(
@@ -147,7 +147,7 @@ async def spendings_summary_chart_get(
 
 @router.get(
     "/summary/{year}",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     summary="Get annual spendings summary",
     response_model=None,
 )
@@ -181,7 +181,7 @@ async def spendings_annual_summary_get(
 
 @router.get(
     "/summary/{year}/chart",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     summary="Get annual spendings summary chart",
 )
 async def spendings_annual_summary_chart_get(
@@ -202,7 +202,7 @@ async def spendings_annual_summary_chart_get(
 
 @router.get(
     "/summary/{year}/{month}/",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     summary="Get monthly spendings summary",
     response_model=None,
 )
@@ -239,7 +239,7 @@ async def spendings_monthly_summary_get(
 
 @router.get(
     "/summary/{year}/{month}/chart/",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     summary="Get monthly spendings summary chart",
 )
 async def spendings_monthly_summary_chart_get(
