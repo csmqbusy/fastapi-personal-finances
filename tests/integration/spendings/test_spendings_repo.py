@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from random import randint, choice
 
 import pytest
@@ -8,7 +8,11 @@ from app.models import UserModel
 from app.repositories import spendings_repo
 from app.schemas.common_schemas import SortParam
 from tests.factories import UsersSpendingCategoriesFactory, SpendingsFactory
-from tests.helpers import add_obj_to_db, create_n_categories
+from tests.helpers import (
+    add_obj_to_db,
+    create_n_categories,
+    create_test_spendings,
+)
 
 
 @pytest.mark.asyncio
@@ -257,3 +261,46 @@ async def test_get_transactions_from_db__with_all_filters(
     spendings_amount = [s.amount for s in spendings]
     assert len(spendings) == expected_spendings_qty
     assert spendings_amount == sorted(spendings_amount, reverse=True)
+
+
+async def test_get_annual_summary_from_db(
+    db_session: AsyncSession,
+    user: UserModel,
+) -> None:
+    num_of_cats = 3
+    await create_test_spendings(db_session, user.id, num_of_categories=num_of_cats)
+
+    summary = await spendings_repo.get_annual_summary_from_db(
+        db_session,
+        user.id,
+        date.today().year,
+    )
+    assert summary
+    assert num_of_cats <= len(summary) <= num_of_cats * 12
+    assert len(summary[0]) == 3
+    assert len(summary[-1]) == 3
+
+
+async def test_get_monthly_summary_from_db(
+    db_session: AsyncSession,
+    user: UserModel,
+) -> None:
+    num_of_cats = 4
+    await create_test_spendings(
+        db_session,
+        user.id,
+        spendings_date_range="this_month",
+        spendings_qty=100,
+        num_of_categories=num_of_cats,
+        )
+
+    summary = await spendings_repo.get_monthly_summary_from_db(
+        db_session,
+        user.id,
+        date.today().year,
+        date.today().month,
+    )
+    assert summary
+    assert 1 <= len(summary) <= num_of_cats * 31
+    assert len(summary[0]) == 3
+    assert len(summary[-1]) == 3
