@@ -454,10 +454,20 @@ class TransactionsService:
         summary: Sequence[BasePeriodTransactionsSummary],
         categories: set,
     ) -> list[dict[str, Any]]:
+        """
+        Prepares data in a json-compatible format.
+        Adds data about all categories to each period.
+
+        Output example:
+        [
+            {'Food': 70, 'Clothes': 0, 'month_number': 1, 'total_amount': 70},
+            {'Food': 0, 'Clothes': 60, 'month_number': 2, 'total_amount': 60},
+            {'Food': 10, 'Clothes': 40, 'month_number': 3, 'total_amount': 50},
+        ]
+        """
         transformed_data = []
         for record in summary:
             period_data = record.model_dump(exclude={"summary"})
-            print(f"{period_data=}")
 
             for category in categories:
                 period_data[category] = 0
