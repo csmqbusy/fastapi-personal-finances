@@ -90,7 +90,8 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         SELECT SUM(amount) AS amount, category_name, EXTRACT(MONTH FROM date) AS month
         FROM spendings
         INNER JOIN users_spending_categories ON spendings.category_id = users_spending_categories.id
-        WHERE spendings.user_id = {user_id} AND EXTRACT(YEAR FROM date) = {year}
+        WHERE spendings.user_id = {user_id}
+          AND EXTRACT(YEAR FROM date) = {year}
         GROUP BY category_name, EXTRACT(MONTH FROM date)
         ORDER BY month, amount DESC, category_name
 
@@ -135,13 +136,16 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
     ) -> list:
         """
         SELECT SUM(amount) AS amount, category_name, EXTRACT(DAY FROM date) AS day
-        FROM spendings INNER JOIN users_spending_categories ON spendings.category_id = users_spending_categories.id
-        WHERE spendings.user_id=12 AND EXTRACT(YEAR FROM date)=2025 AND EXTRACT(MONTH FROM date)=3
+        FROM spendings
+        INNER JOIN users_spending_categories ON spendings.category_id = users_spending_categories.id
+        WHERE spendings.user_id=12
+          AND EXTRACT(YEAR FROM date)=2025
+          AND EXTRACT(MONTH FROM date)=3
         GROUP BY category_name, EXTRACT(DAY FROM date)
         ORDER BY day, amount DESC, category_name
 
         result example: [(700, 'Beer', Decimal('1'))]
-        designations: [(summary amount, category name, month number)]
+        designations: [(summary amount, category name, day number)]
         """
         query = (
             select(
