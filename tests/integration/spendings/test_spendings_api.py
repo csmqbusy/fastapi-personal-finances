@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, date
 from itertools import cycle
 from typing import Any
 
@@ -12,7 +12,11 @@ from app.core.config import settings
 from app.models import UserModel
 from app.repositories import user_spend_cat_repo
 from app.schemas.transaction_category_schemas import TransactionsOnDeleteActions
-from app.schemas.transactions_schemas import STransactionResponse
+from app.schemas.transactions_schemas import (
+    STransactionResponse,
+    MonthTransactionsSummary,
+    DayTransactionsSummary,
+)
 from app.services import user_spend_cat_service, spendings_service
 from tests.factories import (
     UsersSpendingCategoriesFactory,
@@ -26,6 +30,7 @@ from tests.helpers import (
     auth_another_user,
     create_batch,
     create_n_categories,
+    create_test_spendings,
 )
 
 
@@ -577,3 +582,149 @@ async def test_spendings_summary_get__get(
         response_amounts = sorted(i["amount"] for i in response.json())
         expected_summary_amount.sort()
         assert response_amounts == expected_summary_amount
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "request_params",
+    [
+        {"chart_type": "barplot"},
+        {"chart_type": "pie"},
+        {"chart_type": "any"},
+    ]
+)
+async def test_spendings_summary_chart_get(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+    request_params: dict[str, Any],
+):
+    categories_ids = await create_n_categories(3, auth_user.id, db_session)
+    for _, category_id in zip(range(3), categories_ids):
+        spending = SpendingsFactory(
+            user_id=auth_user.id,
+            category_id=category_id,
+        )
+        await add_obj_to_db(spending, db_session)
+
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/spendings/summary/chart/",
+        params=request_params,
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert type(response.content) is bytes
+    assert response.headers["content-type"] == "image/png"
+
+
+async def test_spendings_annual_summary_get(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    await create_test_spendings(db_session, auth_user.id)
+
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/spendings/summary/{date.today().year}",
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()
+    for month_summary in response.json():
+        assert MonthTransactionsSummary.model_validate(month_summary)
+        break
+
+
+async def test_spendings_annual_summary_get__csv(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    await create_test_spendings(db_session, auth_user.id)
+
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/spendings/summary/{date.today().year}",
+        params={"in_csv": True},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.content
+    assert type(response.content) is bytes
+    assert "text/csv" in response.headers["content-type"]
+    assert response.headers["Content-Disposition"]
+
+
+async def test_spendings_annual_summary_chart_get(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    await create_test_spendings(db_session, auth_user.id)
+
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/spendings/summary/{date.today().year}/chart",
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert type(response.content) is bytes
+    assert response.headers["content-type"] == "image/png"
+
+
+async def test_spendings_monthly_summary_get(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    await create_test_spendings(
+        db_session, auth_user.id, spendings_date_range="this_month",
+    )
+
+    url = f"spendings/summary/{date.today().year}/{date.today().month}"
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/{url}/",
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()
+    for day_summary in response.json():
+        assert DayTransactionsSummary.model_validate(day_summary)
+        break
+
+
+async def test_spendings_monthly_summary_get__csv(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    await create_test_spendings(
+        db_session, auth_user.id, spendings_date_range="this_month",
+    )
+
+    url = f"spendings/summary/{date.today().year}/{date.today().month}"
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/{url}/",
+        params={"in_csv": True},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.content
+    assert type(response.content) is bytes
+    assert "text/csv" in response.headers["content-type"]
+    assert response.headers["Content-Disposition"]
+
+
+async def test_spendings_monthly_summary_chart_get(
+    db_session: AsyncSession,
+    client: AsyncClient,
+    auth_user: UserModel,
+):
+    await create_test_spendings(
+        db_session, auth_user.id, spendings_date_range="this_month",
+    )
+
+    url = f"spendings/summary/{date.today().year}/{date.today().month}/chart"
+    response = await client.get(
+        url=f"{settings.api.prefix_v1}/{url}/",
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert type(response.content) is bytes
+    assert response.headers["content-type"] == "image/png"
