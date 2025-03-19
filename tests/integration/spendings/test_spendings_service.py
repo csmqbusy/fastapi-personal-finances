@@ -1,10 +1,11 @@
 from contextlib import nullcontext
-from datetime import datetime
+from datetime import datetime, date
 from itertools import cycle
 from random import randint, choice
 from typing import ContextManager
 
 import pytest
+from dirty_equals import IsApprox
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -15,13 +16,20 @@ from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
     STransactionResponse,
     STransactionsSortParams,
+    BasePeriodTransactionsSummary,
+    MonthTransactionsSummary,
+    DayTransactionsSummary,
+    MonthTransactionsSummaryCSV,
+    DayTransactionsSummaryCSV,
 )
 from app.schemas.common_schemas import SAmountRange, SDatetimeRange
 from app.services import user_spend_cat_service, spendings_service
 from tests.factories import (
     STransactionCreateFactory,
-    UsersSpendingCategoriesFactory, STransactionUpdateFactory,
+    UsersSpendingCategoriesFactory,
+    STransactionUpdateFactory,
     SpendingsFactory,
+    STransactionsSummaryFactory,
 )
 from tests.helpers import (
     add_obj_to_db,
@@ -29,6 +37,7 @@ from tests.helpers import (
     add_default_spendings_category,
     create_batch,
     create_n_categories,
+    create_test_spendings,
 )
 
 
@@ -501,3 +510,174 @@ def test__sort_summarize(
     summary = spendings_service._summarize(transactions)
     sorted_summary = spendings_service._sort_summarize(summary)
     assert [i.category_name for i in sorted_summary] == expected_order
+
+
+@pytest.mark.asyncio
+async def test_get_summary_chart(db_session: AsyncSession, user: UserModel):
+    spendings_qty = 30
+    num_of_cats = 3
+    categories_ids = await create_n_categories(num_of_cats, user.id, db_session)
+
+    for i in range(spendings_qty):
+        spending = SpendingsFactory(
+            user_id=user.id,
+            category_id=categories_ids[i % len(categories_ids)],
+        )
+        await add_obj_to_db(spending, db_session)
+
+    cat_params = [SCategoryQueryParams(category_id=i) for i in categories_ids]
+
+    chart = await spendings_service.get_summary_chart(
+        user_id=user.id,
+        categories_params=cat_params,
+        session=db_session,
+    )
+    assert chart
+    assert type(chart) is bytes
+    assert len(chart) > 1000
+
+
+@pytest.mark.asyncio
+async def test_get_annual_summary(db_session: AsyncSession, user: UserModel):
+    await create_test_spendings(db_session, user.id)
+
+    summary = await spendings_service.get_annual_summary(
+        db_session,
+        user.id,
+        date.today().year,
+    )
+    assert all(type(s) is MonthTransactionsSummary for s in summary)
+
+
+@pytest.mark.asyncio
+async def test_annual_summary_chart(db_session: AsyncSession, user: UserModel):
+    await create_test_spendings(db_session, user.id)
+
+    for split_by_cat in (True, False):
+        chart = await spendings_service.get_annual_summary_chart(
+            user_id=user.id,
+            year=date.today().year,
+            transactions_type="spendings",
+            split_by_category=split_by_cat,
+            session=db_session,
+        )
+        assert chart
+        assert type(chart) is bytes
+        assert len(chart) > 1000
+
+
+@pytest.mark.asyncio
+async def test_get_monthly_summary(db_session: AsyncSession, user: UserModel):
+    await create_test_spendings(db_session, user.id, spendings_date_range="this_month")
+
+    summary = await spendings_service.get_monthly_summary(
+        db_session,
+        user.id,
+        date.today().year,
+        date.today().month,
+    )
+    assert 1 <= len(summary) <= 31
+    assert all(type(s) is DayTransactionsSummary for s in summary)
+
+
+@pytest.mark.asyncio
+async def test_get_monthly_summary_chart(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    await create_test_spendings(db_session, user.id, spendings_date_range="this_month")
+
+    for split_by_cat in (True, False):
+        chart = await spendings_service.get_monthly_summary_chart(
+            session=db_session,
+            user_id=user.id,
+            year=date.today().year,
+            month=date.today().month,
+            transactions_type="spendings",
+            split_by_category=split_by_cat,
+        )
+        assert chart
+        assert type(chart) is bytes
+        assert len(chart) > 1000
+
+
+@pytest.mark.asyncio
+async def test__get_categories_from_summary(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    categories_n = 3
+    periods_n = 5
+    period_summary = [
+        BasePeriodTransactionsSummary(
+            total_amount=200000,
+            summary=[STransactionsSummaryFactory() for _ in range(categories_n)]
+        )
+        for _ in range(periods_n)
+    ]
+    categories = spendings_service._get_categories_from_summary(period_summary)
+    assert len(categories) == IsApprox(categories_n * periods_n, delta=categories_n)
+
+
+@pytest.mark.asyncio
+async def test__prepare_data_for_chart_with_categories_split(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    await create_test_spendings(db_session, user.id)
+
+    summary = await spendings_service.get_annual_summary(
+        db_session,
+        user.id,
+        date.today().year,
+    )
+    categories = spendings_service._get_categories_from_summary(summary)
+
+    prepared_data = spendings_service._prepare_data_for_chart_with_categories_split(
+        summary,
+        categories,
+    )
+    assert [len(d) == len(prepared_data[0]) for d in prepared_data]
+
+
+@pytest.mark.asyncio
+async def test_prepare_period_summary_for_csv__year(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    await create_test_spendings(db_session, user.id)
+
+    summary = await spendings_service.get_annual_summary(
+        db_session,
+        user.id,
+        date.today().year,
+    )
+
+    prepared_data = spendings_service.prepare_period_summary_for_csv(
+        period_summary=summary,
+        period="year",
+    )
+
+    assert all(type(d) is MonthTransactionsSummaryCSV for d in prepared_data)
+
+
+@pytest.mark.asyncio
+async def test_prepare_period_summary_for_csv__month(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    await create_test_spendings(db_session, user.id, spendings_date_range="this_month")
+
+    summary = await spendings_service.get_monthly_summary(
+        db_session,
+        user.id,
+        date.today().year,
+        date.today().month,
+    )
+
+    prepared_data = spendings_service.prepare_period_summary_for_csv(
+        period_summary=summary,
+        period="month",
+    )
+
+    assert all(type(d) is DayTransactionsSummaryCSV for d in prepared_data)
