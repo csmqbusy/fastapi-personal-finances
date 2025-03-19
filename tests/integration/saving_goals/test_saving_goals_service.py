@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from typing import ContextManager
 
 from dirty_equals import IsPositiveInt, IsAnyStr, IsPositiveFloat
@@ -742,3 +742,37 @@ def test_get_expected_daily_payment(
         days_left=rest_days,
     )
     assert daily_payment == expected_result
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "target_date, result",
+    [
+        (date.today(), False),
+        (date.today() + timedelta(days=1), False),
+        (date.today() - timedelta(days=1), True),
+    ]
+)
+async def test__is_goal_overdue(
+    db_session: AsyncSession,
+    user: UserModel,
+    target_date: date,
+    result: bool,
+):
+    goal = SavingGoalFactory(user_id=user.id, target_date=target_date)
+    await add_obj_to_db(goal, db_session)
+
+    assert saving_goals_service._is_goal_overdue(goal) is result
+
+
+@pytest.mark.asyncio
+async def test_make_saving_goal_overdue(
+    db_session: AsyncSession,
+    user: UserModel,
+):
+    goal = SavingGoalFactory(user_id=user.id)
+    await add_obj_to_db(goal, db_session)
+    assert goal.status == GoalStatus.IN_PROGRESS
+
+    await saving_goals_service.make_saving_goal_overdue(goal.id, db_session)
+    assert goal.status == GoalStatus.OVERDUE
