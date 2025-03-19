@@ -12,18 +12,18 @@ from app.exceptions.categories_exceptions import (
     CategoryNameNotFound,
 )
 from app.models import UserModel
-from app.repositories import user_repo, spendings_repo
+from app.repositories import spendings_repo
 from app.schemas.transaction_category_schemas import (
     STransactionCategoryCreate,
     STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
 )
-from app.schemas.transactions_schemas import STransactionCreateInDB
 from app.services import user_spend_cat_service
-from tests.factories import UsersSpendingCategoriesFactory
+from tests.factories import UsersSpendingCategoriesFactory, SpendingsFactory
 from tests.helpers import (
-    add_mock_user,
-    create_spendings, add_obj_to_db, create_batch,
+    add_obj_to_db,
+    create_batch,
+    add_default_spendings_category,
 )
 
 
@@ -188,19 +188,9 @@ async def test__change_transactions_category(
     changed_category = UsersSpendingCategoriesFactory(user_id=user.id)
     await add_obj_to_db(changed_category, db_session)
 
-    # add transactions # todo after add spendings tests
     for i in range(num_of_transactions):
-        transaction_to_create = STransactionCreateInDB(
-            amount=1000 + i,
-            description=None,
-            date=None,
-            user_id=user.id,
-            category_id=original_category.id,
-        )
-        await spendings_repo.add(
-            db_session,
-            transaction_to_create.model_dump(),
-        )
+        spending = SpendingsFactory(user_id=user.id, category_id=original_category.id)
+        await add_obj_to_db(spending, db_session)
 
     transactions = await spendings_repo.get_all(
         db_session, dict(category_id=original_category.id, user_id=user.id)
@@ -269,14 +259,23 @@ async def test_delete_category__delete_spendings_with_category(
     user: UserModel,
 ):
     num_of_spendings = 10
-    await user_spend_cat_service.add_user_default_category(user.id, db_session)
+    default_cat = await add_default_spendings_category(user.id, db_session)
 
     category = UsersSpendingCategoriesFactory(user_id=user.id)
     await add_obj_to_db(category, db_session)
 
-    # todo
-    await create_spendings(num_of_spendings, user.id, None, db_session)
-    await create_spendings(num_of_spendings, user.id, category.id, db_session)
+    await create_batch(
+        db_session,
+        num_of_spendings,
+        SpendingsFactory,
+        dict(user_id=user.id, category_id=default_cat.id),
+    )
+    await create_batch(
+        db_session,
+        num_of_spendings,
+        SpendingsFactory,
+        dict(user_id=user.id, category_id=category.id),
+    )
 
     category_transactions = await spendings_repo.get_all(
         db_session, dict(category_id=category.id, user_id=user.id)
@@ -312,19 +311,23 @@ async def test_delete_category__move_spendings_to_default_category(
     user: UserModel,
 ):
     num_of_spendings = 10
-    await user_spend_cat_service.add_user_default_category(user.id, db_session)
+    default_cat = await add_default_spendings_category(user.id, db_session)
 
     category = UsersSpendingCategoriesFactory(user_id=user.id)
     await add_obj_to_db(category, db_session)
 
-    default_category = await user_spend_cat_service.get_default_category(
-        user.id,
+    await create_batch(
         db_session,
+        num_of_spendings,
+        SpendingsFactory,
+        dict(user_id=user.id, category_id=default_cat.id),
     )
-
-    # todo
-    await create_spendings(num_of_spendings, user.id, None, db_session)
-    await create_spendings(num_of_spendings, user.id, category.id, db_session)
+    await create_batch(
+        db_session,
+        num_of_spendings,
+        SpendingsFactory,
+        dict(user_id=user.id, category_id=category.id),
+    )
 
     category_transactions = await spendings_repo.get_all(
         db_session, dict(category_id=category.id, user_id=user.id)
@@ -332,7 +335,7 @@ async def test_delete_category__move_spendings_to_default_category(
     assert len(category_transactions) == num_of_spendings
 
     default_category_transactions = await spendings_repo.get_all(
-        db_session, dict(user_id=user.id, category_id=default_category.id)
+        db_session, dict(user_id=user.id, category_id=default_cat.id)
     )
     assert len(default_category_transactions) == num_of_spendings
 
@@ -350,7 +353,7 @@ async def test_delete_category__move_spendings_to_default_category(
     assert len(category_transactions) == 0
 
     default_category_transactions = await spendings_repo.get_all(
-        db_session, dict(user_id=user.id, category_id=default_category.id)
+        db_session, dict(user_id=user.id, category_id=default_cat.id)
     )
     assert len(default_category_transactions) == num_of_spendings * 2
 
@@ -365,8 +368,12 @@ async def test_delete_category__move_spendings_to_new_category__success(
     await add_obj_to_db(category, db_session)
     new_category_name = "mock_name"
 
-    # todo
-    await create_spendings(num_of_spendings, user.id, category.id, db_session)
+    await create_batch(
+        db_session,
+        num_of_spendings,
+        SpendingsFactory,
+        dict(user_id=user.id, category_id=category.id),
+    )
 
     category_transactions = await spendings_repo.get_all(
         db_session, dict(category_id=category.id, user_id=user.id)
@@ -425,8 +432,12 @@ async def test_delete_category__move_spendings_to_exists_category__success(
     exists_category = UsersSpendingCategoriesFactory(user_id=user.id)
     await add_obj_to_db(exists_category, db_session)
 
-    # todo
-    await create_spendings(num_of_spendings, user.id, category.id, db_session)
+    await create_batch(
+        db_session,
+        num_of_spendings,
+        SpendingsFactory,
+        dict(user_id=user.id, category_id=category.id),
+    )
 
     category_transactions = await spendings_repo.get_all(
         db_session, dict(category_id=category.id, user_id=user.id)
