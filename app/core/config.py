@@ -53,9 +53,9 @@ class MessageBrokerConfig(BaseModel):
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-            env_file=get_correct_cwd() / ".env.dev",
-            case_sensitive=False,
-            env_nested_delimiter="__",
+        env_file=get_correct_cwd() / ".env.dev",
+        case_sensitive=False,
+        env_nested_delimiter="__",
     )
 
     mode: Literal["TEST", "DEV", "PROD"]
