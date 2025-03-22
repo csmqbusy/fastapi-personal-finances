@@ -138,8 +138,8 @@ async def saving_goals_get_all(
             media_type="text/csv",
             headers={
                 "Content-Disposition": f"attachment; filename={filename}",
-                },
-            )
+            },
+        )
     goals = apply_pagination(goals, pagination)
     return goals
 
@@ -176,8 +176,10 @@ async def saving_goal_delete(
 async def saving_goal_update_amount(
     goal_id: int,
     payment: int = Query(
-        description="It can be any integer, but the total value of "
-                    "`current_amount` cannot be less than 0"
+        description=(
+            "It can be any integer, but the total value of `current_amount`"
+            "cannot be less than 0"
+        )
     ),
     user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),

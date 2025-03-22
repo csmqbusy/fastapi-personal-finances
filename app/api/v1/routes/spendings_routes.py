@@ -133,14 +133,14 @@ async def spendings_summary_chart_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> Response:
     chart: bytes = await spendings_service.get_summary_chart(
-            session=db_session,
-            user_id=user.id,
-            chart_type=chart_type,
-            categories_params=categories_params,
-            amount_params=amount_params,
-            search_term=description_search_term,
-            datetime_range=datetime_range,
-        )
+        session=db_session,
+        user_id=user.id,
+        chart_type=chart_type,
+        categories_params=categories_params,
+        amount_params=amount_params,
+        search_term=description_search_term,
+        datetime_range=datetime_range,
+    )
     return Response(content=chart, media_type="image/png")
 
 
@@ -157,16 +157,18 @@ async def spendings_annual_summary_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[MonthTransactionsSummary] | Response:
     summary = await spendings_service.get_annual_summary(
-            session=db_session,
-            user_id=user.id,
-            year=year,
-        )
+        session=db_session,
+        user_id=user.id,
+        year=year,
+    )
     if in_csv:
         prepared_data = spendings_service.prepare_annual_summary_for_csv(
             period_summary=summary,
         )
         output_csv = make_csv_from_pydantic_models(prepared_data)
-        filename = get_filename_with_utc_datetime(f"{year}_spendings_summary", "csv")
+        filename = get_filename_with_utc_datetime(
+            f"{year}_spendings_summary", "csv"
+        )
         return Response(
             content=output_csv,
             media_type="text/csv",
@@ -189,12 +191,12 @@ async def spendings_annual_summary_chart_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> Response:
     chart: bytes = await spendings_service.get_annual_summary_chart(
-            session=db_session,
-            user_id=user.id,
-            year=year,
-            transactions_type="spendings",
-            split_by_category=split_by_category,
-        )
+        session=db_session,
+        user_id=user.id,
+        year=year,
+        transactions_type="spendings",
+        split_by_category=split_by_category,
+    )
     return Response(content=chart, media_type="image/png")
 
 
@@ -212,11 +214,11 @@ async def spendings_monthly_summary_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[DayTransactionsSummary] | Response:
     summary = await spendings_service.get_monthly_summary(
-            session=db_session,
-            user_id=user.id,
-            year=year,
-            month=month,
-        )
+        session=db_session,
+        user_id=user.id,
+        year=year,
+        month=month,
+    )
     if in_csv:
         prepared_data = spendings_service.prepare_monthly_summary_for_csv(
             period_summary=summary,
@@ -248,13 +250,13 @@ async def spendings_monthly_summary_chart_get(
     db_session: AsyncSession = Depends(get_db_session),
 ) -> Response:
     chart: bytes = await spendings_service.get_monthly_summary_chart(
-            session=db_session,
-            user_id=user.id,
-            year=year,
-            month=month,
-            transactions_type="spendings",
-            split_by_category=split_by_category,
-        )
+        session=db_session,
+        user_id=user.id,
+        year=year,
+        month=month,
+        transactions_type="spendings",
+        split_by_category=split_by_category,
+    )
     return Response(content=chart, media_type="image/png")
 
 
