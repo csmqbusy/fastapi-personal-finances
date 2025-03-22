@@ -1,7 +1,7 @@
 from typing import AsyncGenerator
 
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -11,9 +11,9 @@ from app.models import Base, UserModel
 from app.schemas.saving_goals_schemas import SSavingGoalUpdatePartial
 from app.services import user_spend_cat_service
 from tests.factories import (
-    UserFactory,
     SavingGoalUpdateFactory,
     TransactionCategoryUpdateFactory,
+    UserFactory,
 )
 from tests.helpers import add_obj_to_db
 

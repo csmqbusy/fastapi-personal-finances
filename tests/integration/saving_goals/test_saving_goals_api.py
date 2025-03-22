@@ -9,14 +9,15 @@ from starlette import status
 from app.core.config import settings
 from app.models import UserModel
 from app.schemas.saving_goals_schemas import (
-    SSavingGoalResponse,
-    SSavingGoalProgress,
     GoalStatus,
+    SSavingGoalProgress,
+    SSavingGoalResponse,
 )
 from tests.factories import SavingGoalFactory
 from tests.helpers import (
+    add_obj_to_db,
     auth_another_user,
-    add_obj_to_db, create_batch,
+    create_batch,
 )
 
 

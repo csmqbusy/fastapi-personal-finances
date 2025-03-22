@@ -1,7 +1,7 @@
 from contextlib import nullcontext
-from datetime import datetime, date
+from datetime import date, datetime
 from itertools import cycle
-from random import randint, choice
+from random import choice, randint
 from typing import ContextManager
 
 import pytest
@@ -12,29 +12,29 @@ from app.core.config import settings
 from app.exceptions.categories_exceptions import CategoryNotFound
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
+from app.schemas.common_schemas import SAmountRange, SDatetimeRange
 from app.schemas.transaction_category_schemas import SCategoryQueryParams
 from app.schemas.transactions_schemas import (
+    BasePeriodTransactionsSummary,
+    DayTransactionsSummary,
+    DayTransactionsSummaryCSV,
+    MonthTransactionsSummary,
+    MonthTransactionsSummaryCSV,
     STransactionResponse,
     STransactionsSortParams,
-    BasePeriodTransactionsSummary,
-    MonthTransactionsSummary,
-    DayTransactionsSummary,
-    MonthTransactionsSummaryCSV,
-    DayTransactionsSummaryCSV,
 )
-from app.schemas.common_schemas import SAmountRange, SDatetimeRange
-from app.services import user_spend_cat_service, spendings_service
+from app.services import spendings_service, user_spend_cat_service
 from tests.factories import (
-    STransactionCreateFactory,
-    UsersSpendingCategoriesFactory,
-    STransactionUpdateFactory,
     SpendingsFactory,
+    STransactionCreateFactory,
     STransactionsSummaryFactory,
+    STransactionUpdateFactory,
+    UsersSpendingCategoriesFactory,
 )
 from tests.helpers import (
+    add_default_spendings_category,
     add_obj_to_db,
     add_obj_to_db_all,
-    add_default_spendings_category,
     create_batch,
     create_n_categories,
     create_test_spendings,

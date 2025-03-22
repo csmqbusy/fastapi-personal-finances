@@ -1,16 +1,15 @@
 from datetime import date, timedelta
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 from factory.faker import faker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import UserModel
 from app.repositories.saving_goals_repository import saving_goals_repo
 from app.schemas.common_schemas import SortParam
 from app.schemas.saving_goals_schemas import GoalStatus
 from tests.factories import SavingGoalFactory
-from tests.helpers import create_batch, add_obj_to_db
-
+from tests.helpers import add_obj_to_db, create_batch
 
 fake = faker.Faker()
 

@@ -6,10 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.exceptions.categories_exceptions import (
-    CategoryAlreadyExists,
-    CategoryNotFound,
     CannotDeleteDefaultCategory,
+    CategoryAlreadyExists,
     CategoryNameNotFound,
+    CategoryNotFound,
 )
 from app.models import UserModel
 from app.repositories import spendings_repo
@@ -19,11 +19,11 @@ from app.schemas.transaction_category_schemas import (
     TransactionsOnDeleteActions,
 )
 from app.services import user_spend_cat_service
-from tests.factories import UsersSpendingCategoriesFactory, SpendingsFactory
+from tests.factories import SpendingsFactory, UsersSpendingCategoriesFactory
 from tests.helpers import (
+    add_default_spendings_category,
     add_obj_to_db,
     create_batch,
-    add_default_spendings_category,
 )
 
 

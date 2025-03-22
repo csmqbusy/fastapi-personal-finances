@@ -1,12 +1,11 @@
 import pytest
+from factory.faker import faker
 from httpx import AsyncClient
 from starlette import status
-from factory.faker import faker
 
 from app.core.config import settings
 from app.models import UserModel
 from tests.factories import UserFactory
-
 
 fake = faker.Faker()
 

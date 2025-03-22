@@ -1,5 +1,5 @@
-from datetime import datetime, date
-from random import randint, choice
+from datetime import date, datetime
+from random import choice, randint
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import UserModel
 from app.repositories import spendings_repo
 from app.schemas.common_schemas import SortParam
-from tests.factories import UsersSpendingCategoriesFactory, SpendingsFactory
+from tests.factories import SpendingsFactory, UsersSpendingCategoriesFactory
 from tests.helpers import (
     add_obj_to_db,
     create_n_categories,

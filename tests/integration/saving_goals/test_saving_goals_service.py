@@ -1,22 +1,22 @@
 from datetime import date, timedelta
 from typing import ContextManager
 
-from dirty_equals import IsPositiveInt, IsAnyStr, IsPositiveFloat
 import pytest
+from dirty_equals import IsAnyStr, IsPositiveFloat, IsPositiveInt
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.saving_goals_exceptions import (
-    GoalNotFound,
     GoalCurrentAmountInvalid,
+    GoalNotFound,
 )
 from app.models import UserModel
 from app.schemas.common_schemas import SAmountRange, SDateRange
 from app.schemas.saving_goals_schemas import (
-    SSavingGoalCreate,
-    SSavingGoalUpdatePartial,
     GoalStatus,
     SGoalsSortParams,
+    SSavingGoalCreate,
+    SSavingGoalUpdatePartial,
 )
 from app.services import saving_goals_service
 from tests.factories import SavingGoalFactory

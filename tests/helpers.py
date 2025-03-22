@@ -1,9 +1,9 @@
 from random import randint
-from typing import TypeVar, Type, Any, Literal
+from typing import Any, Literal, Type, TypeVar
 
 import factory
-from factory.faker import faker
 from factory import LazyFunction
+from factory.faker import faker
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,11 +14,10 @@ from app.schemas.transaction_category_schemas import STransactionCategoryOut
 from app.schemas.user_schemas import SUserSignUp
 from app.services import user_spend_cat_service
 from tests.factories import (
+    SpendingsFactory,
     UserFactory,
     UsersSpendingCategoriesFactory,
-    SpendingsFactory,
 )
-
 
 fake = faker.Faker()
 

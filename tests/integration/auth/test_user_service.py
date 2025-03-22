@@ -2,20 +2,22 @@ from contextlib import nullcontext
 from typing import ContextManager
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 from factory.faker import faker
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.user_exceptions import UsernameAlreadyExists, EmailAlreadyExists
+from app.exceptions.user_exceptions import (
+    EmailAlreadyExists,
+    UsernameAlreadyExists,
+)
 from app.models import UserModel
 from app.schemas.user_schemas import SUserSignUp
 from app.services.user_service import (
-    _check_unique_username,
     _check_unique_email,
-    get_user_by_username,
+    _check_unique_username,
     create_user,
+    get_user_by_username,
 )
 from tests.factories import UserFactory
-
 
 fake = faker.Faker()
 

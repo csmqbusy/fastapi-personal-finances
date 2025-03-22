@@ -4,8 +4,8 @@ from app.services.auth_service import (
     create_access_token,
     decode_access_token,
     hash_password,
-    verify_password,
     validate_username,
+    verify_password,
 )
 
 

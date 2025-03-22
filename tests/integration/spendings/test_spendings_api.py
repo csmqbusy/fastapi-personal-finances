@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, date
+from datetime import date, datetime
 from itertools import cycle
 from typing import Any
 
@@ -13,16 +13,16 @@ from app.models import UserModel
 from app.repositories import user_spend_cat_repo
 from app.schemas.transaction_category_schemas import TransactionsOnDeleteActions
 from app.schemas.transactions_schemas import (
-    STransactionResponse,
-    MonthTransactionsSummary,
     DayTransactionsSummary,
+    MonthTransactionsSummary,
+    STransactionResponse,
 )
-from app.services import user_spend_cat_service, spendings_service
+from app.services import spendings_service, user_spend_cat_service
 from tests.factories import (
-    UsersSpendingCategoriesFactory,
     SpendingsFactory,
-    STransactionUpdateFactory,
     STransactionCreateFactory,
+    STransactionUpdateFactory,
+    UsersSpendingCategoriesFactory,
 )
 from tests.helpers import (
     add_obj_to_db,

@@ -5,10 +5,10 @@ from factory import LazyFunction
 from factory.faker import faker
 
 from app.models import (
-    UserModel,
     SavingGoalsModel,
-    UsersSpendingCategoriesModel,
     SpendingsModel,
+    UserModel,
+    UsersSpendingCategoriesModel,
 )
 from app.schemas.saving_goals_schemas import (
     GoalStatus,
@@ -17,11 +17,10 @@ from app.schemas.saving_goals_schemas import (
 from app.schemas.transaction_category_schemas import STransactionCategoryUpdate
 from app.schemas.transactions_schemas import (
     STransactionCreate,
-    STransactionUpdatePartial,
     STransactionsSummary,
+    STransactionUpdatePartial,
 )
 from app.services.auth_service import hash_password
-
 
 fake = faker.Faker()
 
