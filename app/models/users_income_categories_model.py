@@ -8,6 +8,8 @@ class UsersIncomeCategoriesModel(BaseCategoriesModel):
 
     __table_args__ = (
         UniqueConstraint(
-            "user_id", "category_name", name="uq_user_income_category",
+            "user_id",
+            "category_name",
+            name="uq_user_income_category",
         ),
     )
