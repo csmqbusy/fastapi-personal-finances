@@ -17,14 +17,13 @@ class SUserSignUp(SUserSignIn):
 
     model_config = {
         "json_schema_extra": {
-            "examples":
-                [
-                    {
-                        "username": "username",
-                        "password": "password",
-                        "email": "mail@example.com",
-                    }
-                ]
+            "examples": [
+                {
+                    "username": "username",
+                    "password": "password",
+                    "email": "mail@example.com",
+                }
+            ]
         }
     }
 

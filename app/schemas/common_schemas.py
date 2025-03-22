@@ -51,7 +51,7 @@ class SSortParamsBase(BaseModel):
             for field in sort_by_copy:
                 if field.lstrip("-") in self.allowed_fields:
                     if field.startswith("-"):
-                        field = f"-{field.lstrip("-")}"
+                        field = f"-{field.lstrip('-')}"
                     self.sort_by.append(field)
         return self
 
