@@ -14,9 +14,7 @@ class UserRepository(BaseRepository[UserModel]):
         session: AsyncSession,
         username: str,
     ) -> UserModel | None:
-        query = select(self.model).filter(
-            self.model.username.ilike(username)
-        )
+        query = select(self.model).filter(self.model.username.ilike(username))
         user = await session.execute(query)
         return user.scalar_one_or_none()
 
@@ -25,9 +23,7 @@ class UserRepository(BaseRepository[UserModel]):
         session: AsyncSession,
         email: str,
     ) -> UserModel | None:
-        query = select(self.model).filter(
-            self.model.email.ilike(email)
-        )
+        query = select(self.model).filter(self.model.email.ilike(email))
         user = await session.execute(query)
         return user.scalar_one_or_none()
 

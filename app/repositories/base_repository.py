@@ -10,7 +10,7 @@ class ObjectNotFound(Exception):
     pass
 
 
-T = TypeVar('T', bound=Base)
+T = TypeVar("T", bound=Base)
 
 
 class BaseRepository(Generic[T]):

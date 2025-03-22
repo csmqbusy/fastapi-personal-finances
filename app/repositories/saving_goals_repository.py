@@ -32,10 +32,7 @@ class SavingGoalsRepository(BaseRepository[SavingGoalsModel]):
         status: GoalStatus | None = None,
         sort_params: list[SortParam] | None = None,
     ) -> list[SavingGoalsModel]:
-        query = (
-            select(self.model)
-            .where(self.model.user_id == user_id)
-        )
+        query = select(self.model).where(self.model.user_id == user_id)
 
         filters = []
         if min_current_amount:

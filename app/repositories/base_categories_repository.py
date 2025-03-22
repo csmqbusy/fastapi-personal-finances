@@ -17,12 +17,9 @@ class BaseCategoriesRepository(BaseRepository[BaseCategoriesModel]):
         user_id: int,
         category_name: str,
     ) -> BaseCategoriesModel | None:
-        query = (
-            select(self.model)
-            .filter(
-                self.model.category_name.ilike(category_name),
-                self.model.user_id == user_id,
-            )
+        query = select(self.model).filter(
+            self.model.category_name.ilike(category_name),
+            self.model.user_id == user_id,
         )
         result = await session.execute(query)
         return result.scalar_one_or_none()

@@ -43,17 +43,14 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         datetime_to: datetime | None = None,
         sort_params: list[SortParam] | None = None,
     ) -> list[BaseTranscationsModel]:
-        query = (
-            select(self.model)
-            .where(self.model.user_id == user_id)
-        )
+        query = select(self.model).where(self.model.user_id == user_id)
 
         filters: list[ColumnElement[bool]] = []
         if categories_ids:
             filters.append(self.model.category_id.in_(categories_ids))
         if description_search_term:
-            filters.append(self.model.description.ilike(
-                f"%{description_search_term}%"),
+            filters.append(
+                self.model.description.ilike(f"%{description_search_term}%"),
             )
         if min_amount:
             filters.append(self.model.amount >= min_amount)
