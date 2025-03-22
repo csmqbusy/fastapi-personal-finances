@@ -29,8 +29,7 @@ class MessageBrokerConfig(BaseModel):
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=get_correct_cwd(
-            additional_workdir_path="charts_service") / ".env.dev",
+        env_file=get_correct_cwd(additional_workdir_path="charts_service") / ".env.dev",
         case_sensitive=False,
         env_nested_delimiter="__",
     )

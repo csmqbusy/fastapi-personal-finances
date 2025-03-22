@@ -5,10 +5,10 @@ from aio_pika.patterns import RPC
 
 from app.core.config import settings
 from charts_service.app.services import (
-    create_simple_chart,
     create_annual_chart_with_categories,
     create_monthly_chart_with_categories,
     create_simple_bar_chart,
+    create_simple_chart,
 )
 
 
