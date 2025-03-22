@@ -13,7 +13,7 @@ from app.services.auth_service import (
     "payload",
     [
         {"sub": "etoo"},
-    ]
+    ],
 )
 def test_create_access_token(
     payload: dict,
@@ -31,7 +31,7 @@ def test_create_access_token(
     "password",
     [
         "qwerty",
-    ]
+    ],
 )
 def test_hash_password(
     password: str,
@@ -53,7 +53,7 @@ def test_hash_password(
         ("", False),
         ("qwe rty", False),
         ("@werty", False),
-    ]
+    ],
 )
 def test_validate_username(
     username: str,

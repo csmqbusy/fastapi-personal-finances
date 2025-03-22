@@ -33,7 +33,7 @@ from tests.helpers import (
     [
         ("Food", nullcontext()),
         ("c@t ***", nullcontext()),
-    ]
+    ],
 )
 async def test_add_category_to_db__success(
     db_session: AsyncSession,
@@ -97,10 +97,7 @@ async def test_create_and_get_default_category(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "num_of_categories",
-    [1, 100, 0, 9]
-)
+@pytest.mark.parametrize("num_of_categories", [1, 100, 0, 9])
 async def test_get_user_categories(
     db_session: AsyncSession,
     user: UserModel,
@@ -144,7 +141,7 @@ async def test_update_category__success(
     [
         ("Food", "FOOD ", True, pytest.raises(CategoryAlreadyExists)),
         ("Cat food", "Pet food", False, pytest.raises(CategoryNotFound)),
-    ]
+    ],
 )
 async def test_update_category__error(
     db_session: AsyncSession,
@@ -173,10 +170,7 @@ async def test_update_category__error(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "num_of_transactions",
-    [10, 0]
-)
+@pytest.mark.parametrize("num_of_transactions", [10, 0])
 async def test__change_transactions_category(
     db_session: AsyncSession,
     user: UserModel,
@@ -189,7 +183,9 @@ async def test__change_transactions_category(
     await add_obj_to_db(changed_category, db_session)
 
     for i in range(num_of_transactions):
-        spending = SpendingsFactory(user_id=user.id, category_id=original_category.id)
+        spending = SpendingsFactory(
+            user_id=user.id, category_id=original_category.id
+        )
         await add_obj_to_db(spending, db_session)
 
     transactions = await spendings_repo.get_all(
@@ -220,7 +216,7 @@ async def test__change_transactions_category(
     [
         settings.app.default_spending_category_name,
         settings.app.default_spending_category_name.upper(),
-    ]
+    ],
 )
 async def test_delete_category__delete_default_category(
     db_session: AsyncSession,
@@ -469,7 +465,7 @@ async def test_delete_category__move_spendings_to_exists_category__success(
     [
         (False, pytest.raises(CategoryNotFound)),
         (True, pytest.raises(CategoryNameNotFound)),
-    ]
+    ],
 )
 async def test_delete_category__move_spendings_to_exists_category__error(
     db_session: AsyncSession,

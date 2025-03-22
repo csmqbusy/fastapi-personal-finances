@@ -43,7 +43,7 @@ from tests.helpers import (
         (100, "Food", False, status.HTTP_404_NOT_FOUND),
         (-100, "Food", True, status.HTTP_422_UNPROCESSABLE_ENTITY),
         (None, "Food", True, status.HTTP_422_UNPROCESSABLE_ENTITY),
-    ]
+    ],
 )
 async def test_spendings__post(
     db_session: AsyncSession,
@@ -56,7 +56,8 @@ async def test_spendings__post(
 ):
     if create_category:
         category = UsersSpendingCategoriesFactory(
-            user_id=auth_user.id, category_name=category_name,
+            user_id=auth_user.id,
+            category_name=category_name,
         )
         await add_obj_to_db(category, db_session)
 
@@ -65,7 +66,7 @@ async def test_spendings__post(
         json={
             "amount": amount,
             "category_name": category_name,
-        }
+        },
     )
     assert response.status_code == status_code
     if status_code == status.HTTP_201_CREATED:
@@ -83,8 +84,10 @@ async def test_spendings_categories__get(
     auth_user: UserModel,
     num_of_categories: int,
 ):
-    categories = [UsersSpendingCategoriesFactory(user_id=auth_user.id)
-                  for _ in range(num_of_categories)]
+    categories = [
+        UsersSpendingCategoriesFactory(user_id=auth_user.id)
+        for _ in range(num_of_categories)
+    ]
     await add_obj_to_db_all(categories, db_session)
 
     categories_response = await client.get(
@@ -103,7 +106,7 @@ async def test_spendings_categories__get(
         (None, False, status.HTTP_200_OK),
         (99999, False, status.HTTP_404_NOT_FOUND),
         (None, True, status.HTTP_404_NOT_FOUND),
-    ]
+    ],
 )
 async def test_spendings_spending_id__get(
     db_session: AsyncSession,
@@ -157,7 +160,7 @@ async def test_spendings_spending_id__patch__success(
         (None, 99999, False),
         ("wrong", None, False),
         (None, None, True),
-    ]
+    ],
 )
 async def test_spendings_spending_id__patch__error(
     db_session: AsyncSession,
@@ -214,7 +217,7 @@ async def test_spendings_spending_id__delete__success(
     [
         (99999, False, status.HTTP_404_NOT_FOUND),
         (None, True, status.HTTP_404_NOT_FOUND),
-    ]
+    ],
 )
 async def test_spendings_spending_id__delete__error(
     db_session: AsyncSession,
@@ -266,7 +269,7 @@ async def test_spendings_spending_id__delete__error(
             "wrong",
             status.HTTP_404_NOT_FOUND,
         ),
-    ]
+    ],
 )
 async def test_spendings__get(
     db_session: AsyncSession,
@@ -287,7 +290,9 @@ async def test_spendings__get(
     )
     await create_batch(db_session, spendings_qty, SpendingsFactory, add_params)
 
-    request_params["category_name"] = wrong_category_name or category.category_name
+    request_params["category_name"] = (
+        wrong_category_name or category.category_name
+    )
     response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/",
         params=request_params,
@@ -318,7 +323,7 @@ async def test_spendings__get_csv(
 
     response = await client.get(
         url=f"{settings.api.prefix_v1}/spendings/",
-        params={"in_csv": True}
+        params={"in_csv": True},
     )
     assert response.status_code == status.HTTP_200_OK
     assert type(response.content) is bytes
@@ -336,10 +341,11 @@ async def test_spendings_categories__post__success(
 ):
     response = await client.post(
         url=f"{settings.api.prefix_v1}/spendings/categories/",
-        json={"category_name": "any_name"}
+        json={"category_name": "any_name"},
     )
     categories = await user_spend_cat_service.get_user_categories(
-        auth_user.id, db_session,
+        auth_user.id,
+        db_session,
     )
     assert response.status_code == status.HTTP_201_CREATED
     # +1 is an automatically created category for the rest spendings
@@ -354,7 +360,7 @@ async def test_spendings_categories__post__success(
         (None, False, status.HTTP_422_UNPROCESSABLE_ENTITY),
         ("", False, status.HTTP_422_UNPROCESSABLE_ENTITY),
         (" ", False, status.HTTP_422_UNPROCESSABLE_ENTITY),
-    ]
+    ],
 )
 async def test_spendings_categories__post__error(
     db_session: AsyncSession,
@@ -367,11 +373,12 @@ async def test_spendings_categories__post__error(
     for _ in range(1 + try_add_again):
         response = await client.post(
             url=f"{settings.api.prefix_v1}/spendings/categories/",
-            json={"category_name": category_name}
+            json={"category_name": category_name},
         )
 
     categories = await user_spend_cat_service.get_user_categories(
-        auth_user.id, db_session,
+        auth_user.id,
+        db_session,
     )
     assert response.status_code == status_code
     if response.status_code != status.HTTP_422_UNPROCESSABLE_ENTITY:
@@ -393,7 +400,7 @@ async def test_spendings_categories__patch__success(
 
     response = await client.patch(
         url=f"{settings.api.prefix_v1}/spendings/categories/{category_1.category_name}/",
-        json={"category_name": new_category_name}
+        json={"category_name": new_category_name},
     )
     assert response.status_code == status.HTTP_200_OK
 
@@ -409,7 +416,7 @@ async def test_spendings_categories__patch__success(
     [
         (False, False, status.HTTP_404_NOT_FOUND),
         (True, True, status.HTTP_409_CONFLICT),
-    ]
+    ],
 )
 async def test_spendings_categories__patch__error(
     db_session: AsyncSession,
@@ -430,7 +437,7 @@ async def test_spendings_categories__patch__error(
         url=f"{settings.api.prefix_v1}/spendings/categories/{category_1.category_name}/",
         json={
             "category_name": category_2.category_name,
-        }
+        },
     )
     assert response.status_code == status_code
 
@@ -448,12 +455,13 @@ async def test_spendings_categories__delete__success(
         url=f"{settings.api.prefix_v1}/spendings/categories/{category.category_name}/",
         params={
             "handle_spendings_on_deletion": TransactionsOnDeleteActions.DELETE,
-        }
+        },
     )
     assert response.status_code == status.HTTP_200_OK
 
     categories = await user_spend_cat_service.get_user_categories(
-        auth_user.id, db_session,
+        auth_user.id,
+        db_session,
     )
     categories = [i.category_name for i in categories]
     assert category.category_name not in categories
@@ -493,7 +501,7 @@ async def test_spendings_categories__delete__success(
             None,
             status.HTTP_422_UNPROCESSABLE_ENTITY,
         ),
-    ]
+    ],
 )
 async def test_spendings_categories__delete__error(
     db_session: AsyncSession,
@@ -506,7 +514,8 @@ async def test_spendings_categories__delete__error(
 ):
     if create_category:
         category = UsersSpendingCategoriesFactory(
-            user_id=auth_user.id, category_name=category_name,
+            user_id=auth_user.id,
+            category_name=category_name,
         )
         await add_obj_to_db(category, db_session)
 
@@ -514,7 +523,7 @@ async def test_spendings_categories__delete__error(
         url=f"{settings.api.prefix_v1}/spendings/categories/{category_name}/",
         params={
             "handle_spendings_on_deletion": on_delete_action,
-        }
+        },
     )
     assert response.status_code == status_code
 
@@ -545,7 +554,7 @@ async def test_spendings_categories__delete__error(
             "wrong_category_name",
             status.HTTP_404_NOT_FOUND,
         ),
-    ]
+    ],
 )
 async def test_spendings_summary_get__get(
     db_session: AsyncSession,
@@ -557,7 +566,9 @@ async def test_spendings_summary_get__get(
     status_code: int,
 ):
     amounts = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
-    datetimes = [datetime(year=2020 + i, month=1, day=1, hour=12) for i in range(9)]
+    datetimes = [
+        datetime(year=2020 + i, month=1, day=1, hour=12) for i in range(9)
+    ]
     categories_ids = await create_n_categories(3, auth_user.id, db_session)
 
     for amount, dt, cat_id in zip(amounts, datetimes, cycle(categories_ids)):
@@ -591,7 +602,7 @@ async def test_spendings_summary_get__get(
         {"chart_type": "barplot"},
         {"chart_type": "pie"},
         {"chart_type": "any"},
-    ]
+    ],
 )
 async def test_spendings_summary_chart_get(
     db_session: AsyncSession,
@@ -674,7 +685,9 @@ async def test_spendings_monthly_summary_get(
     auth_user: UserModel,
 ):
     await create_test_spendings(
-        db_session, auth_user.id, spendings_date_range="this_month",
+        db_session,
+        auth_user.id,
+        spendings_date_range="this_month",
     )
 
     url = f"spendings/summary/{date.today().year}/{date.today().month}"
@@ -695,7 +708,9 @@ async def test_spendings_monthly_summary_get__csv(
     auth_user: UserModel,
 ):
     await create_test_spendings(
-        db_session, auth_user.id, spendings_date_range="this_month",
+        db_session,
+        auth_user.id,
+        spendings_date_range="this_month",
     )
 
     url = f"spendings/summary/{date.today().year}/{date.today().month}"
@@ -717,7 +732,9 @@ async def test_spendings_monthly_summary_chart_get(
     auth_user: UserModel,
 ):
     await create_test_spendings(
-        db_session, auth_user.id, spendings_date_range="this_month",
+        db_session,
+        auth_user.id,
+        spendings_date_range="this_month",
     )
 
     url = f"spendings/summary/{date.today().year}/{date.today().month}/chart"

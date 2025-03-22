@@ -39,7 +39,7 @@ async def test_get_transaction_with_category(
     "prices",
     [
         ([200, 500, 400, 100, 300, 900]),
-    ]
+    ],
 )
 async def test_get_transactions_from_db__with_sort(
     db_session: AsyncSession,
@@ -60,7 +60,7 @@ async def test_get_transactions_from_db__with_sort(
         user_id=user.id,
         session=db_session,
         categories_ids=categories_ids,
-        sort_params=[SortParam(order_by="amount", order_direction="asc")]
+        sort_params=[SortParam(order_by="amount", order_direction="asc")],
     )
     assert len(spendings) == len(prices)
     assert [s.amount for s in spendings] == sorted(prices)
@@ -75,7 +75,7 @@ async def test_get_transactions_from_db__with_sort(
             datetime(year=2021, month=1, day=11, hour=12, minute=0),
             3,
         ),
-    ]
+    ],
 )
 async def test_get_transactions_from_db__with_datetime_period(
     db_session: AsyncSession,
@@ -119,16 +119,23 @@ async def test_get_transactions_from_db__with_datetime_period(
     "search_term, expected_spendings_qty",
     [
         ("Food", 5),
-    ]
+    ],
 )
 async def test_get_transactions_from_db__with_desc_search_term(
     db_session: AsyncSession,
     user: UserModel,
     search_term: str,
-    expected_spendings_qty: int
+    expected_spendings_qty: int,
 ) -> None:
-    descriptions = ["Cat Food", "dog food", "turtle foOd", "turtle sneakers",
-                    "Dog toys", "Food for cat", "delicious food for dog"]
+    descriptions = [
+        "Cat Food",
+        "dog food",
+        "turtle foOd",
+        "turtle sneakers",
+        "Dog toys",
+        "Food for cat",
+        "delicious food for dog",
+    ]
     categories_ids = await create_n_categories(3, user.id, db_session)
 
     for description in descriptions:
@@ -157,14 +164,14 @@ async def test_get_transactions_from_db__with_desc_search_term(
         (100000, 100001, 1),
         (0, 10, 1),
         (100001, 1000000, 0),
-    ]
+    ],
 )
 async def test_get_transactions_from_db__with_amount_range(
     db_session: AsyncSession,
     user: UserModel,
     min_amount: int,
     max_amount: int,
-    expected_spendings_qty: int
+    expected_spendings_qty: int,
 ) -> None:
     amounts = [10, 200, 800, 1200, 1600, 2000, 20000, 100000, 3000, 1500]
     categories_ids = await create_n_categories(randint(1, 5), user.id, db_session)
@@ -216,7 +223,7 @@ async def test_get_transactions_from_db__with_amount_range(
             datetime(year=2024, month=1, day=1),
             4,
         ),
-    ]
+    ],
 )
 async def test_get_transactions_from_db__with_all_filters(
     db_session: AsyncSession,
@@ -231,9 +238,12 @@ async def test_get_transactions_from_db__with_all_filters(
     amounts = [1000, 2000, 3000, 4000, 5000, 7000]
     descriptions = ["text", "TEXT ", "My Text", "text1", "text2", "t3xt"]
     datetimes = [
-        datetime(year=2020, month=1, day=1), datetime(year=2021, month=1, day=1),
-        datetime(year=2022, month=1, day=1), datetime(year=2023, month=1, day=1),
-        datetime(year=2023, month=1, day=1), datetime(year=2024, month=1, day=1),
+        datetime(year=2020, month=1, day=1),
+        datetime(year=2021, month=1, day=1),
+        datetime(year=2022, month=1, day=1),
+        datetime(year=2023, month=1, day=1),
+        datetime(year=2023, month=1, day=1),
+        datetime(year=2024, month=1, day=1),
     ]
     categories_ids = await create_n_categories(randint(1, 5), user.id, db_session)
 
@@ -268,7 +278,9 @@ async def test_get_annual_summary_from_db(
     user: UserModel,
 ) -> None:
     num_of_cats = 3
-    await create_test_spendings(db_session, user.id, num_of_categories=num_of_cats)
+    await create_test_spendings(
+        db_session, user.id, num_of_categories=num_of_cats
+    )
 
     summary = await spendings_repo.get_annual_summary_from_db(
         db_session,
@@ -292,7 +304,7 @@ async def test_get_monthly_summary_from_db(
         spendings_date_range="this_month",
         spendings_qty=100,
         num_of_categories=num_of_cats,
-        )
+    )
 
     summary = await spendings_repo.get_monthly_summary_from_db(
         db_session,

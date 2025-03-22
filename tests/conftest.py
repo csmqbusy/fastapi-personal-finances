@@ -58,7 +58,7 @@ async def user(db_session: AsyncSession) -> UserModel:
 async def auth_user(
     db_session: AsyncSession,
     client: AsyncClient,
-    user: UserModel
+    user: UserModel,
 ) -> UserModel:
     await user_spend_cat_service.add_user_default_category(user.id, db_session)
     await client.post(
@@ -66,7 +66,7 @@ async def auth_user(
         data={
             "username": user.username,
             "password": "password",
-        }
+        },
     )
     return user
 

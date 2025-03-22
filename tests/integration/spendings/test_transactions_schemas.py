@@ -28,7 +28,7 @@ from app.schemas.transactions_schemas import (
             ["-incorrect", "--d-ate", "-category_name_"],
             [],
         ),
-    ]
+    ],
 )
 def test_STransactionsSortParams_schema(
     sort_params: list[str],

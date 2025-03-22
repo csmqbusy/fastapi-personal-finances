@@ -19,7 +19,7 @@ async def test_sign_up_user__success(client: AsyncClient):
             "username": user.username,
             "password": user.password.decode(),
             "email": user.email,
-        }
+        },
     )
     assert response.status_code == status.HTTP_201_CREATED
 
@@ -33,7 +33,7 @@ async def test_sign_up_user__same_username_or_email(client: AsyncClient):
             "username": user.username,
             "password": user.password.decode(),
             "email": user.email,
-        }
+        },
     )
 
     response = await client.post(
@@ -42,7 +42,7 @@ async def test_sign_up_user__same_username_or_email(client: AsyncClient):
             "username": user.username,
             "password": user.password.decode(),
             "email": fake.email(),
-        }
+        },
     )
     assert response.status_code == status.HTTP_409_CONFLICT
 
@@ -52,7 +52,7 @@ async def test_sign_up_user__same_username_or_email(client: AsyncClient):
             "username": fake.user_name(),
             "password": user.password.decode(),
             "email": user.email,
-        }
+        },
     )
     assert response.status_code == status.HTTP_409_CONFLICT
 
@@ -65,7 +65,7 @@ async def test_login__success(client: AsyncClient, user: UserModel):
         data={
             "username": user.username,
             "password": "password",
-        }
+        },
     )
     assert response.status_code == status.HTTP_200_OK
     assert client.cookies.get("access_token")
@@ -82,7 +82,7 @@ async def test_login__wrong_username_or_password(
         data={
             "username": fake.user_name(),
             "password": "password",
-        }
+        },
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     response = await client.post(
@@ -90,7 +90,7 @@ async def test_login__wrong_username_or_password(
         data={
             "username": user.username,
             "password": "wrong_password",
-        }
+        },
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert client.cookies.get("access_token") is None

@@ -56,9 +56,7 @@ class SavingGoalUpdateFactory(factory.Factory):
 
     name = LazyFunction(lambda: fake.text(max_nb_chars=20))
     description = LazyFunction(lambda: fake.text(max_nb_chars=100))
-    current_amount = LazyFunction(
-        lambda: fake.pyint(min_value=0, max_value=1000)
-    )
+    current_amount = LazyFunction(lambda: fake.pyint(min_value=0, max_value=1000))
     target_amount = LazyFunction(
         lambda: fake.pyint(min_value=1001, max_value=100000)
     )
@@ -118,7 +116,9 @@ class STransactionUpdateFactory(factory.Factory):
     class Meta:
         model = STransactionUpdatePartial
 
-    amount: int | None = LazyFunction(lambda: fake.pyint(min_value=0, max_value=10000))
+    amount: int | None = LazyFunction(
+        lambda: fake.pyint(min_value=0, max_value=10000)
+    )
     description: str | None = LazyFunction(lambda: fake.text(max_nb_chars=30))
     date: datetime | None = LazyFunction(
         lambda: fake.date_time_between_dates(

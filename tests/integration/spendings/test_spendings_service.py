@@ -69,7 +69,9 @@ async def test_add_transaction_to_db(
     if category_name:
         assert spending.category_name == category_name
     else:
-        assert spending.category_name == settings.app.default_spending_category_name
+        assert (
+            spending.category_name == settings.app.default_spending_category_name
+        )
 
 
 @pytest.mark.asyncio
@@ -105,7 +107,7 @@ async def test_update_transaction__success(
     [
         ("wrong", False, pytest.raises(CategoryNotFound)),
         (None, True, pytest.raises(TransactionNotFound)),
-    ]
+    ],
 )
 async def test_update_transaction__error(
     db_session: AsyncSession,
@@ -140,7 +142,7 @@ async def test_update_transaction__error(
         (False, False, nullcontext()),
         (True, False, pytest.raises(TransactionNotFound)),
         (False, True, pytest.raises(TransactionNotFound)),
-    ]
+    ],
 )
 async def test_get_transaction(
     db_session: AsyncSession,
@@ -185,7 +187,7 @@ async def test_delete_transaction__success(
     [
         (True, False),
         (False, True),
-    ]
+    ],
 )
 async def test_delete_transaction__error(
     db_session: AsyncSession,
@@ -212,7 +214,7 @@ async def test_delete_transaction__error(
     [
         (None, nullcontext()),
         ("wrong", pytest.raises(CategoryNotFound)),
-    ]
+    ],
 )
 async def test__get_category_id(
     db_session: AsyncSession,
@@ -295,7 +297,7 @@ async def test_get_transactions__category_id_priority(
             None,
             4,
         ),
-    ]
+    ],
 )
 async def test_get_transactions__success(
     db_session: AsyncSession,
@@ -306,7 +308,9 @@ async def test_get_transactions__success(
     expected_spendings_qty: int,
 ):
     amounts = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
-    datetimes = [datetime(year=2020 + i, month=1, day=1, hour=12) for i in range(9)]
+    datetimes = [
+        datetime(year=2020 + i, month=1, day=1, hour=12) for i in range(9)
+    ]
     descs = [f"{search_term.title()}{i}" if i % 2 else "txt" for i in range(9)]
     categories_ids = await create_n_categories(randint(1, 5), user.id, db_session)
 
@@ -368,7 +372,7 @@ async def test_get_transactions__success(
             pytest.raises(CategoryNotFound),
             0,
         ),
-    ]
+    ],
 )
 async def test_get_summary(
     db_session: AsyncSession,
@@ -381,7 +385,9 @@ async def test_get_summary(
 ):
     search_term = "term"
     amounts = [100, 200, 300, 400, 500, 600, 700, 800, 900]
-    datetimes = [datetime(year=2020 + i, month=1, day=1, hour=12) for i in range(9)]
+    datetimes = [
+        datetime(year=2020 + i, month=1, day=1, hour=12) for i in range(9)
+    ]
     categories_ids = await create_n_categories(3, user.id, db_session)
 
     for amount, dt, cat_id in zip(amounts, datetimes, cycle(categories_ids)):
@@ -444,7 +450,7 @@ async def test__extract_category_ids(db_session: AsyncSession, user: UserModel):
     [
         (["Food"], [5], [1500]),
         (["Food", "Relax", "Health"], [1, 3, 5], [100, 600, 1500]),
-    ]
+    ],
 )
 def test__summarize(
     cat_names: list[str],
@@ -487,7 +493,7 @@ def test__summarize(
             [100, 200, 300, 400, 500],
             ["Fun", "Food", "Casino", "Health", "Relax"],
         ),
-    ]
+    ],
 )
 def test__sort_summarize(
     cat_names: list[str],
@@ -568,7 +574,9 @@ async def test_annual_summary_chart(db_session: AsyncSession, user: UserModel):
 
 @pytest.mark.asyncio
 async def test_get_monthly_summary(db_session: AsyncSession, user: UserModel):
-    await create_test_spendings(db_session, user.id, spendings_date_range="this_month")
+    await create_test_spendings(
+        db_session, user.id, spendings_date_range="this_month"
+    )
 
     summary = await spendings_service.get_monthly_summary(
         db_session,
@@ -585,7 +593,9 @@ async def test_get_monthly_summary_chart(
     db_session: AsyncSession,
     user: UserModel,
 ):
-    await create_test_spendings(db_session, user.id, spendings_date_range="this_month")
+    await create_test_spendings(
+        db_session, user.id, spendings_date_range="this_month"
+    )
 
     for split_by_cat in (True, False):
         chart = await spendings_service.get_monthly_summary_chart(
@@ -611,12 +621,14 @@ async def test__get_categories_from_summary(
     period_summary = [
         BasePeriodTransactionsSummary(
             total_amount=200000,
-            summary=[STransactionsSummaryFactory() for _ in range(categories_n)]
+            summary=[STransactionsSummaryFactory() for _ in range(categories_n)],
         )
         for _ in range(periods_n)
     ]
     categories = spendings_service._get_categories_from_summary(period_summary)
-    assert len(categories) == IsApprox(categories_n * periods_n, delta=categories_n)
+    assert len(categories) == IsApprox(
+        categories_n * periods_n, delta=categories_n
+    )
 
 
 @pytest.mark.asyncio
@@ -633,9 +645,11 @@ async def test__prepare_data_for_chart_with_categories_split(
     )
     categories = spendings_service._get_categories_from_summary(summary)
 
-    prepared_data = spendings_service._prepare_data_for_chart_with_categories_split(
-        summary,
-        categories,
+    prepared_data = (
+        spendings_service._prepare_data_for_chart_with_categories_split(
+            summary,
+            categories,
+        )
     )
     assert [len(d) == len(prepared_data[0]) for d in prepared_data]
 
@@ -666,7 +680,11 @@ async def test_prepare_period_summary_for_csv__month(
     db_session: AsyncSession,
     user: UserModel,
 ):
-    await create_test_spendings(db_session, user.id, spendings_date_range="this_month")
+    await create_test_spendings(
+        db_session,
+        user.id,
+        spendings_date_range="this_month",
+    )
 
     summary = await spendings_service.get_monthly_summary(
         db_session,

@@ -15,16 +15,15 @@ fake = faker.Faker()
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "goals_qty",
-    [1, 5, 50, 0]
-)
+@pytest.mark.parametrize("goals_qty", [1, 5, 50, 0])
 async def test_get_goals_from_db__without_filters(
     db_session: AsyncSession,
     user: UserModel,
     goals_qty: int,
 ):
-    await create_batch(db_session, goals_qty, SavingGoalFactory, dict(user_id=user.id))
+    await create_batch(
+        db_session, goals_qty, SavingGoalFactory, dict(user_id=user.id)
+    )
     goals = await saving_goals_repo.get_goals_from_db(db_session, user.id)
     assert len(goals) == goals_qty
 
@@ -46,7 +45,7 @@ async def test_get_goals_from_db__without_filters(
         (None, None, 40000, None, 3),
         (None, None, None, 33000, 4),
         (None, None, None, None, 8),
-    ]
+    ],
 )
 async def test_get_goals_from_db__with_amounts(
     db_session: AsyncSession,
@@ -88,7 +87,7 @@ async def test_get_goals_from_db__with_amounts(
         (None, "desc", 3),
         (None, "3", 1),
         (None, None, 6),
-    ]
+    ],
 )
 async def test_get_goals_from_db__with_search_terms(
     db_session: AsyncSession,
@@ -126,13 +125,19 @@ async def test_get_goals_from_db__with_search_terms(
         "expected_goals_qty",
     ),
     [
-        (date(2025, 1, 1), date(2025, 12, 31), date(2026, 1, 1), date(2026, 12, 31), 8),
+        (
+            date(2025, 1, 1),
+            date(2025, 12, 31),
+            date(2026, 1, 1),
+            date(2026, 12, 31),
+            8,
+        ),
         (date(2025, 1, 1), None, date(2026, 1, 1), None, 8),
         (None, date(2025, 3, 20), None, date(2026, 3, 20), 3),
         (date(2025, 12, 31), date(2025, 12, 31), None, None, 1),
         (None, None, date(2026, 12, 31), date(2026, 12, 31), 1),
         (None, None, None, None, 8),
-    ]
+    ],
 )
 async def test_get_goals_from_db__with_dates_ranges(
     db_session: AsyncSession,
@@ -144,14 +149,24 @@ async def test_get_goals_from_db__with_dates_ranges(
     expected_goals_qty: int,
 ):
     start_dates = [
-        date(2025, 1, 1), date(2025, 2, 15), date(2025, 3, 20),
-        date(2025, 5, 23), date(2025, 6, 30), date(2025, 8, 26),
-        date(2025, 10, 10), date(2025, 12, 31),
+        date(2025, 1, 1),
+        date(2025, 2, 15),
+        date(2025, 3, 20),
+        date(2025, 5, 23),
+        date(2025, 6, 30),
+        date(2025, 8, 26),
+        date(2025, 10, 10),
+        date(2025, 12, 31),
     ]
     target_dates = [
-        date(2026, 1, 1), date(2026, 2, 15), date(2026, 3, 20),
-        date(2026, 5, 23), date(2026, 6, 30), date(2026, 8, 26),
-        date(2026, 10, 10), date(2026, 12, 31),
+        date(2026, 1, 1),
+        date(2026, 2, 15),
+        date(2026, 3, 20),
+        date(2026, 5, 23),
+        date(2026, 6, 30),
+        date(2026, 8, 26),
+        date(2026, 10, 10),
+        date(2026, 12, 31),
     ]
     for i in range(len(start_dates)):
         obj = SavingGoalFactory(
@@ -181,7 +196,7 @@ async def test_get_goals_from_db__with_dates_ranges(
         (None, date.today(), 3),
         (date.today() + timedelta(days=1), date.today() + timedelta(days=1), 0),
         (date.today() - timedelta(days=1), date.today() - timedelta(days=1), 0),
-    ]
+    ],
 )
 async def test_get_goals_from_db__with_end_date_range(
     db_session: AsyncSession,
@@ -217,7 +232,7 @@ async def test_get_goals_from_db__with_end_date_range(
         (GoalStatus.COMPLETED, 3),
         (GoalStatus.OVERDUE, 3),
         (None, 9),
-    ]
+    ],
 )
 async def test_get_goals_from_db__with_status(
     db_session: AsyncSession,
@@ -362,7 +377,7 @@ async def test_get_goals_from_db__with_status(
             [20000, 15000, 8000, 4000, 2000, 1000, 500, 0],
             8,
         ),
-    ]
+    ],
 )
 async def test_get_goals_from_db__with_all_filters(
     db_session: AsyncSession,
@@ -386,21 +401,47 @@ async def test_get_goals_from_db__with_all_filters(
 ):
     current_amounts = [0, 500, 1000, 2000, 4000, 8000, 15000, 20000]
     target_amounts = [15000, 22000, 25000, 33000, 35000, 40000, 40000, 100000]
-    names = ["name", "n@m3", " name ", "_name_", "some name", "bad NAME", "n",
-             "NaMe"]
-    descs = ["de3c", "desc ", "description", "_desc_", "some desc ", "d", "",
-             "my desc"]
+    names = [
+        "name",
+        "n@m3",
+        " name ",
+        "_name_",
+        "some name",
+        "bad NAME",
+        "n",
+        "NaMe",
+    ]
+    descs = [
+        "de3c",
+        "desc ",
+        "description",
+        "_desc_",
+        "some desc ",
+        "d",
+        "",
+        "my desc",
+    ]
     statuses = [GoalStatus.IN_PROGRESS] * 7 + [GoalStatus.COMPLETED]
     end_dates = [None] * 7 + [date.today()]
     start_dates = [
-        date(2025, 1, 1), date(2025, 2, 15), date(2025, 3, 20),
-        date(2025, 5, 23), date(2025, 6, 30), date(2025, 8, 26),
-        date(2025, 10, 10), date(2025, 12, 31),
+        date(2025, 1, 1),
+        date(2025, 2, 15),
+        date(2025, 3, 20),
+        date(2025, 5, 23),
+        date(2025, 6, 30),
+        date(2025, 8, 26),
+        date(2025, 10, 10),
+        date(2025, 12, 31),
     ]
     target_dates = [
-        date(2026, 1, 1), date(2026, 2, 15), date(2026, 3, 20),
-        date(2026, 5, 23), date(2026, 6, 30), date(2026, 8, 26),
-        date(2026, 10, 10), date(2026, 12, 31),
+        date(2026, 1, 1),
+        date(2026, 2, 15),
+        date(2026, 3, 20),
+        date(2026, 5, 23),
+        date(2026, 6, 30),
+        date(2026, 8, 26),
+        date(2026, 10, 10),
+        date(2026, 12, 31),
     ]
     for i in range(len(current_amounts)):
         obj = SavingGoalFactory(

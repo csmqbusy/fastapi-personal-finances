@@ -90,7 +90,7 @@ from app.schemas.saving_goals_schemas import (
             "description",
             nullcontext(),
         ),
-    ]
+    ],
 )
 def test_SSavingGoalBase_schema(
     name: str,
@@ -114,7 +114,6 @@ def test_SSavingGoalBase_schema(
         )
         assert goal.name == expected_name
         assert goal.description == expected_descriptions
-
 
 
 @pytest.mark.parametrize(
@@ -174,7 +173,7 @@ def test_SSavingGoalBase_schema(
             "description",
             nullcontext(),
         ),
-    ]
+    ],
 )
 def test_SSavingGoalUpdatePartial_schema(
     name: str,

@@ -29,7 +29,7 @@ from tests.helpers import add_obj_to_db
     [
         (date(2025, 1, 1), date(2025, 1, 1)),
         (None, date.today()),
-    ]
+    ],
 )
 async def test_set_goal__success(
     db_session: AsyncSession,
@@ -70,7 +70,7 @@ async def test_set_goal__add_completed_goal(
     [
         ("Macbook Pro", date(2026, 1, 1), date(2025, 6, 20)),
         (None, date(2020, 6, 20), date(2025, 6, 20)),
-    ]
+    ],
 )
 async def test_set_goal__error(
     db_session: AsyncSession,
@@ -109,7 +109,7 @@ async def test_get_goal__success(db_session: AsyncSession, user: UserModel):
     [
         (None, 99999),
         (77777, None),
-    ]
+    ],
 )
 async def test_get_goal__error(
     db_session: AsyncSession,
@@ -143,7 +143,7 @@ async def test_delete_goal__success(db_session: AsyncSession, user: UserModel):
     [
         (None, 99999),
         (77777, None),
-    ]
+    ],
 )
 async def test_delete_goal__error(
     db_session: AsyncSession,
@@ -226,7 +226,7 @@ async def test_update_goal__success_partial_update(
     [
         (None, None, date(2021, 1, 1), date(2020, 1, 1)),
         (200001, 200000, None, None),
-    ]
+    ],
 )
 async def test_update_goal__error(
     db_session: AsyncSession,
@@ -280,7 +280,7 @@ async def test_get_goal_progress__success(
     [
         (9999, None),
         (None, 9999),
-    ]
+    ],
 )
 async def test_get_goal_progress__error(
     db_session: AsyncSession,
@@ -304,7 +304,7 @@ async def test_get_goal_progress__error(
     [
         (20000, GoalStatus.IN_PROGRESS, 20000),
         (200000, GoalStatus.COMPLETED, 200000),
-    ]
+    ],
 )
 async def test_update_current_amount__success(
     db_session: AsyncSession,
@@ -339,7 +339,7 @@ async def test_update_current_amount__success(
         (-10001, None, None, pytest.raises(GoalCurrentAmountInvalid)),
         (1000, 9999, None, pytest.raises(GoalNotFound)),
         (1000, None, 9999, pytest.raises(GoalNotFound)),
-    ]
+    ],
 )
 async def test_update_current_amount__error(
     db_session: AsyncSession,
@@ -391,7 +391,7 @@ async def test_update_current_amount__error(
             SAmountRange(min_amount=30000, max_amount=None),
             1,
         ),
-    ]
+    ],
 )
 async def test_get_goals_all__with_amounts_range(
     db_session: AsyncSession,
@@ -404,7 +404,8 @@ async def test_get_goals_all__with_amounts_range(
     target_amounts = [5000, 10000, 15000, 20000, 25000, 30000]
     for ca, ta in zip(current_amounts, target_amounts):
         goal = SavingGoalFactory(
-            user_id=user.id, current_amount=ca, target_amount=ta)
+            user_id=user.id, current_amount=ca, target_amount=ta
+        )
         await add_obj_to_db(goal, db_session)
 
     goals = await saving_goals_service.get_goals_all(
@@ -432,7 +433,7 @@ async def test_get_goals_all__with_amounts_range(
         ("text", "desc", 3),
         ("T3XT", None, 1),
         (None, "desc ", 1),
-    ]
+    ],
 )
 async def test_get_goals_all__with_search_terms(
     db_session: AsyncSession,
@@ -485,7 +486,7 @@ async def test_get_goals_all__with_search_terms(
             SDateRange(start=date(2025, 12, 29), end=date(2025, 12, 31)),
             3,
         ),
-    ]
+    ],
 )
 async def test_get_goals_all__with_date_ranges(
     db_session: AsyncSession,
@@ -494,10 +495,20 @@ async def test_get_goals_all__with_date_ranges(
     target_date_range: SDateRange | None,
     expected_goals_qty: int,
 ):
-    start_dates = [date(2025, 1, 1), date(2025, 2, 1), date(2025, 3, 1),
-                   date(2025, 4, 1), date(2025, 5, 1)]
-    target_dates = [date(2025, 12, 27), date(2025, 12, 28), date(2025, 12, 29),
-                    date(2025, 12, 30), date(2025, 12, 31)]
+    start_dates = [
+        date(2025, 1, 1),
+        date(2025, 2, 1),
+        date(2025, 3, 1),
+        date(2025, 4, 1),
+        date(2025, 5, 1),
+    ]
+    target_dates = [
+        date(2025, 12, 27),
+        date(2025, 12, 28),
+        date(2025, 12, 29),
+        date(2025, 12, 30),
+        date(2025, 12, 31),
+    ]
     for sd, td in zip(start_dates, target_dates):
         goal = SavingGoalFactory(user_id=user.id, start_date=sd, target_date=td)
         await add_obj_to_db(goal, db_session)
@@ -525,7 +536,7 @@ async def test_get_goals_all__with_date_ranges(
     [
         (5, SDateRange(start=date.today(), end=date.today()), 5),
         (5, SDateRange(start=date(2020, 1, 1), end=date(2023, 1, 1)), 0),
-    ]
+    ],
 )
 async def test_get_goals_all__with_end_date_range(
     db_session: AsyncSession,
@@ -562,7 +573,7 @@ async def test_get_goals_all__with_end_date_range(
         (GoalStatus.IN_PROGRESS, 1),
         (GoalStatus.COMPLETED, 1),
         (GoalStatus.OVERDUE, 1),
-    ]
+    ],
 )
 async def test_get_goals_all__with_status(
     db_session: AsyncSession,
@@ -614,7 +625,7 @@ async def test_get_goals_all__with_status(
             [20000, 15000, 10000, 5000],
             4,
         ),
-    ]
+    ],
 )
 async def test_get_goals_all__with_all_filters(
     db_session: AsyncSession,
@@ -635,10 +646,20 @@ async def test_get_goals_all__with_all_filters(
     target_amounts = [5000, 15000, 10000, 20000, 30000]
     names = ["TEXT", "TEXT", "text", " text ", "t3xT   "]
     descs = [" some description", "description text", "my desc ", "desc", " "]
-    start_dates = [date(2025, 1, 1), date(2025, 2, 1), date(2025, 3, 1),
-                   date(2025, 4, 1), date(2025, 5, 1)]
-    target_dates = [date(2025, 12, 27), date(2025, 12, 28), date(2025, 12, 29),
-                    date(2025, 12, 30), date(2025, 12, 31)]
+    start_dates = [
+        date(2025, 1, 1),
+        date(2025, 2, 1),
+        date(2025, 3, 1),
+        date(2025, 4, 1),
+        date(2025, 5, 1),
+    ]
+    target_dates = [
+        date(2025, 12, 27),
+        date(2025, 12, 28),
+        date(2025, 12, 29),
+        date(2025, 12, 30),
+        date(2025, 12, 31),
+    ]
     statuses = [GoalStatus.IN_PROGRESS] * 5
 
     for i in range(len(current_amounts)):
@@ -700,7 +721,7 @@ async def test__complete_saving_goal(db_session: AsyncSession, user: UserModel):
         (17500, 233000, 7.51),
         (3171631, 31489307, 10.07),
         (200, 200, 100.0),
-    ]
+    ],
 )
 def test_get_percentage(first_num: int, second_num: int, expected_result: float):
     percent = saving_goals_service.get_percentage(first_num, second_num)
@@ -715,7 +736,7 @@ def test_get_percentage(first_num: int, second_num: int, expected_result: float)
         (date(2025, 1, 1), date(2025, 1, 20), 19),
         (date(2023, 12, 1), date(2025, 3, 5), 460),
         (date(2025, 3, 5), date(2023, 12, 1), 460),
-    ]
+    ],
 )
 def test_get_days_before_dates(date1: date, date2: date, expected_result: int):
     days = saving_goals_service.get_days_between_dates(d1=date1, d2=date2)
@@ -730,7 +751,7 @@ def test_get_days_before_dates(date1: date, date2: date, expected_result: int):
         (2000, 1, 2000),
         (2000, 0, 2000),
         (0, 100, 0),
-    ]
+    ],
 )
 def test_get_expected_daily_payment(
     amount: int,
@@ -751,7 +772,7 @@ def test_get_expected_daily_payment(
         (date.today(), False),
         (date.today() + timedelta(days=1), False),
         (date.today() - timedelta(days=1), True),
-    ]
+    ],
 )
 async def test__is_goal_overdue(
     db_session: AsyncSession,

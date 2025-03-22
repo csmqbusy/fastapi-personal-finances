@@ -32,7 +32,7 @@ async def sign_up_user(client: AsyncClient, username: str):
             "username": username,
             "password": "password",
             "email": f"{username.lower()}@example.com",
-        }
+        },
     )
 
 
@@ -42,7 +42,7 @@ async def sign_in_user(client: AsyncClient, username: str):
         data={
             "username": username,
             "password": "password",
-        }
+        },
     )
 
 
@@ -106,8 +106,8 @@ async def create_test_spendings(
 
     if spendings_date_range == "this_year":
         date_range = LazyFunction(
-                lambda: fake.date_time_this_year().replace(microsecond=0)
-            )
+            lambda: fake.date_time_this_year().replace(microsecond=0)
+        )
     elif spendings_date_range == "this_month":
         date_range = LazyFunction(
             lambda: fake.date_time_this_month().replace(microsecond=0)
@@ -134,7 +134,7 @@ async def auth_another_user(
         data={
             "username": user.username,
             "password": "password",
-        }
+        },
     )
     return user
 

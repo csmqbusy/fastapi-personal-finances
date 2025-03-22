@@ -55,7 +55,7 @@ async def test_get_user_by_username(
         (False, False, nullcontext()),
         (True, False, pytest.raises(UsernameAlreadyExists)),
         (False, True, pytest.raises(EmailAlreadyExists)),
-    ]
+    ],
 )
 async def test_add_user(
     db_session: AsyncSession,

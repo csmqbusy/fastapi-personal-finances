@@ -49,7 +49,7 @@ from app.services.common_service import (
             SPagination(page=1000, page_size=20),
             "",
         ),
-    ]
+    ],
 )
 def test_apply_pagination(
     data: Sequence,
@@ -110,13 +110,12 @@ def test_apply_pagination(
             ),
             None,
         ),
-    ]
+    ],
 )
 def test_parse_sort_params_for_query(
     sort_params: STransactionsSortParams,
     expected_result: list[SortParam],
 ):
-
     result = parse_sort_params_for_query(sort_params)
     assert result == expected_result
 
@@ -133,7 +132,7 @@ class ModelForTest(BaseModel):
         (ModelForTest, 500),
         (ModelForTest, 10000),
         (ModelForTest, 0),
-    ]
+    ],
 )
 def test_make_csv_from_pydantic_models(
     pydantic_model: Type[BaseModel],
@@ -159,14 +158,14 @@ def test_make_csv_from_pydantic_models(
         ("prefix", "csv"),
         ("p", "anyfiletype"),
         ("", "py"),
-    ]
+    ],
 )
 def test_get_filename_with_utc_datetime(
     prefix: str,
     filetype: str,
     regular_expression: str = r"_\d{8}_\d{6}.",
 ):
-    pattern = re.compile(fr"{prefix}{regular_expression}{filetype}")
+    pattern = re.compile(rf"{prefix}{regular_expression}{filetype}")
     result = get_filename_with_utc_datetime(prefix, filetype)
     assert type(result) is str
     assert re.match(pattern, result) is not None

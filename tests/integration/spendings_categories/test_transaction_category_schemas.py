@@ -40,7 +40,7 @@ from app.schemas.transaction_category_schemas import STransactionCategoryBase
             None,
             pytest.raises(ValidationError),
         ),
-    ]
+    ],
 )
 def test_STransactionCategoryBase_schema(
     category_name: str,

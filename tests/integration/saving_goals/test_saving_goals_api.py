@@ -56,7 +56,7 @@ from tests.helpers import (
                 "target_amount": 250000,
             },
         ),
-    ]
+    ],
 )
 async def test_goals__post(
     client: AsyncClient,
@@ -68,7 +68,7 @@ async def test_goals__post(
     request_params.update({"target_date": date(2030, 1, 1).isoformat()})
     response = await client.post(
         url=f"{settings.api.prefix_v1}/goals/",
-        json=request_params
+        json=request_params,
     )
     assert response.status_code == status_code
     if status_code == status.HTTP_201_CREATED:
@@ -83,7 +83,7 @@ async def test_goals__post(
         (status.HTTP_200_OK, None, False),
         (status.HTTP_404_NOT_FOUND, 99999, False),
         (status.HTTP_404_NOT_FOUND, None, True),
-    ]
+    ],
 )
 async def test_goals_progress_goal_id__get(
     client: AsyncClient,
@@ -116,7 +116,7 @@ async def test_goals_progress_goal_id__get(
         (status.HTTP_200_OK, None, False),
         (status.HTTP_404_NOT_FOUND, 99999, False),
         (status.HTTP_404_NOT_FOUND, None, True),
-    ]
+    ],
 )
 async def test_goals_goal_id__get(
     client: AsyncClient,
@@ -147,7 +147,7 @@ async def test_goals_goal_id__get(
         (status.HTTP_200_OK, None, False),
         (status.HTTP_404_NOT_FOUND, 99999, False),
         (status.HTTP_404_NOT_FOUND, None, True),
-    ]
+    ],
 )
 async def test_goals_goal_id__delete(
     client: AsyncClient,
@@ -181,7 +181,7 @@ async def test_goals_goal_id__delete(
         (status.HTTP_400_BAD_REQUEST, -101, False, False),
         (status.HTTP_404_NOT_FOUND, 200, 99999, False),
         (status.HTTP_404_NOT_FOUND, 200, False, True),
-    ]
+    ],
 )
 async def test_goals_update_amount__patch(
     client: AsyncClient,
@@ -203,7 +203,7 @@ async def test_goals_update_amount__patch(
         url=f"{settings.api.prefix_v1}/goals/update_amount/{goal_id}/",
         params={
             "payment": payment,
-        }
+        },
     )
     assert response.status_code == status_code
     if status_code == status.HTTP_200_OK:
@@ -224,7 +224,7 @@ async def test_goals_update_amount__patch(
                 "target_amount": 100000,
                 "start_date": date(2028, 1, 1).isoformat(),
                 "target_date": date(2030, 1, 1).isoformat(),
-            }
+            },
         ),
         (
             status.HTTP_200_OK,
@@ -238,7 +238,7 @@ async def test_goals_update_amount__patch(
             status.HTTP_200_OK,
             {},
         ),
-    ]
+    ],
 )
 async def test_goals_goal_id__patch__success(
     client: AsyncClient,
@@ -265,7 +265,7 @@ async def test_goals_goal_id__patch__success(
     [
         (99999, False),
         (None, True),
-    ]
+    ],
 )
 async def test_goals_goal_id__patch__error(
     client: AsyncClient,
@@ -334,7 +334,7 @@ async def test_goals_goal_id__patch__error(
             {},
             5,
         ),
-    ]
+    ],
 )
 async def test_goals__get(
     client: AsyncClient,
@@ -361,7 +361,7 @@ async def test_goals__get(
                 "target_amount": target_amount,
                 "start_date": (start_date + timedelta(days=i * 30)).isoformat(),
                 "target_date": (target_date + timedelta(days=i * 30)).isoformat(),
-            }
+            },
         )
 
     response = await client.get(
@@ -384,13 +384,14 @@ async def test_goals__get_csv(
     goals_qty: int,
 ):
     await create_batch(
-        db_session, goals_qty, SavingGoalFactory, dict(user_id=auth_user.id))
+        db_session, goals_qty, SavingGoalFactory, dict(user_id=auth_user.id)
+    )
 
     response = await client.get(
         url=f"{settings.api.prefix_v1}/goals/",
         params={
             "in_csv": True,
-        }
+        },
     )
     assert response.status_code == status.HTTP_200_OK
     assert type(response.content) is bytes
