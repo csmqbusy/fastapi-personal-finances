@@ -24,7 +24,7 @@ main_app.include_router(
     prefix=settings.api.prefix_v1,
 )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     uvicorn.run(
         "main:main_app",
         host=settings.run.host,
