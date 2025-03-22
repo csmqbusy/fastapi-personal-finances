@@ -298,7 +298,7 @@ class TransactionsService:
                 values=amounts,
                 labels=categories,
                 chart_type=chart_type or "barplot",
-            )
+            ),
         )
 
         return result
@@ -356,7 +356,8 @@ class TransactionsService:
         if split_by_category:
             categories = self._get_categories_from_summary(annual_summary)
             prepared_data = self._prepare_data_for_chart_with_categories_split(
-                annual_summary, categories)
+                annual_summary, categories
+            )
             rpc_method_name = "create_annual_chart_with_categories"
             rpc_params.update(dict(data=prepared_data, categories=categories))
 
@@ -428,7 +429,8 @@ class TransactionsService:
         if split_by_category:
             categories = self._get_categories_from_summary(monthly_summary)
             prepared_data = self._prepare_data_for_chart_with_categories_split(
-                monthly_summary, categories)
+                monthly_summary, categories
+            )
 
             rpc_method_name = "create_monthly_chart_with_categories"
             rpc_params.update(
@@ -553,10 +555,9 @@ class TransactionsService:
         return list(category_ids)
 
     @staticmethod
-    def prepare_period_summary_for_csv(
-        period_summary: list[MonthTransactionsSummary | DayTransactionsSummary],
-        period: Literal["year", "month"]
-    ) -> list[MonthTransactionsSummaryCSV | DayTransactionsSummaryCSV]:
+    def prepare_annual_summary_for_csv(
+        period_summary: list[MonthTransactionsSummary],
+    ) -> list[MonthTransactionsSummaryCSV]:
         """
         Converts a nested JSON object to a format suitable for CSV,
         when the bulk JSON data is repeated in each nested object.
@@ -568,13 +569,27 @@ class TransactionsService:
                     "category_name": summ.category_name,
                     "amount": summ.amount,
                     "total_amount": record.total_amount,
+                    "month_number": record.month_number,
                 }
-                if period == "year":
-                    data["month_number"] = record.month_number
-                    result.append(MonthTransactionsSummaryCSV.model_validate(data))
-                elif period == "month":
-                    data["day_number"] = record.day_number
-                    result.append(DayTransactionsSummaryCSV.model_validate(data))
-                else:
-                    raise ValueError("Unknown period type")
+                result.append(MonthTransactionsSummaryCSV.model_validate(data))
+        return result
+
+    @staticmethod
+    def prepare_monthly_summary_for_csv(
+        period_summary: list[DayTransactionsSummary],
+    ) -> list[DayTransactionsSummaryCSV]:
+        """
+        Converts a nested JSON object to a format suitable for CSV,
+        when the bulk JSON data is repeated in each nested object.
+        """
+        result = []
+        for record in period_summary:
+            for summ in record.summary:
+                data = {
+                    "category_name": summ.category_name,
+                    "amount": summ.amount,
+                    "total_amount": record.total_amount,
+                    "day_number": record.day_number,
+                }
+                result.append(DayTransactionsSummaryCSV.model_validate(data))
         return result

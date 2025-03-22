@@ -56,7 +56,6 @@ from app.services.common_service import (
 )
 from app.services.users_spending_categories_service import user_spend_cat_service
 
-
 router = APIRouter(prefix="/spendings")
 
 
@@ -163,9 +162,8 @@ async def spendings_annual_summary_get(
             year=year,
         )
     if in_csv:
-        prepared_data = spendings_service.prepare_period_summary_for_csv(
+        prepared_data = spendings_service.prepare_annual_summary_for_csv(
             period_summary=summary,
-            period="year",
         )
         output_csv = make_csv_from_pydantic_models(prepared_data)
         filename = get_filename_with_utc_datetime(f"{year}_spendings_summary", "csv")
@@ -207,10 +205,10 @@ async def spendings_annual_summary_chart_get(
     response_model=None,
 )
 async def spendings_monthly_summary_get(
-    user: UserModel = Depends(get_active_verified_user),
-    year: int = Path(),
+    year: int,
     month: int = Path(ge=1, le=12),
     in_csv: bool = Depends(get_csv_params),
+    user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[DayTransactionsSummary] | Response:
     summary = await spendings_service.get_monthly_summary(
@@ -220,13 +218,13 @@ async def spendings_monthly_summary_get(
             month=month,
         )
     if in_csv:
-        prepared_data = spendings_service.prepare_period_summary_for_csv(
+        prepared_data = spendings_service.prepare_monthly_summary_for_csv(
             period_summary=summary,
-            period="month",
         )
         output_csv = make_csv_from_pydantic_models(prepared_data)
         filename = get_filename_with_utc_datetime(
-            f"{year}_{month}_spendings_summary", "csv")
+            f"{year}_{month}_spendings_summary", "csv"
+        )
         return Response(
             content=output_csv,
             media_type="text/csv",

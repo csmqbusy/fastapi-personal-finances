@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, status, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -72,9 +73,9 @@ async def income_add(
 ) -> STransactionResponse:
     try:
         return await income_service.add_transaction_to_db(
-            income,
-            user.id,
-            db_session,
+            transaction=income,
+            user_id=user.id,
+            session=db_session,
         )
     except CategoryNotFound:
         raise CategoryNotFoundError()
@@ -146,14 +147,14 @@ async def income_summary_chart_get(
 
 
 @router.get(
-    "/summary/{year}",
+    "/summary/{year}/",
     status_code=200,
     summary="Get annual income summary",
     response_model=None,
 )
 async def income_annual_summary_get(
+    year: int,
     user: UserModel = Depends(get_active_verified_user),
-    year: int = Path(),
     in_csv: bool = Depends(get_csv_params),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[MonthTransactionsSummary] | Response:
@@ -163,9 +164,8 @@ async def income_annual_summary_get(
             year=year,
         )
     if in_csv:
-        prepared_data = income_service.prepare_period_summary_for_csv(
+        prepared_data = income_service.prepare_annual_summary_for_csv(
             period_summary=summary,
-            period="year",
         )
         output_csv = make_csv_from_pydantic_models(prepared_data)
         filename = get_filename_with_utc_datetime(f"{year}_income_summary", "csv")
@@ -207,10 +207,10 @@ async def income_annual_summary_chart_get(
     response_model=None,
 )
 async def income_monthly_summary_get(
-    user: UserModel = Depends(get_active_verified_user),
-    year: int = Path(),
-    month: int = Path(ge=1, le=12),
+    year: int,
+    month: Annotated[int, Path(ge=1, le=12)],
     in_csv: bool = Depends(get_csv_params),
+    user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[DayTransactionsSummary] | Response:
     summary = await income_service.get_monthly_summary(
@@ -220,13 +220,13 @@ async def income_monthly_summary_get(
             month=month,
         )
     if in_csv:
-        prepared_data = income_service.prepare_period_summary_for_csv(
+        prepared_data = income_service.prepare_monthly_summary_for_csv(
             period_summary=summary,
-            period="month",
         )
         output_csv = make_csv_from_pydantic_models(prepared_data)
         filename = get_filename_with_utc_datetime(
-            f"{year}_{month}_income_summary", "csv")
+            f"{year}_{month}_income_summary", "csv"
+        )
         return Response(
             content=output_csv,
             media_type="text/csv",
@@ -243,10 +243,10 @@ async def income_monthly_summary_get(
     summary="Get monthly income summary chart",
 )
 async def income_monthly_summary_chart_get(
-    user: UserModel = Depends(get_active_verified_user),
-    year: int = Path(),
-    month: int = Path(ge=1, le=12),
+    year: int,
+    month: Annotated[int, Path(ge=1, le=12)],
     split_by_category: bool = Query(False),
+    user: UserModel = Depends(get_active_verified_user),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> Response:
     chart: bytes = await income_service.get_monthly_summary_chart(
