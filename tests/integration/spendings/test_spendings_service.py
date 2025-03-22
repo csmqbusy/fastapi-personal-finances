@@ -667,9 +667,8 @@ async def test_prepare_period_summary_for_csv__year(
         date.today().year,
     )
 
-    prepared_data = spendings_service.prepare_period_summary_for_csv(
+    prepared_data = spendings_service.prepare_annual_summary_for_csv(
         period_summary=summary,
-        period="year",
     )
 
     assert all(type(d) is MonthTransactionsSummaryCSV for d in prepared_data)
@@ -693,9 +692,8 @@ async def test_prepare_period_summary_for_csv__month(
         date.today().month,
     )
 
-    prepared_data = spendings_service.prepare_period_summary_for_csv(
+    prepared_data = spendings_service.prepare_monthly_summary_for_csv(
         period_summary=summary,
-        period="month",
     )
 
     assert all(type(d) is DayTransactionsSummaryCSV for d in prepared_data)
