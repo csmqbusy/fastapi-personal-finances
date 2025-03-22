@@ -8,7 +8,7 @@ from app.schemas.saving_goals_schemas import SGoalsSortParams
 
 def get_start_date_range(
     start_date_from: date = Query(None, description="Date included"),
-    start_date_to: date = Query(None, description="Date included")
+    start_date_to: date = Query(None, description="Date included"),
 ) -> SDateRange:
     return SDateRange(
         start=start_date_from,
@@ -18,7 +18,7 @@ def get_start_date_range(
 
 def get_target_date_range(
     target_date_from: date = Query(None, description="Date included"),
-    target_date_to: date = Query(None, description="Date included")
+    target_date_to: date = Query(None, description="Date included"),
 ) -> SDateRange:
     return SDateRange(
         start=target_date_from,
@@ -28,7 +28,7 @@ def get_target_date_range(
 
 def get_end_date_range(
     end_date_from: date = Query(None, description="Date included"),
-    end_date_to: date = Query(None, description="Date included")
+    end_date_to: date = Query(None, description="Date included"),
 ) -> SDateRange:
     return SDateRange(
         start=end_date_from,
@@ -37,7 +37,7 @@ def get_end_date_range(
 
 
 def get_goals_sort_params(
-    sort_params: list[str] | None = Query(None, description="`-` is desc")
+    sort_params: list[str] | None = Query(None, description="`-` is desc"),
 ) -> SGoalsSortParams | None:
     if sort_params is not None:
         return SGoalsSortParams(sort_by=sort_params)

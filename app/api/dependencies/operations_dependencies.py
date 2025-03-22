@@ -26,7 +26,7 @@ def get_pagination_params(
 
 def get_date_range(
     datetime_from: datetime = Query(None, description="Date included"),
-    datetime_to: datetime = Query(None, description="Date included")
+    datetime_to: datetime = Query(None, description="Date included"),
 ) -> SDatetimeRange:
     return SDatetimeRange(
         start=datetime_from,
@@ -56,8 +56,7 @@ def get_categories_params(
 
     if category_id:
         category_params = [
-            SCategoryQueryParams(category_id=cat_id)
-            for cat_id in category_id
+            SCategoryQueryParams(category_id=cat_id) for cat_id in category_id
         ]
     elif category_name:
         category_params = [
@@ -71,7 +70,7 @@ def get_categories_params(
 
 
 def get_transactions_sort_params(
-    sort_params: list[str] | None = Query(None, description="`-` is desc")
+    sort_params: list[str] | None = Query(None, description="`-` is desc"),
 ) -> STransactionsSortParams | None:
     if sort_params is not None:
         return STransactionsSortParams(sort_by=sort_params)
