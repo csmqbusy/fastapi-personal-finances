@@ -175,11 +175,8 @@ class SavingGoalsService:
         status: GoalStatus | None = None,
         sort_params: SGoalsSortParams | None = None,
     ) -> list[SSavingGoalResponse]:
-
         if sort_params:
-            parsed_sort_params = parse_sort_params_for_query(
-                sort_params
-            )
+            parsed_sort_params = parse_sort_params_for_query(sort_params)
         else:
             parsed_sort_params = None
 

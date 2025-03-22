@@ -65,9 +65,7 @@ class TransactionsService:
         category_name = transaction.category_name
         if not category_name:
             category_name = self.default_tx_category_name
-        category_id = await self._get_category_id(
-            user_id, category_name, session
-        )
+        category_id = await self._get_category_id(user_id, category_name, session)
         transaction_to_create = self.creation_in_db_schema(
             amount=transaction.amount,
             description=transaction.description,
@@ -415,7 +413,8 @@ class TransactionsService:
         split_by_category: bool,
     ):
         monthly_summary = await self.get_monthly_summary(
-            session, user_id, year, month)
+            session, user_id, year, month
+        )
 
         month_name = calendar.month_name[month]
         days_in_month = calendar.monthrange(year, month)[1]

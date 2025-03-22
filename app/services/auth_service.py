@@ -14,7 +14,7 @@ def create_access_token(
 ) -> str:
     to_encode = payload.copy()
     iat = datetime.now(UTC).timestamp()
-    expire = (iat + settings.auth.access_token_expires_sec)
+    expire = iat + settings.auth.access_token_expires_sec
     to_encode.update(
         iat=iat,
         exp=expire,
@@ -32,11 +32,7 @@ def decode_access_token(
     public_key: str = settings.auth.public_key_path.read_text(),
     algorithm: str = settings.auth.algorithm,
 ) -> dict:
-    decoded = jwt.decode(
-        jwt=token,
-        key=public_key,
-        algorithms=[algorithm]
-    )
+    decoded = jwt.decode(jwt=token, key=public_key, algorithms=[algorithm])
     return decoded
 
 

@@ -112,7 +112,8 @@ class BaseCategoriesService:
             raise CategoryNotFound
 
         new_category = await self.get_category(
-            user_id, category_update_obj.category_name, session)
+            user_id, category_update_obj.category_name, session
+        )
         if new_category:
             raise CategoryAlreadyExists
 
@@ -135,12 +136,14 @@ class BaseCategoriesService:
             raise CannotDeleteDefaultCategory
 
         category_for_delete = await self.get_category(
-            user_id, category_name, session)
+            user_id, category_name, session
+        )
         if category_for_delete is None:
             raise CategoryNotFound
 
         transactions = await self.transaction_repo.get_all(
-            session, dict(category_id=category_for_delete.id, user_id=user_id))
+            session, dict(category_id=category_for_delete.id, user_id=user_id)
+        )
 
         if transactions_actions == TransactionsOnDeleteActions.DELETE:
             for transaction in transactions:
