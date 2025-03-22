@@ -8,7 +8,6 @@ from app.schemas.transactions_schemas import (
 )
 from app.services.base_transactions_service import TransactionsService
 
-
 spendings_service = TransactionsService(
     tx_repo=spendings_repo,
     tx_categories_repo=user_spend_cat_repo,

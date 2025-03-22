@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Type
 
-from sqlalchemy import select, and_, func, desc, ColumnElement
+from sqlalchemy import ColumnElement, and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 

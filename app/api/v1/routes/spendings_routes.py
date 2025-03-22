@@ -1,58 +1,58 @@
-from fastapi import APIRouter, Depends, Query, Response, Path
+from fastapi import APIRouter, Depends, Path, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
 from app.api.dependencies.common_dependenceis import get_csv_params
 from app.api.dependencies.operations_dependencies import (
-    get_pagination_params,
-    get_date_range,
-    get_categories_params,
-    get_transactions_sort_params,
     get_amount_range,
+    get_categories_params,
+    get_date_range,
+    get_pagination_params,
+    get_transactions_sort_params,
 )
 from app.api.exceptions.operations_exceptions import (
-    TransactionNotFoundError,
-    CategoryNotFoundError,
+    CannotDeleteDefaultCategoryError,
     CategoryAlreadyExistsError,
     CategoryNameNotFoundError,
-    CannotDeleteDefaultCategoryError,
+    CategoryNotFoundError,
+    TransactionNotFoundError,
 )
 from app.db import get_db_session
 from app.exceptions.categories_exceptions import (
-    CategoryNotFound,
+    CannotDeleteDefaultCategory,
     CategoryAlreadyExists,
     CategoryNameNotFound,
-    CannotDeleteDefaultCategory,
+    CategoryNotFound,
 )
 from app.exceptions.transaction_exceptions import TransactionNotFound
 from app.models import UserModel
+from app.schemas.common_schemas import (
+    SAmountRange,
+    SDatetimeRange,
+    SPagination,
+)
 from app.schemas.transaction_category_schemas import (
+    SCategoryQueryParams,
     STransactionCategoryCreate,
     STransactionCategoryOut,
     STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
-    SCategoryQueryParams,
 )
 from app.schemas.transactions_schemas import (
+    DayTransactionsSummary,
+    MonthTransactionsSummary,
     STransactionCreate,
     STransactionResponse,
-    STransactionUpdatePartial,
     STransactionsSortParams,
     STransactionsSummary,
-    MonthTransactionsSummary,
-    DayTransactionsSummary,
-)
-from app.schemas.common_schemas import (
-    SAmountRange,
-    SPagination,
-    SDatetimeRange,
+    STransactionUpdatePartial,
 )
 from app.services import spendings_service
 from app.services.common_service import (
     apply_pagination,
-    make_csv_from_pydantic_models,
     get_filename_with_utc_datetime,
+    make_csv_from_pydantic_models,
 )
 from app.services.users_spending_categories_service import user_spend_cat_service
 

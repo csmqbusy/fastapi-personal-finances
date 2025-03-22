@@ -4,24 +4,24 @@ from typing import Type
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.saving_goals_exceptions import (
-    GoalNotFound,
     GoalCurrentAmountInvalid,
+    GoalNotFound,
 )
 from app.models import SavingGoalsModel
 from app.repositories.saving_goals_repository import (
-    saving_goals_repo,
     SavingGoalsRepository,
-)
-from app.schemas.saving_goals_schemas import (
-    SSavingGoalCreate,
-    SSavingGoalCreateInDB,
-    SSavingGoalResponse,
-    SSavingGoalUpdatePartial,
-    SSavingGoalProgress,
-    GoalStatus,
-    SGoalsSortParams,
+    saving_goals_repo,
 )
 from app.schemas.common_schemas import SAmountRange, SDateRange
+from app.schemas.saving_goals_schemas import (
+    GoalStatus,
+    SGoalsSortParams,
+    SSavingGoalCreate,
+    SSavingGoalCreateInDB,
+    SSavingGoalProgress,
+    SSavingGoalResponse,
+    SSavingGoalUpdatePartial,
+)
 from app.services.common_service import parse_sort_params_for_query
 
 

@@ -1,9 +1,10 @@
 from fastapi import APIRouter
+
 from .routes import (
     authentication_router,
-    spendings_router,
     income_router,
     saving_goals_router,
+    spendings_router,
 )
 
 router_v1 = APIRouter()

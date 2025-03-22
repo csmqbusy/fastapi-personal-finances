@@ -1,8 +1,9 @@
 from typing import AsyncGenerator
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 from app.db.manager import DatabaseSessionManager
-from sqlalchemy.ext.asyncio import AsyncSession
 
 database_manager = DatabaseSessionManager(
         url=str(settings.db.url),

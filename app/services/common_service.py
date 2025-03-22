@@ -1,11 +1,10 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Sequence, TypeVar
 
 import pandas as pd
 from pydantic import BaseModel
 
-from app.schemas.common_schemas import SPagination, SSortParamsBase, SortParam
-
+from app.schemas.common_schemas import SortParam, SPagination, SSortParamsBase
 
 AnyPydanticModel = TypeVar("AnyPydanticModel", bound=BaseModel)
 

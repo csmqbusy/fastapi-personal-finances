@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import Query
 
-from app.schemas.common_schemas import SDateRange, SAmountRange
+from app.schemas.common_schemas import SAmountRange, SDateRange
 from app.schemas.saving_goals_schemas import SGoalsSortParams
 
 

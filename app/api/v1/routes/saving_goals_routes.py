@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth_dependencies import get_active_verified_user
@@ -8,38 +8,37 @@ from app.api.dependencies.operations_dependencies import (
     get_transactions_sort_params,
 )
 from app.api.dependencies.saving_goals_dependencies import (
-    get_start_date_range,
-    get_target_date_range,
-    get_end_date_range,
     get_current_amount_range,
+    get_end_date_range,
+    get_start_date_range,
     get_target_amount_range,
+    get_target_date_range,
 )
 from app.api.exceptions.operations_exceptions import (
-    GoalNotFoundError,
     GoalCurrentAmountError,
+    GoalNotFoundError,
 )
 from app.db import get_db_session
 from app.exceptions.saving_goals_exceptions import (
-    GoalNotFound,
     GoalCurrentAmountInvalid,
+    GoalNotFound,
 )
 from app.models import UserModel
-from app.schemas.common_schemas import SAmountRange, SPagination, SDateRange
+from app.schemas.common_schemas import SAmountRange, SDateRange, SPagination
 from app.schemas.saving_goals_schemas import (
-    SSavingGoalCreate,
-    SSavingGoalResponse,
-    SSavingGoalUpdatePartial,
-    SSavingGoalProgress,
     GoalStatus,
     SGoalsSortParams,
+    SSavingGoalCreate,
+    SSavingGoalProgress,
+    SSavingGoalResponse,
+    SSavingGoalUpdatePartial,
 )
 from app.services.common_service import (
     apply_pagination,
-    make_csv_from_pydantic_models,
     get_filename_with_utc_datetime,
+    make_csv_from_pydantic_models,
 )
 from app.services.saving_goals_service import saving_goals_service
-
 
 router = APIRouter(prefix="/goals")
 

@@ -3,10 +3,10 @@ from typing import Iterable, Type
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.categories_exceptions import (
-    CategoryAlreadyExists,
-    CategoryNotFound,
-    CategoryNameNotFound,
     CannotDeleteDefaultCategory,
+    CategoryAlreadyExists,
+    CategoryNameNotFound,
+    CategoryNotFound,
 )
 from app.models.base_categories_model import BaseCategoriesModel
 from app.repositories import (
@@ -14,9 +14,9 @@ from app.repositories import (
     BaseTransactionsRepository,
 )
 from app.schemas.transaction_category_schemas import (
+    STransactionCategoryOut,
     STransactionCategoryUpdate,
     TransactionsOnDeleteActions,
-    STransactionCategoryOut,
 )
 
 

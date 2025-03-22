@@ -2,8 +2,8 @@ from datetime import datetime
 
 from pydantic import (
     BaseModel,
-    Field,
     ConfigDict,
+    Field,
 )
 
 from app.schemas.common_schemas import SSortParamsBase
