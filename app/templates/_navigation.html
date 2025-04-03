@@ -1,0 +1,16 @@
+<nav>
+{% set data = [("home", "root_page"), ("spendings", "spendings_page"), ("income", "income_page"), ("saving goals", "saving_goals_page")] %}
+    <div class="row align-items-center">
+      {% for name, function in data %}
+        {% if name == "home" %}
+        <div class="col-2 offset-2">
+          <h5><a href="{{ url_for(function) }}" class="menu-link link-underline link-underline-opacity-0">{{ name | title }}</a></h5>
+        </div>
+        {% else %}
+        <div class="col-2">
+          <h5><a href="{{ url_for(function) }}" class="menu-link link-underline link-underline-opacity-0">{{ name | title }}</a></h5>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+</nav>

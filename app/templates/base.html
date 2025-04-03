@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    {% block title %}
+      <title>{{ title | capitalize }}</title>
+    {% endblock %}
+    <link rel="icon" href="/static/img/favicon.png" type="image/png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+  </head>
+    <body>
+
+      <div class="container text-center">
+        <header class="mb-5 header">
+          <div class="logo">
+            <img src="/static/img/logo.png" alt="some" width="512">
+          </div>
+          {% include "_navigation.html" %}
+        </header>
+
+          <main>
+              {% block content %}
+                  <div class="row justify-content-center tx-info">
+                      <div class="row col-3">
+                          <div class="col-md">
+                              <h5><a href="{{ url_for(sign_in_funcname) }}" class="menu-link link-underline link-underline-opacity-0">Sign in</a></h5>
+                          </div>
+
+                          <div class="col-md">
+                              <h5><a href="{{ url_for(sign_up_funcname) }}" class="menu-link link-underline link-underline-opacity-0">Sign up</a></h5>
+                          </div>
+                      </div>
+                  </div>
+                  <h4 class="mt-5">An app that takes care of your finances.</h4>
+              {% endblock %}
+          </main>
+
+        <footer>
+          <div class="mt-5 footer">
+            <div class="contact-info email">
+                <img src="/static/img/icons/mail.svg" alt="mail icon" class="contact-icon">
+                <span>support@dohodyaga.com</span>
+            </div>
+            <div class="contact-info phone-number">
+                <img src="/static/img/icons/call.svg" alt="mail icon" class="contact-icon">
+                <span>561-555-7689</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      <script src="/static/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>

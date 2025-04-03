@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>{{ title }}</title>
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h3>Log In</h3>
+            <form id="goal-form" onsubmit="handleLogin(event)">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <span class="form-hint">Username:</span>
+                    </div>
+                    <div class="col">
+                        <input type="text" id="username" name="username" class="form-control text-center" required>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <span class="form-hint">Password:</span>
+                    </div>
+                    <div class="col">
+                        <input type="password" id="password" name="password" class="form-control text-center" required>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12 text-center">
+                        <button type="submit" onclick="submitForm()" class="btn btn-primary">
+                            <span>Enter</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const response = await fetch("{{ url_for('login') }}", {
+                method: "POST",
+                body: new URLSearchParams(formData),
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+            });
+
+            const result = await response.json();
+
+            if (result.sign_in === "Success!") {
+                window.location.href = "/pages/";
+            } else {
+                alert("Invalid username or password.");
+            }
+        }
+    </script>
+{% endblock %}
