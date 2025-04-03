@@ -5,7 +5,6 @@ from app.api.dependencies.auth_dependencies import get_active_verified_user
 from app.api.dependencies.common_dependenceis import get_csv_params
 from app.api.dependencies.operations_dependencies import (
     get_pagination_params,
-    get_transactions_sort_params,
 )
 from app.api.dependencies.saving_goals_dependencies import (
     get_current_amount_range,
@@ -13,6 +12,7 @@ from app.api.dependencies.saving_goals_dependencies import (
     get_start_date_range,
     get_target_amount_range,
     get_target_date_range,
+    get_goals_sort_params,
 )
 from app.api.exceptions.operations_exceptions import (
     GoalCurrentAmountError,
@@ -113,7 +113,7 @@ async def saving_goals_get_all(
     end_date_range: SDateRange = Depends(get_end_date_range),
     goal_status: GoalStatus | None = Query(None),
     pagination: SPagination = Depends(get_pagination_params),
-    sort_params: SGoalsSortParams = Depends(get_transactions_sort_params),
+    sort_params: SGoalsSortParams = Depends(get_goals_sort_params),
     in_csv: bool = Depends(get_csv_params),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> list[SSavingGoalResponse] | Response:
