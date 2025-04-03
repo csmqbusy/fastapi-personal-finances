@@ -4,6 +4,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    model_validator,
 )
 
 from app.schemas.common_schemas import SSortParamsBase
@@ -30,6 +31,12 @@ class STransactionResponse(BaseModel):
     date: datetime
     id: int
 
+    @model_validator(mode="after")
+    def microseconds_remove(self):
+        if self.date:
+            self.date = self.date.replace(microsecond=0)
+        return self
+
 
 class STransactionCreateInDB(STransactionBase):
     user_id: int
@@ -39,7 +46,7 @@ class STransactionCreateInDB(STransactionBase):
 class STransactionUpdatePartial(BaseModel):
     amount: int | None = Field(None, gt=0)
     description: str | None = Field(None, max_length=100)
-    date: datetime | None
+    date: datetime | None = None
     category_name: str | None = Field(None, max_length=50)
 
 
