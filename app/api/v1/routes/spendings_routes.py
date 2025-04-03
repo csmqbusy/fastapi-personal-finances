@@ -145,7 +145,7 @@ async def spendings_summary_chart_get(
 
 
 @router.get(
-    "/summary/{year}",
+    "/summary/{year}/",
     status_code=status.HTTP_200_OK,
     summary="Get annual spendings summary",
     response_model=None,
@@ -180,7 +180,7 @@ async def spendings_annual_summary_get(
 
 
 @router.get(
-    "/summary/{year}/chart",
+    "/summary/chart/{year}/",
     status_code=status.HTTP_200_OK,
     summary="Get annual spendings summary chart",
 )
@@ -238,7 +238,7 @@ async def spendings_monthly_summary_get(
 
 
 @router.get(
-    "/summary/{year}/{month}/chart/",
+    "/summary/chart/{year}/{month}/",
     status_code=status.HTTP_200_OK,
     summary="Get monthly spendings summary chart",
 )
@@ -334,7 +334,7 @@ async def spending_delete(
     status_code=status.HTTP_200_OK,
     response_model=None,
 )
-async def spendings_get(
+async def spendings_get_all(
     user: UserModel = Depends(get_active_verified_user),
     categories_params: list[SCategoryQueryParams] = Depends(get_categories_params),
     amount_params: SAmountRange = Depends(get_amount_range),

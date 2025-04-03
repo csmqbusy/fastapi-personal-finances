@@ -180,13 +180,13 @@ async def income_annual_summary_get(
 
 
 @router.get(
-    "/summary/{year}/chart",
+    "/summary/chart/{year}/",
     status_code=200,
     summary="Get annual income summary chart",
 )
 async def income_annual_summary_chart_get(
+    year: int,
     user: UserModel = Depends(get_active_verified_user),
-    year: int = Path(),
     split_by_category: bool = Query(False),
     db_session: AsyncSession = Depends(get_db_session),
 ) -> Response:
@@ -238,7 +238,7 @@ async def income_monthly_summary_get(
 
 
 @router.get(
-    "/summary/{year}/{month}/chart/",
+    "/summary/chart/{year}/{month}/",
     status_code=200,
     summary="Get monthly income summary chart",
 )
