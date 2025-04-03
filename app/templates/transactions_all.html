@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>{{ title | capitalize }}</title>
+{% endblock %}
+
+{% block content %}
+    <div class="row col-12 mt-5">
+        <h5>{{ tx_type_multiple | capitalize }} list</h5>
+    </div>
+
+    <div class="row mb-3 justify-content-center">
+        <div class="col-9">
+            <form id="filter-form" class="form-inline">
+                <div class="row g-3 align-items-center">
+                    <div class="col">
+                        <label for="category"
+                               class="col-form-label">Category:</label>
+                    </div>
+                    <div class="col">
+                        <input type="text" class="form-control" id="category"
+                               name="category_name">
+                    </div>
+
+                    <div class="col">
+                        <label for="min_amount" class="col-form-label">Min
+                            amount:</label>
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control"
+                               id="min_amount" name="min_amount">
+                    </div>
+
+                    <div class="col">
+                        <label for="max_amount" class="col-form-label">Max
+                            amount:</label>
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control"
+                               id="max_amount" name="max_amount">
+                    </div>
+
+                    <div class="col">
+                        <label for="description" class="col-form-label">Description:</label>
+                    </div>
+                    <div class="col">
+                        <input type="text" class="form-control"
+                               id="description" name="description_search_term">
+                    </div>
+                </div>
+                <div class="row g-3 align-items-center mt-2">
+
+                    <div class="col">
+                        <label for="start-date"
+                               class="col-form-label">From:</label>
+                    </div>
+                    <div class="col">
+                        <input type="date" class="form-control" id="start-date"
+                               name="datetime_from">
+                    </div>
+
+                    <div class="col">
+                        <label for="end-date"
+                               class="col-form-label">To:</label>
+                    </div>
+                    <div class="col">
+                        <input type="date" class="form-control" id="end-date"
+                               name="datetime_to">
+                    </div>
+
+                    <div class="col">
+                        <label for="sort-params" class="col-form-label">Sort
+                            param:</label>
+                    </div>
+                    <div class="col">
+                        <input type="text" class="form-control"
+                               id="sort-params" name="sort_params">
+                    </div>
+                </div>
+                <div class="row g-3 align-items-center mt-2">
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary">Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-striped table-hover table-sm table-bordered border-success">
+                <thead>
+                <tr>
+                    <th scope="col">id</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Description</th>
+                </tr>
+                </thead>
+                <tbody class="table-group-divider" id="transactions-table-body">
+                {% for tx in transactions %}
+                    <tr class="clickable-row" onclick='window.location.href="{{ url_for(tx_get_details_funcname, transaction_id=tx.id) }}"'>
+                        <th scope="row">{{ tx.id }}</th>
+                        <td>{{ tx.amount }}</td>
+                        <td>{{ tx.category_name }}</td>
+                        <td>{{ tx.date }}</td>
+                        <td>{{ tx.description }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <nav aria-label="...">
+        <ul class="pagination">
+            <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1"
+                   aria-disabled="true">prev</a>
+            </li>
+            <li class="page-item active"><a class="page-link" href="#">1</a>
+            </li>
+            <li class="page-item" aria-current="page">
+                <a class="page-link" href="#">2</a>
+            </li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+                <a class="page-link" href="#">next</a>
+            </li>
+        </ul>
+    </nav>
+
+    <script>
+        document.getElementById("filter-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            const data = {};
+            for (const [key, value] of formData.entries()) {
+                if (value !== "" && value !== null && value !== undefined) {
+                    data[key] = value;
+                }
+            }
+            const params = new URLSearchParams(data).toString();
+
+            fetch(`{{ transactions_get_url }}?${params}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    const tableBody = document.getElementById("transactions-table-body");
+                    tableBody.innerHTML = "";
+
+                    data.forEach((tx) => {
+                        const row = document.createElement("tr");
+                        row.className = "clickable-row";
+                        row.onclick = function () {
+                            window.location.href = `{{ tx_get_details_url_prefix }}${tx.id}`;
+                        };
+                        row.innerHTML = `
+                                    <th scope="row">${tx.id}</th>
+                                    <td>${tx.amount}</td>
+                                    <td>${tx.category_name}</td>
+                                    <td>${tx.date}</td>
+                                    <td>${tx.description}</td>
+                                `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch((error) => console.error("Error:", error));
+        });
+    </script>
+{% endblock %}

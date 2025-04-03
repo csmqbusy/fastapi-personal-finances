@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>{{ title }}</title>
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center tx-info">
+        <div class="row col-12">
+          <h5>{{ transaction_type | capitalize }} info</h5>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-group">
+                <li class="list-group-item"><b>ID:</b> {{ transaction_info.id }}</li>
+                <li class="list-group-item"><b>Amount:</b> {{ transaction_info.amount }}</li>
+                <li class="list-group-item"><b>Category name:</b> {{ transaction_info.category_name }}</li>
+                <li class="list-group-item"><b>Description:</b> {{ transaction_info.description }}</li>
+                <li class="list-group-item"><b>Date:</b> {{ transaction_info.date }}</li>
+            </ul>
+        </div>
+        <div class="col-md-12">
+        </div>
+        <div class="col-md-2 action delete-tx mt-3">
+            <button class="btn btn-danger delete-btn" data-url="{{ tx_delete_url }}">
+                🆇 Delete {{ transaction_type }}
+            </button>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-6 mt-4">
+            <form id="tx-update-form" onsubmit="updateTx(event)">
+                <div class="row">
+                    <h5 class="text-center">Update {{ transaction_type }}</h5>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-12">
+                        <span class="form-hint">Amount:</span>
+                    </div>
+                    <div class="col-12">
+                        <input type="number" name="amount" class="form-control text-center">
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-12">
+                        <span class="form-hint">Category:</span>
+                    </div>
+                    <div class="col-12">
+                        <select class="form-select text-center" name="category_name">
+                            <option selected="{{ transaction_info.category_name }}">{{ transaction_info.category_name }}</option>
+                            {% for category in user_categories %}
+                                <option value="{{ category.category_name }}">{{ category.category_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-12">
+                        <span class="form-hint">Description:</span>
+                    </div>
+                    <div class="col-12">
+                        <input type="text" name="description" class="form-control text-center">
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-12">
+                        <span class="form-hint">Date:</span>
+                    </div>
+                    <div class="col-12">
+                        <input type="datetime-local" name="date" class="form-control text-center">
+                    </div>
+                </div>
+
+                <div class="row mb-5 action update-tx mt-3">
+                    <button type="submit" class="btn btn-primary">
+                       Update {{ transaction_type }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete {{ transaction_type }}?')) {
+                    fetch(this.dataset.url, {
+                        method: 'DELETE',
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.href = "{{ success_redirect_url }}";
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
+    <script>
+        async function updateTx(event) {
+            event.preventDefault();
+            const form = document.getElementById("tx-update-form");
+            const formData = new FormData(form);
+
+            const data = {};
+            for (const [key, value] of formData.entries()) {
+                if (value !== "" && value !== null && value !== undefined) {
+                    data[key] = value;
+                }
+            }
+
+            try {
+                const response = await fetch("{{ api_update_tx_url }}", {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Server error:", errorData);
+
+                    let errorMessage = "Form submission error";
+                    if (Array.isArray(errorData.detail)) {
+                        errorMessage = errorData.detail.map((err) => `${err.loc?.join(".")}: ${err.msg}`).join("\n");
+                    } else if (errorData.detail) {
+                        errorMessage = errorData.detail;
+                    }
+
+                    alert(errorMessage);
+                    return;
+                }
+
+                window.location.href = "{{ success_redirect_url }}";
+            } catch (error) {
+                console.error("Network error:", error);
+                alert("Network error: " + error.message);
+            }
+        }
+    </script>
+{% endblock %}

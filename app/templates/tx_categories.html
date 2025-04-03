@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>{{ title }}</title>
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center tx-info">
+        <div class="row col-12">
+            <h5>{{ categories_type | capitalize }} categories</h5>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-group">
+                {% for category in categories %}
+                    <li class="list-group-item p-0">
+                        <div class="p-3"><b>{{ category.category_name }}</b>
+                        </div>
+                        <div class="d-flex p-3 pt-0 align-items-center">
+                            <form id="tx-category-update-form"
+                                  class="d-flex flex-grow-1 me-2"
+                                  onsubmit="updateTxCategory(event, '{{ category.category_name }}')">
+                                <div class="input-group">
+                                    <input type="text" name="category_name"
+                                           placeholder="New category name"
+                                           class="form-control">
+                                    <button type="submit"
+                                            class="btn btn-primary">Update name
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="d-flex p-3 pt-0 align-items-center">
+                            <form id="tx-category-delete-form" class="d-flex flex-grow-1 me-2" onsubmit="deleteTxCategory(event, '{{ category.category_name }}')">
+                                <select class="form-select text-center" name="handle_spendings_on_deletion">
+                                    {% for action in on_delete_actions %}
+                                        <option value="{{ action }}">{{ action }}</option>
+                                    {% endfor %}
+                                    <input type="text" name="new_category_name" placeholder="*" class="form-control">
+                                </select>
+                                <button type="submit" class="btn btn-danger delete-btn">
+                                    🆇 Delete {{ transaction_type }}
+                                </button>
+                            </form>
+                        </div>
+                        <span class="text-size-10">* Specify the category name here, if you have selected "TO_EXISTS_CATEGORY" or "TO_NEW_CATEGORY", this will help you not lose transactions of the deleted category.</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function deleteTxCategory(event, category_name) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const formData = new FormData(form);
+
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                if (value !== "" && value !== null && value !== undefined) {
+                    params.append(key, value);
+                }
+            }
+
+            try {
+                let url = "{{ api_delete_tx_category_url }}" + encodeURIComponent(category_name);
+
+                const queryString = params.toString();
+                if (queryString) {
+                    url += "?" + queryString;
+                }
+                const response = await fetch(url, {
+                    method: "DELETE",
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Server error:", errorData);
+
+                    let errorMessage = "Form submission error";
+                    if (Array.isArray(errorData.detail)) {
+                        errorMessage = errorData.detail.map((err) => `${err.loc?.join(".")}: ${err.msg}`).join("\n");
+                    } else if (errorData.detail) {
+                        errorMessage = errorData.detail;
+                    }
+
+                    alert(errorMessage);
+                    return;
+                }
+
+                window.location.reload();
+            } catch (error) {
+                console.error("Network error:", error);
+                alert("Network error: " + error.message);
+            }
+        }
+    </script>
+    <script>
+        async function updateTxCategory(event, category_name) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const formData = new FormData(form);
+
+            const data = {};
+            for (const [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+
+            try {
+                const response = await fetch("{{ api_update_tx_category_url }}" + encodeURIComponent(category_name), {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Server error:", errorData);
+
+                    let errorMessage = "Form submission error";
+                    if (Array.isArray(errorData.detail)) {
+                        errorMessage = errorData.detail.map((err) => `${err.loc?.join(".")}: ${err.msg}`).join("\n");
+                    } else if (errorData.detail) {
+                        errorMessage = errorData.detail;
+                    }
+
+                    alert(errorMessage);
+                    return;
+                }
+
+                window.location.reload();
+            } catch (error) {
+                console.error("Network error:", error);
+                alert("Network error: " + error.message);
+            }
+        }
+    </script>
+{% endblock %}

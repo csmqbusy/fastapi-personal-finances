@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>{{ title | capitalize }}</title>
+{% endblock %}
+
+{% block content %}
+    <div class="row col-12 mt-5">
+        <h5>{{ time_interval | capitalize }} {{ tx_type_multiple }} summary</h5>
+    </div>
+
+    <div class="row mb-3 justify-content-center">
+        <div class="col-9">
+            <form id="filter-form" class="form-inline">
+                <div class="row g-3 align-items-center">
+                    <div class="col-1">
+                        <label for="year" class="col-form-label">Year:</label>
+                    </div>
+                    <div class="col-2">
+                        <input type="number" class="form-control" id="year" name="year">
+                    </div>
+
+                    <div class="col-1">
+                        <label for="month" class="col-form-label">Month:</label>
+                    </div>
+                    <div class="col-2">
+                        <input type="number" class="form-control" id="month" name="month">
+                    </div>
+
+                    <div class="col-2">
+                        <label for="split_by_category" class="col-form-label">Split by categories:</label>
+                    </div>
+                    <div class="col-1 form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="split_by_category" name="split_by_category">
+                    </div>
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-striped table-hover table-sm table-bordered border-success">
+                <thead>
+                <tr>
+                    <th scope="col">Day number</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Category amount</th>
+                    <th scope="col">Total amount</th>
+                </tr>
+                </thead>
+                <tbody class="table-group-divider" id="summary-table-body">
+                {% for s in summary %}
+                    <tr>
+                        <td>{{ s.day_number }}</td>
+                        <td>All categories</td>
+                        <td>{{ s.total_amount }}</td>
+                        <td>{{ s.total_amount }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <img src="data:image/png;base64,{{ chart }}" id="summary-chart" width={{ chart_width }}>
+    </div>
+
+    <script>
+        document.getElementById("filter-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            let year = formData.get("year");
+            if (!year) {
+                year = new Date().getFullYear();
+            }
+
+            let month = formData.get("month");
+            if (!month) {
+                month = new Date().getMonth() + 1;
+            } else {
+                month = parseInt(month, 10);
+                if (month < 1 || month > 12) {
+                    alert("The month number must be between 1 and 12.");
+                    return;
+                }
+            }
+            // on or null
+            const splitByCategory = formData.get("split_by_category");
+            const url_summary = splitByCategory === "on" ? `{{ get_summary_prefix }}/${year}/${month}?split_by_category=true` : `{{ get_summary_prefix }}/${year}/${month}`;
+            const url_chart = splitByCategory === "on" ? `{{ get_summary_prefix }}/chart/${year}/${month}?split_by_category=true` : `{{ get_summary_prefix }}/chart/${year}/${month}`;
+
+            fetch(url_summary)
+                .then((response) => response.json())
+                .then((data) => {
+                    const tableBody = document.getElementById("summary-table-body");
+                    tableBody.innerHTML = "";
+
+                    if (splitByCategory) {
+                        data.forEach((daily_summary) => {
+                            daily_summary.summary.forEach((summary_record) => {
+                                const row = document.createElement("tr");
+                                row.innerHTML = `
+                                        <td>${daily_summary.day_number}</td>
+                                        <td>${summary_record.category_name}</td>
+                                        <td>${summary_record.amount}</td>
+                                        <td>${daily_summary.total_amount}</td>
+                                    `;
+                                tableBody.appendChild(row);
+                            });
+                        });
+                    } else {
+                        data.forEach((summary_record) => {
+                            const row = document.createElement("tr");
+                            row.innerHTML = `
+                                        <td>${summary_record.day_number}</td>
+                                        <td>All categories</td>
+                                        <td>${summary_record.total_amount}</td>
+                                        <td>${summary_record.total_amount}</td>
+                                    `;
+                            tableBody.appendChild(row);
+                        });
+                    }
+                })
+                .catch((error) => console.error("Error:", error));
+
+            fetch(url_chart)
+                .then((response) => response.arrayBuffer())
+                .then((arrayBuffer) => {
+                    const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+                    const imgElement = document.getElementById("summary-chart");
+                    imgElement.src = `data:image/png;base64,${base64String}`;
+                })
+                .catch((error) => console.error("Error:", error));
+        });
+    </script>
+{% endblock %}

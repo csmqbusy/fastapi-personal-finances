@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  <title>{{ title | capitalize  }}</title>
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-center">
+        <ul class="list-group list-group-horizontal actions transactions">
+            <li class="list-group-item">
+                <div class="action">
+                    <a href="{{ url_for('income_create_page') }}">
+                    <button type="button" class="btn btn-primary" href="{{ url_for('income_create_page') }}">
+                      ➕ Create income
+                    </button>
+                    </a>
+                </div>
+            </li>
+            <li class="list-group-item">
+                <div class="action">
+                    <a href="{{ url_for('income_get_all_page') }}">
+                    <button type="button" class="btn btn-primary" href="{{ url_for('income_get_all_page') }}">
+                      👀 View income
+                    </button>
+                    </a>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="d-flex justify-content-center mb-3 mt-3">
+        <ul class="list-group list-group-horizontal actions categories">
+            <li class="list-group-item">
+                <div class="action">
+                    <a href="{{ url_for('income_category_create_page') }}">
+                    <button type="button" class="btn btn-secondary" href="{{ url_for('income_category_create_page') }}">
+                      ➕ Create category
+                    </button>
+                    </a>
+                </div>
+            </li>
+            <li class="list-group-item">
+                <div class="action">
+                    <a href="{{ url_for('income_categories_page') }}">
+                    <button type="button" class="btn btn-secondary" href="{{ url_for('income_create_page') }}">
+                      👀 View categories
+                    </button>
+                    </a>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="d-flex justify-content-center">
+        <ul class="list-group list-group-horizontal actions categories">
+            <li class="list-group-item">
+                <div class="action">
+                    <a href="{{ url_for('income_summary_full') }}">
+                    <button type="button" class="btn btn-success" href="{{ url_for('income_summary_full') }}">
+                      📊 All time summary
+                    </button>
+                    </a>
+                </div>
+            </li>
+            <li class="list-group-item">
+                <div class="action">
+                    <a href="{{ url_for('income_summary_annual') }}">
+                    <button type="button" class="btn btn-success" href="{{ url_for('income_summary_annual') }}">
+                      📊 Annual summary
+                    </button>
+                    </a>
+                </div>
+            </li>
+            <li class="list-group-item">
+                <div class="action">
+                    <a href="{{ url_for('income_summary_monthly') }}">
+                    <button type="button" class="btn btn-success" href="{{ url_for('income_summary_monthly') }}">
+                      📊 Monthly summary
+                    </button>
+                    </a>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="row col-12 mt-5">
+      <h5>Income summary</h5>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <table class="table table-striped table-hover table-sm">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Category</th>
+              <th scope="col">Amount</th>
+            </tr>
+          </thead>
+          <tbody class="table-group-divider">
+          {% for summary_item in summary %}
+            <tr>
+              <th scope="row">{{ loop.index }}</th>
+              <td>{{ summary_item.category_name }}</td>
+              <td>{{ summary_item.amount }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+{% endblock %}
