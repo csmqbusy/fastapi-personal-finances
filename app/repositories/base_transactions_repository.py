@@ -5,10 +5,10 @@ from sqlalchemy import ColumnElement, and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.models.base_categories_model import BaseCategoriesModel
 from app.models.base_transactions_model import BaseTranscationsModel
 from app.repositories.base_repository import BaseRepository
 from app.schemas.common_schemas import SortParam
-from app.models.base_categories_model import BaseCategoriesModel
 
 
 class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):

@@ -2,14 +2,14 @@ import base64
 from datetime import date
 
 import aiohttp
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
 
 from app.api.v1.routes.income_routes import (
-    income_summary_get,
     income_categories_get,
     income_get_all,
     income_summary_chart_get,
+    income_summary_get,
 )
 from app.core.config import settings
 from app.schemas.transaction_category_schemas import TransactionsOnDeleteActions

@@ -9,10 +9,10 @@ from app.api.dependencies.operations_dependencies import (
 from app.api.dependencies.saving_goals_dependencies import (
     get_current_amount_range,
     get_end_date_range,
+    get_goals_sort_params,
     get_start_date_range,
     get_target_amount_range,
     get_target_date_range,
-    get_goals_sort_params,
 )
 from app.api.exceptions.operations_exceptions import (
     GoalCurrentAmountError,
