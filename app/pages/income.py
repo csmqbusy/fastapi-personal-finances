@@ -73,7 +73,9 @@ async def income_get_page(
     categories=Depends(income_categories_get),
 ):
     async with aiohttp.ClientSession() as session:
-        url = f"http://0.0.0.0:8000{settings.api.prefix_v1}/income/{transaction_id}/"
+        url = (
+            f"http://0.0.0.0:8000{settings.api.prefix_v1}/income/{transaction_id}/"
+        )
         async with session.get(url, cookies=request.cookies) as resp:
             income_info = await resp.json()
 
@@ -89,7 +91,7 @@ async def income_get_page(
             "transactions_get_url": f"{settings.api.prefix_v1}/income/",
             "tx_delete_url": f"{settings.api.prefix_v1}/income/{transaction_id}/",
             "api_update_tx_url": f"{settings.api.prefix_v1}/income/{transaction_id}/",
-            "success_redirect_url": "/pages/income/"
+            "success_redirect_url": "/pages/income/",
         },
     )
 
@@ -141,7 +143,7 @@ async def income_summary_full(
     summary=Depends(income_summary_get),
     chart=Depends(income_summary_chart_get),
 ):
-    chart_base64 = base64.b64encode(chart.body).decode('utf-8')
+    chart_base64 = base64.b64encode(chart.body).decode("utf-8")
     return templates.TemplateResponse(
         name="summary_full.html",
         context={
@@ -173,7 +175,7 @@ async def income_summary_annual(
         async with session.get(chart_url, cookies=request.cookies) as resp:
             chart = await resp.content.read()
 
-    chart_base64 = base64.b64encode(chart).decode('utf-8')
+    chart_base64 = base64.b64encode(chart).decode("utf-8")
     return templates.TemplateResponse(
         name="summary_annual.html",
         context={
@@ -206,7 +208,7 @@ async def income_summary_monthly(
         async with session.get(chart_url, cookies=request.cookies) as resp:
             chart = await resp.content.read()
 
-    chart_base64 = base64.b64encode(chart).decode('utf-8')
+    chart_base64 = base64.b64encode(chart).decode("utf-8")
     return templates.TemplateResponse(
         name="summary_monthly.html",
         context={

@@ -89,7 +89,7 @@ async def spending_get_page(
             "transactions_get_url": f"{settings.api.prefix_v1}/spendings/",
             "tx_delete_url": f"{settings.api.prefix_v1}/spendings/{transaction_id}/",
             "api_update_tx_url": f"{settings.api.prefix_v1}/spendings/{transaction_id}/",
-            "success_redirect_url": "/pages/spendings/"
+            "success_redirect_url": "/pages/spendings/",
         },
     )
 
@@ -141,7 +141,7 @@ async def spending_summary_full(
     summary=Depends(spendings_summary_get),
     chart=Depends(spendings_summary_chart_get),
 ):
-    chart_base64 = base64.b64encode(chart.body).decode('utf-8')
+    chart_base64 = base64.b64encode(chart.body).decode("utf-8")
     return templates.TemplateResponse(
         name="summary_full.html",
         context={
@@ -164,7 +164,9 @@ async def spending_summary_annual(
     year = date.today().year
 
     async with aiohttp.ClientSession() as session:
-        url_prefix = f"http://0.0.0.0:8000{settings.api.prefix_v1}/spendings/summary"
+        url_prefix = (
+            f"http://0.0.0.0:8000{settings.api.prefix_v1}/spendings/summary"
+        )
         summary_url = f"{url_prefix}/{year}/"
         async with session.get(summary_url, cookies=request.cookies) as resp:
             summary = await resp.json()
@@ -173,7 +175,7 @@ async def spending_summary_annual(
         async with session.get(chart_url, cookies=request.cookies) as resp:
             chart = await resp.content.read()
 
-    chart_base64 = base64.b64encode(chart).decode('utf-8')
+    chart_base64 = base64.b64encode(chart).decode("utf-8")
     return templates.TemplateResponse(
         name="summary_annual.html",
         context={
@@ -197,7 +199,9 @@ async def spending_summary_monthly(
     month = date.today().month
 
     async with aiohttp.ClientSession() as session:
-        url_prefix = f"http://0.0.0.0:8000{settings.api.prefix_v1}/spendings/summary"
+        url_prefix = (
+            f"http://0.0.0.0:8000{settings.api.prefix_v1}/spendings/summary"
+        )
         summary_url = f"{url_prefix}/{year}/{month}/"
         async with session.get(summary_url, cookies=request.cookies) as resp:
             summary = await resp.json()
@@ -206,7 +210,7 @@ async def spending_summary_monthly(
         async with session.get(chart_url, cookies=request.cookies) as resp:
             chart = await resp.content.read()
 
-    chart_base64 = base64.b64encode(chart).decode('utf-8')
+    chart_base64 = base64.b64encode(chart).decode("utf-8")
     return templates.TemplateResponse(
         name="summary_monthly.html",
         context={
