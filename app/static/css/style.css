@@ -1,0 +1,42 @@
+.header {
+  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+}
+
+.create-spending-form {
+  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  color: #ffffff;
+  font-weight: 100;
+  background: #e82e2b;
+}
+
+nav {
+  margin-bottom: 20px;
+}
+
+.contact-icon {
+  width: 20px;
+}
+
+.btn {
+  min-width: 180px;
+}
+
+.category-select {
+  max-width: 200px;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.text-size-10 {
+  font-size: 10px;
+}
