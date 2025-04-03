@@ -45,7 +45,7 @@ async def spendings_create_page(
             "transaction_name": "spending",
             "user_categories": categories,
             "api_create_url": f"{settings.api.prefix_v1}/spendings/",
-            "success_redirect_url": f"/pages/spendings/",
+            "success_redirect_url": "/pages/spendings/",
         },
     )
 
@@ -61,7 +61,7 @@ async def spendings_category_create_page(
             "title": "Create category",
             "tx_type_multiple": "spendings",
             "api_create_url": f"{settings.api.prefix_v1}/spendings/categories/",
-            "success_redirect_url": f"/pages/spendings/",
+            "success_redirect_url": "/pages/spendings/",
         },
     )
 
@@ -89,7 +89,7 @@ async def spending_get_page(
             "transactions_get_url": f"{settings.api.prefix_v1}/spendings/",
             "tx_delete_url": f"{settings.api.prefix_v1}/spendings/{transaction_id}/",
             "api_update_tx_url": f"{settings.api.prefix_v1}/spendings/{transaction_id}/",
-            "success_redirect_url": f"/pages/spendings/"
+            "success_redirect_url": "/pages/spendings/"
         },
     )
 

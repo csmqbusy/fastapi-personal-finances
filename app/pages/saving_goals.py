@@ -69,6 +69,6 @@ async def saving_goal_details_page(
             "title": "Saving goal details",
             "goal_delete_url": f"{settings.api.prefix_v1}/goals/{goal_id}/",
             "api_update_goal_url": f"{settings.api.prefix_v1}/goals/{goal_id}/",
-            "success_redirect_url": f"/pages/goals/"
+            "success_redirect_url": "/pages/goals/"
         },
     )

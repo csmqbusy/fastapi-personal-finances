@@ -1,6 +1,6 @@
 import calendar
 from collections import defaultdict
-from typing import Any, Literal, Sequence, Type
+from typing import Any, Sequence, Type
 
 from aio_pika import connect_robust
 from aio_pika.patterns import RPC

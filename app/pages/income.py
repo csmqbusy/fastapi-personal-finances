@@ -45,7 +45,7 @@ async def income_create_page(
             "transaction_name": "income",
             "user_categories": categories,
             "api_create_url": f"{settings.api.prefix_v1}/income/",
-            "success_redirect_url": f"/pages/income/",
+            "success_redirect_url": "/pages/income/",
         },
     )
 
@@ -61,7 +61,7 @@ async def income_category_create_page(
             "title": "Create category",
             "tx_type_multiple": "income",
             "api_create_url": f"{settings.api.prefix_v1}/income/categories/",
-            "success_redirect_url": f"/pages/income/",
+            "success_redirect_url": "/pages/income/",
         },
     )
 
@@ -89,7 +89,7 @@ async def income_get_page(
             "transactions_get_url": f"{settings.api.prefix_v1}/income/",
             "tx_delete_url": f"{settings.api.prefix_v1}/income/{transaction_id}/",
             "api_update_tx_url": f"{settings.api.prefix_v1}/income/{transaction_id}/",
-            "success_redirect_url": f"/pages/income/"
+            "success_redirect_url": "/pages/income/"
         },
     )
 
