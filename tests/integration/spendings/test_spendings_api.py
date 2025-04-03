@@ -635,7 +635,7 @@ async def test_spendings_annual_summary_get(
     await create_test_spendings(db_session, auth_user.id)
 
     response = await client.get(
-        url=f"{settings.api.prefix_v1}/spendings/summary/{date.today().year}",
+        url=f"{settings.api.prefix_v1}/spendings/summary/{date.today().year}/",
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -653,7 +653,7 @@ async def test_spendings_annual_summary_get__csv(
     await create_test_spendings(db_session, auth_user.id)
 
     response = await client.get(
-        url=f"{settings.api.prefix_v1}/spendings/summary/{date.today().year}",
+        url=f"{settings.api.prefix_v1}/spendings/summary/{date.today().year}/",
         params={"in_csv": True},
     )
 
@@ -672,7 +672,7 @@ async def test_spendings_annual_summary_chart_get(
     await create_test_spendings(db_session, auth_user.id)
 
     response = await client.get(
-        url=f"{settings.api.prefix_v1}/spendings/summary/{date.today().year}/chart",
+        url=f"{settings.api.prefix_v1}/spendings/summary/chart/{date.today().year}/",
     )
     assert response.status_code == status.HTTP_200_OK
     assert type(response.content) is bytes
@@ -737,7 +737,7 @@ async def test_spendings_monthly_summary_chart_get(
         spendings_date_range="this_month",
     )
 
-    url = f"spendings/summary/{date.today().year}/{date.today().month}/chart"
+    url = f"spendings/summary/chart/{date.today().year}/{date.today().month}"
     response = await client.get(
         url=f"{settings.api.prefix_v1}/{url}/",
     )
