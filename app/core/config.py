@@ -25,6 +25,11 @@ class ApiPrefix(BaseModel):
     prefix_v1: str = "/api/v1"
 
 
+class PagesConfig(BaseModel):
+    static_path: Path = get_correct_cwd() / "app/static"
+    pages_prefix: str = "/pages"
+
+
 class DatabaseConfig(BaseModel):
     url: PostgresDsn
     echo: bool = False
@@ -65,6 +70,7 @@ class Settings(BaseSettings):
     db: DatabaseConfig
     auth: JWTAuth = JWTAuth()
     app: AppConfig = AppConfig()
+    pages: PagesConfig = PagesConfig()
     broker: MessageBrokerConfig
 
 
