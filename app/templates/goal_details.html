@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>{{ title }}</title>
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center tx-info">
+        <div class="row col-12">
+          <h5>{{ title | capitalize }}</h5>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-group">
+                <li class="list-group-item"><b>ID:</b> {{ goal_info.id }}</li>
+                <li class="list-group-item"><b>Name:</b> {{ goal_info.name }}</li>
+                <li class="list-group-item"><b>Description:</b> {{ goal_info.description }}</li>
+                <li class="list-group-item"><b>Current amount:</b> {{ goal_info.current_amount }}</li>
+                <li class="list-group-item"><b>Target amount:</b> {{ goal_info.target_amount }}</li>
+                <li class="list-group-item"><b>Start date:</b> {{ goal_info.start_date }}</li>
+                <li class="list-group-item"><b>Target date:</b> {{ goal_info.target_date }}</li>
+                <li class="list-group-item"><b>End date:</b> {{ goal_info.end_date }}</li>
+                <li class="list-group-item"><b>Status:</b> {{ goal_info.status }}</li>
+            </ul>
+        </div>
+        <div class="col-md-12"></div>
+        <div class="row col-12 mt-4">
+          <h5>Progress</h5>
+        </div>
+        <div class="col-md-6">
+            <ul class="list-group">
+                <li class="list-group-item"><b>Rest amount:</b> {{ goal_progress.rest_amount }}</li>
+                <li class="list-group-item"><b>Percentage progress:</b> {{ goal_progress.percentage_progress }}</li>
+                <li class="list-group-item"><b>Days left:</b> {{ goal_progress.days_left }}</li>
+                <li class="list-group-item"><b>Expected daily payment:</b> {{ goal_progress.expected_daily_payment }}</li>
+            </ul>
+        </div>
+        <div class="col-md-12"></div>
+        <div class="col-md-4 mt-2">
+            <div class="progress">
+              <div class="progress-bar bg-success"
+                   role="progressbar"
+                   style="width: {{ goal_progress.percentage_progress }}%;"
+                   aria-valuenow="{{ goal_progress.percentage_progress }}"
+                   aria-valuemin="0"
+                   aria-valuemax="100">
+                  {{ goal_progress.percentage_progress }}%
+              </div>
+            </div>
+        </div>
+        <div class="col-md-12"></div>
+        <div class="col-md-2 action delete-tx mt-5">
+            <button class="btn btn-danger delete-btn" data-url="{{ goal_delete_url }}">
+                🆇 Delete goal
+            </button>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-6 mt-4">
+            <form id="goal-update-form" onsubmit="updateGoal(event)">
+                <div class="row">
+                    <h5 class="text-center">Update goal</h5>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <span class="form-hint">Name:</span>
+                    </div>
+                    <div class="col-12">
+                        <input type="text" name="name" class="form-control text-center">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <span class="form-hint">Description:</span>
+                    </div>
+                    <div class="col-12">
+                        <input type="text" name="description" class="form-control text-center">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <span class="form-hint">Current amount:</span>
+                    </div>
+                    <div class="col-12">
+                        <input type="number" name="current_amount" class="form-control text-center">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <span class="form-hint">Target amount:</span>
+                    </div>
+                    <div class="col-12">
+                        <input type="number" name="target_amount" class="form-control text-center">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <span class="form-hint">Start date:</span>
+                    </div>
+                    <div class="col-12">
+                        <input type="date" name="start_date" class="form-control text-center">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <span class="form-hint">Target date:</span>
+                    </div>
+                    <div class="col-12">
+                        <input type="date" name="target_date" class="form-control text-center">
+                    </div>
+                </div>
+
+                <div class="row mb-5 action update-tx mt-3">
+                    <button type="submit" class="btn btn-primary">
+                       Update goal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this saving goal?')) {
+                    fetch(this.dataset.url, {
+                        method: 'DELETE',
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.href = "{{ success_redirect_url }}";
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
+    <script>
+        async function updateGoal(event) {
+            event.preventDefault();
+            const form = document.getElementById("goal-update-form");
+            const formData = new FormData(form);
+
+            const data = {};
+            for (const [key, value] of formData.entries()) {
+                if (value !== "" && value !== null && value !== undefined) {
+                    data[key] = value;
+                }
+            }
+
+            try {
+                const response = await fetch("{{ api_update_goal_url }}", {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Server error:", errorData);
+
+                    let errorMessage = "Form submission error";
+                    if (Array.isArray(errorData.detail)) {
+                        errorMessage = errorData.detail.map((err) => `${err.loc?.join(".")}: ${err.msg}`).join("\n");
+                    } else if (errorData.detail) {
+                        errorMessage = errorData.detail;
+                    }
+
+                    alert(errorMessage);
+                    return;
+                }
+
+                window.location.href = "{{ success_redirect_url }}";
+            } catch (error) {
+                console.error("Network error:", error);
+                alert("Network error: " + error.message);
+            }
+        }
+    </script>
+{% endblock %}
