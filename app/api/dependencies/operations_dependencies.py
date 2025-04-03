@@ -16,7 +16,7 @@ from app.schemas.transactions_schemas import (
 
 def get_pagination_params(
     page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(10, ge=1, le=100, description="Objects per page"),
+    page_size: int = Query(20, ge=1, le=100, description="Objects per page"),
 ) -> SPagination:
     return SPagination(
         page=page,
