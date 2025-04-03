@@ -5,15 +5,20 @@ from sqlalchemy import ColumnElement, and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.models import UsersSpendingCategoriesModel
 from app.models.base_transactions_model import BaseTranscationsModel
 from app.repositories.base_repository import BaseRepository
 from app.schemas.common_schemas import SortParam
+from app.models.base_categories_model import BaseCategoriesModel
 
 
 class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
-    def __init__(self, model: Type[BaseTranscationsModel]):
+    def __init__(
+        self,
+        model: Type[BaseTranscationsModel],
+        tx_categories_model: Type[BaseCategoriesModel],
+    ):
         super().__init__(model=model)
+        self.tx_categories_model = tx_categories_model
 
     async def get_transaction_with_category(
         self,
@@ -102,12 +107,12 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         query = (
             select(
                 func.sum(self.model.amount).label("amount"),
-                UsersSpendingCategoriesModel.category_name,
+                self.tx_categories_model.category_name,
                 func.extract("month", self.model.date).label("month"),
             )
             .join(
-                UsersSpendingCategoriesModel,
-                self.model.category_id == UsersSpendingCategoriesModel.id,
+                self.tx_categories_model,
+                self.model.category_id == self.tx_categories_model.id,
             )
             .where(
                 and_(
@@ -116,13 +121,13 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
                 )
             )
             .group_by(
-                UsersSpendingCategoriesModel.category_name,
+                self.tx_categories_model.category_name,
                 func.extract("month", self.model.date),
             )
             .order_by(
                 "month",
                 desc("amount"),
-                UsersSpendingCategoriesModel.category_name,
+                self.tx_categories_model.category_name,
             )
         )
         result = await session.execute(query)
@@ -152,12 +157,12 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
         query = (
             select(
                 func.sum(self.model.amount).label("amount"),
-                UsersSpendingCategoriesModel.category_name,
+                self.tx_categories_model.category_name,
                 func.extract("day", self.model.date).label("day"),
             )
             .join(
-                UsersSpendingCategoriesModel,
-                self.model.category_id == UsersSpendingCategoriesModel.id,
+                self.tx_categories_model,
+                self.model.category_id == self.tx_categories_model.id,
             )
             .where(
                 and_(
@@ -167,13 +172,13 @@ class BaseTransactionsRepository(BaseRepository[BaseTranscationsModel]):
                 )
             )
             .group_by(
-                UsersSpendingCategoriesModel.category_name,
+                self.tx_categories_model.category_name,
                 func.extract("day", self.model.date),
             )
             .order_by(
                 "day",
                 desc("amount"),
-                UsersSpendingCategoriesModel.category_name,
+                self.tx_categories_model.category_name,
             )
         )
         result = await session.execute(query)
