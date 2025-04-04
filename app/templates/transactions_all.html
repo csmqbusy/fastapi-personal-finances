@@ -115,19 +115,35 @@
     </div>
 
     <nav aria-label="...">
-        <ul class="pagination">
-            <li class="page-item disabled">
-                <a class="page-link" href="#" tabindex="-1"
-                   aria-disabled="true">prev</a>
-            </li>
-            <li class="page-item active"><a class="page-link" href="#">1</a>
+        <ul class="pagination" id="tx-pagination">
+            {% if current_page == 1 %}
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true">prev</a>
+                </li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for_pagination }}{{ current_page - 1 }}" tabindex="-1">prev</a>
+                </li>
+            {% endif %}
+
+            {% if current_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for_pagination }}1">1</a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true">...</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <a class="page-link">{{ current_page }}</a>
             </li>
             <li class="page-item" aria-current="page">
-                <a class="page-link" href="#">2</a>
+                <a class="page-link" href="{{ url_for_pagination }}{{ current_page + 1 }}">{{ current_page + 1 }}</a>
             </li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item"><a class="page-link" href="{{ url_for_pagination }}{{ current_page + 2 }}">{{ current_page + 2 }}</a></li>
             <li class="page-item">
-                <a class="page-link" href="#">next</a>
+                <a class="page-link" href="{{ url_for_pagination }}{{ current_page + 1 }}">next</a>
             </li>
         </ul>
     </nav>
@@ -144,7 +160,7 @@
                     data[key] = value;
                 }
             }
-            const params = new URLSearchParams(data).toString();
+            const params = new URLSearchParams(data);
 
             fetch(`{{ transactions_get_url }}?${params}`)
                 .then((response) => response.json())

@@ -2,7 +2,7 @@ import base64
 from datetime import date
 
 import aiohttp
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Query
 from fastapi.templating import Jinja2Templates
 
 from app.api.v1.routes.income_routes import (
@@ -99,16 +99,24 @@ async def income_get_page(
 @router.get("/income/all/")
 async def income_get_all_page(
     request: Request,
-    all_income=Depends(income_get_all),
+    page: int = Query(1, ge=1),
 ):
+    async with aiohttp.ClientSession() as session:
+        url = f"http://0.0.0.0:8000{settings.api.prefix_v1}/income/"
+        params = {"page": page}
+        cookies = request.cookies
+        async with session.get(url, cookies=cookies, params=params) as resp:
+            income = await resp.json()
+
     return templates.TemplateResponse(
         name="transactions_all.html",
         context={
             "request": request,
-            "transactions": all_income,
+            "transactions": income,
+            "current_page": page,
             "title": "All income",
             "tx_type_multiple": "income",
-            "page_size": 20,
+            "url_for_pagination": f"{settings.pages.pages_prefix}/income/all/?page=",
             "transactions_get_url": f"{settings.api.prefix_v1}/income/",
             "tx_get_details_funcname": "income_get_page",
             "tx_get_details_url_prefix": "/pages/income/detail/",

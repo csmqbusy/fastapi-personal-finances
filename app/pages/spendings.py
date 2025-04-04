@@ -2,7 +2,7 @@ import base64
 from datetime import date
 
 import aiohttp
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Query
 from fastapi.templating import Jinja2Templates
 
 from app.api.v1.routes.spendings_routes import (
@@ -97,16 +97,24 @@ async def spending_get_page(
 @router.get("/spendings/all/")
 async def spendings_get_all_page(
     request: Request,
-    all_spendings=Depends(spendings_get_all),
+    page: int = Query(1, ge=1),
 ):
+    async with aiohttp.ClientSession() as session:
+        url = f"http://0.0.0.0:8000{settings.api.prefix_v1}/spendings/"
+        params = {"page": page}
+        cookies = request.cookies
+        async with session.get(url, cookies=cookies, params=params) as resp:
+            spendings = await resp.json()
+
     return templates.TemplateResponse(
         name="transactions_all.html",
         context={
             "request": request,
-            "transactions": all_spendings,
+            "transactions": spendings,
+            "current_page": page,
             "title": "All spendings",
             "tx_type_multiple": "spendings",
-            "page_size": 20,
+            "url_for_pagination": f"{settings.pages.pages_prefix}/spendings/all/?page=",
             "transactions_get_url": f"{settings.api.prefix_v1}/spendings/",
             "tx_get_details_funcname": "spending_get_page",
             "tx_get_details_url_prefix": "/pages/spendings/detail/",
