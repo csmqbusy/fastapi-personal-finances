@@ -45,32 +45,8 @@
         </div>
     </div>
     <script>
-        async function handleRegistration(event) {
-            event.preventDefault();
-
-            const formData = new FormData(event.target);
-            const data = {
-                username: formData.get("username"),
-                email: formData.get("email"),
-                password: formData.get("password"),
-            };
-
-            const response = await fetch("{{ url_for('sign_up_user') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            });
-
-            if (response.ok) {
-                window.location.href = "/pages/";
-            } else {
-                const errorData = await response.json();
-                const errorMessage = errorData.detail || "An error occurred";
-                alert(errorMessage);
-            }
-        }
+        window.signUpUrl = "{{ url_for('sign_up_user') }}"
     </script>
+    <script src="/static/js/handleRegistration.js"></script>
 
 {% endblock %}

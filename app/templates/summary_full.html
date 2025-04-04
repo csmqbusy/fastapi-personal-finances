@@ -90,47 +90,9 @@
         <img src="data:image/png;base64,{{ chart }}" id="summary-chart" width={{ chart_width }}>
     </div>
 
-
     <script>
-        document.getElementById("filter-form").addEventListener("submit", function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-
-            const data = {};
-            for (const [key, value] of formData.entries()) {
-                if (value !== "" && value !== null && value !== undefined) {
-                    data[key] = value;
-                }
-            }
-            const params = new URLSearchParams(data).toString();
-
-            fetch(`{{ get_summary_url }}?${params}`)
-                .then((response) => response.json())
-                .then((data) => {
-                    const tableBody = document.getElementById("summary-table-body");
-                    tableBody.innerHTML = "";
-
-                    data.forEach((summary_record) => {
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                                    <td>${summary_record.category_name}</td>
-                                    <td>${summary_record.amount}</td>
-                                `;
-                        tableBody.appendChild(row);
-                    });
-                })
-                .catch((error) => console.error("Error:", error));
-
-            fetch(`{{ get_summary_chart_url }}?${params}`)
-                .then((response) => response.arrayBuffer())
-                .then((arrayBuffer) => {
-                    const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-                    const imgElement = document.getElementById("summary-chart");
-                    imgElement.src = `data:image/jpeg;base64,${base64String}`;
-                })
-                .catch((error) => console.error("Error:", error));
-        });
+        window.getSummaryUrl = "{{ get_summary_url }}"
+        window.getSummaryChartUrl = "{{ get_summary_chart_url }}"
     </script>
+    <script src="/static/js/filterSummaryFull.js"></script>
 {% endblock %}

@@ -7,7 +7,7 @@
 {% block content %}
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <form id="transaction-form" onsubmit="submitForm(event)">
+            <form id="transaction-form" onsubmit="createTransaction(event)">
                 <div class="row mb-3">
                     <h5 class="text-center">Create {{ transaction_name }}</h5>
                 </div>
@@ -54,7 +54,7 @@
 
                 <div class="row mb-5">
                     <div class="col-12 text-center">
-                        <button type="submit" onclick="submitForm()" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary">
                             <span>+ Create {{ transaction_name }}</span>
                         </button>
                     </div>
@@ -64,47 +64,7 @@
     </div>
 
     <script>
-        async function submitForm(event) {
-            event.preventDefault();
-            const form = document.getElementById("transaction-form");
-            const formData = new FormData(form);
-
-            const data = {};
-            for (const [key, value] of formData.entries()) {
-                if (value !== "" && value !== null && value !== undefined) {
-                    data[key] = value;
-                }
-            }
-
-            try {
-                const response = await fetch("{{ api_create_url }}", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(data),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error("Server error:", errorData);
-
-                    let errorMessage = "Form submission error";
-                    if (Array.isArray(errorData.detail)) {
-                        errorMessage = errorData.detail.map((err) => `${err.loc?.join(".")}: ${err.msg}`).join("\n");
-                    } else if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
-
-                    alert(errorMessage);
-                    return;
-                }
-
-                window.location.href = "{{ success_redirect_url }}";
-            } catch (error) {
-                console.error("Network error:", error);
-                alert("Network error: " + error.message);
-            }
-        }
+        window.apiCreateUrl = "{{ api_create_url }}"
+        window.successRedirectUrl = "{{ success_redirect_url }}"
     </script>
 {% endblock %}
