@@ -158,7 +158,7 @@ async def spending_summary_full(
             "time_interval": "All time",
             "summary": summary,
             "chart": chart_base64,
-            "chart_width": "500",
+            "chart_width": "600",
             "get_summary_url": f"{settings.api.prefix_v1}/spendings/summary/",
             "get_summary_chart_url": f"{settings.api.prefix_v1}/spendings/summary/chart/",
         },
@@ -193,7 +193,7 @@ async def spending_summary_annual(
             "tx_type_multiple": "spendings",
             "summary": summary,
             "chart": chart_base64,
-            "chart_width": "700",
+            "chart_width": "900",
             "get_summary_prefix": f"{settings.api.prefix_v1}/spendings/summary",
         },
     )
@@ -228,7 +228,7 @@ async def spending_summary_monthly(
             "tx_type_multiple": "spendings",
             "summary": summary,
             "chart": chart_base64,
-            "chart_width": "700",
+            "chart_width": "900",
             "get_summary_prefix": f"{settings.api.prefix_v1}/spendings/summary",
         },
     )

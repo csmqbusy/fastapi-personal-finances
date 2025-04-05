@@ -160,7 +160,7 @@ async def income_summary_full(
             "time_interval": "All time",
             "summary": summary,
             "chart": chart_base64,
-            "chart_width": "500",
+            "chart_width": "600",
             "get_summary_url": f"{settings.api.prefix_v1}/income/summary/",
             "get_summary_chart_url": f"{settings.api.prefix_v1}/income/summary/chart/",
         },
@@ -193,7 +193,7 @@ async def income_summary_annual(
             "tx_type_multiple": "income",
             "summary": summary,
             "chart": chart_base64,
-            "chart_width": "700",
+            "chart_width": "900",
             "get_summary_prefix": f"{settings.api.prefix_v1}/income/summary",
         },
     )
@@ -226,7 +226,7 @@ async def income_summary_monthly(
             "tx_type_multiple": "income",
             "summary": summary,
             "chart": chart_base64,
-            "chart_width": "700",
+            "chart_width": "900",
             "get_summary_prefix": f"{settings.api.prefix_v1}/income/summary",
         },
     )
