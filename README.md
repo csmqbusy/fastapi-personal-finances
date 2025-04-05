@@ -42,10 +42,10 @@ A personal finance management tool for tracking income, spendings, and savings g
 ***
 
 ### 👀 Frontend overview
-![frontend_overview](https://github.com/user-attachments/assets/1299f0bc-c7d6-4d9e-a27f-177e82a24d7a)
+<img src="https://github.com/user-attachments/assets/1299f0bc-c7d6-4d9e-a27f-177e82a24d7a" alt="quick_demonstration" width="700">
 
 ***
 ### 👀 API overview
-<img width="1000" alt="api overview" src="https://github.com/user-attachments/assets/32d884df-641a-4a4d-ace4-16d3819d3019" />
+<img src="https://github.com/user-attachments/assets/32d884df-641a-4a4d-ace4-16d3819d3019" width="700" alt="api overview"  />
 
 ***
